@@ -1,28 +1,44 @@
 {
-  "database": { "rules": "database.rules.json" },
+  "database": {
+    "rules": "database.rules.json"
+  },
   "functions": [
     {
       "source": "functions",
       "codebase": "default",
-      "predeploy": ["npm --prefix functions run build"]
+      "predeploy": [
+        "npm --prefix functions run build"
+      ]
     }
   ],
   "hosting": {
     "public": "client/dist",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-    "rewrites": [{ "source": "**", "destination": "/index.html" }],
-    "headers": [
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
       {
         "source": "**",
-        "headers": [{ "key": "X-Content-Type-Options", "value": "nosniff" }]
+        "destination": "/index.html"
       }
     ]
   },
   "emulators": {
-    "auth": { "port": 9099 },
-    "database": { "port": 9000 },
-    "functions": { "port": 5001 },
-    "ui": { "enabled": true, "port": 4000 },
+    "auth": {
+      "port": 9099
+    },
+    "database": {
+      "port": 9000
+    },
+    "functions": {
+      "port": 5001
+    },
+    "ui": {
+      "enabled": true,
+      "port": 4000
+    },
     "singleProjectMode": true
   }
 }
