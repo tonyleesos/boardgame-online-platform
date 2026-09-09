@@ -1,0 +1,40 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "sessions": {
+      "$code": {
+        "public": {
+          ".read": "auth != null && data.child('players').child(auth.uid).exists()"
+        },
+        "private": {
+          "$uid": {
+            ".read": "auth != null && auth.uid === $uid && root.child('sessions').child($code).child('public/players').child(auth.uid).exists()"
+          }
+        },
+        "timebombPrivate": {
+          "$uid": {
+            ".read": "auth != null && auth.uid === $uid && root.child('sessions').child($code).child('public/players').child(auth.uid).exists()"
+          }
+        },
+        "presence": {
+          ".read": "auth != null && root.child('sessions').child($code).child('public/players').child(auth.uid).exists()",
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid && root.child('sessions').child($code).child('public/players').child(auth.uid).exists()",
+            "connections": {
+              "$connection": {
+                ".validate": "newData.val() === true"
+              }
+            },
+            "lastSeen": {
+              ".validate": "newData.isNumber() && newData.val() <= now"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        }
+      }
+    }
+  }
+}

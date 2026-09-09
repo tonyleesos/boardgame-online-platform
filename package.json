@@ -1,9 +1,21 @@
 {
   "name": "boardgame-online-platform",
   "version": "1.0.0",
-  "main": "index.js",
+  "private": true,
+  "workspaces": [
+    "client",
+    "functions"
+  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "npm run dev --workspace client",
+    "dev:emulator": "npm run dev --workspace client -- --mode emulator",
+    "build": "npm run build --workspace functions && npm run build --workspace client",
+    "lint": "npm run lint --workspace client && npm run lint --workspace functions",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "emulators": "npm run build --workspace functions && firebase emulators:start --project demo-boardgame --only auth,database,functions",
+    "test:services": "node tests/integration.mjs && node tests/timebomb-integration.mjs",
+    "test:integration": "npm run build --workspace functions && firebase emulators:exec --project demo-boardgame --only auth,database,functions \"npm run test:services\""
   },
   "repository": {
     "type": "git",
@@ -17,8 +29,10 @@
   },
   "homepage": "https://github.com/tonyleesos/boardgame-online-platform#readme",
   "description": "",
-  "dependencies": {
-    "express": "^5.2.1",
-    "socket.io": "^4.8.3"
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "firebase-tools": "^15.29.0",
+    "prettier": "^3.9.6",
+    "vitest": "^5.0.0"
   }
 }

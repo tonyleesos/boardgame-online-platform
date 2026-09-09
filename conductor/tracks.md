@@ -2,6 +2,9 @@
 
 This file tracks all major tracks for the project. Each track has its own detailed plan in its respective folder.
 
+- [x] **V2 Firebase platform and playable Avalon — local implementation**: [verification and pending cloud setup](../IMPLEMENTATION_STATUS.md).
+- [ ] **V2 production Firebase setup and deployment**: database URL, Anonymous Auth, project access, rules / Functions / Hosting deployment.
+
 ---
 
 - [ ] **Track: Implement Core Game Logic for 'TIME BOMB EVOLUTION'**
