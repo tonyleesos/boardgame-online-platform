@@ -5,22 +5,22 @@
     "sessions": {
       "$code": {
         "public": {
-          ".read": "auth != null && data.child('players').child(auth.uid).exists()"
+          ".read": "auth != null && data.child('players').child(auth.uid).exists() && data.child('players').child(auth.uid).child('isBot').val() !== true"
         },
         "private": {
           "$uid": {
-            ".read": "auth != null && auth.uid === $uid && root.child('sessions').child($code).child('public/players').child(auth.uid).exists()"
+            ".read": "auth != null && auth.uid === $uid && root.child('sessions').child($code).child('public/players').child(auth.uid).exists() && root.child('sessions').child($code).child('public/players').child(auth.uid).child('isBot').val() !== true"
           }
         },
         "timebombPrivate": {
           "$uid": {
-            ".read": "auth != null && auth.uid === $uid && root.child('sessions').child($code).child('public/players').child(auth.uid).exists()"
+            ".read": "auth != null && auth.uid === $uid && root.child('sessions').child($code).child('public/players').child(auth.uid).exists() && root.child('sessions').child($code).child('public/players').child(auth.uid).child('isBot').val() !== true"
           }
         },
         "presence": {
-          ".read": "auth != null && root.child('sessions').child($code).child('public/players').child(auth.uid).exists()",
+          ".read": "auth != null && root.child('sessions').child($code).child('public/players').child(auth.uid).exists() && root.child('sessions').child($code).child('public/players').child(auth.uid).child('isBot').val() !== true",
           "$uid": {
-            ".write": "auth != null && auth.uid === $uid && root.child('sessions').child($code).child('public/players').child(auth.uid).exists()",
+            ".write": "auth != null && auth.uid === $uid && root.child('sessions').child($code).child('public/players').child(auth.uid).exists() && root.child('sessions').child($code).child('public/players').child(auth.uid).child('isBot').val() !== true",
             "connections": {
               "$connection": {
                 ".validate": "newData.val() === true"

@@ -11,6 +11,8 @@ import { TimeBombGame } from "../games/timebomb/TimeBombGame";
 import { useBots } from "../hooks/useBots";
 import { games } from "../games/catalog";
 import type { RoomAction } from "../../../functions/src/shared/model";
+import { GameDialog } from "../components/GameDialog";
+import "../games/game-table.css";
 export function RoomPage() {
   const { code = "" } = useParams();
   const { uid } = usePlayer();
@@ -33,7 +35,7 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
     loaded,
     error: roomError,
   } = useRoom(code, uid);
-  const botError = useBots(room, connected);
+  const botError = useBots(room, connected && !!room?.players[uid] && !room.players[uid].isBot);
   const { pending, error, run } = useAction();
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
@@ -47,7 +49,7 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
       }
     });
   if (!loaded) return <p role="status">正在讀取房間…</p>;
-  if (!room || !room.players[uid])
+  if (!room || !room.players[uid] || room.players[uid].isBot)
     return (
       <section className="panel">
         <h1>無法進入房間</h1>
@@ -67,7 +69,7 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
   const allReady =
     players.length >= definition.minPlayers && players.every((p) => p.ready);
   return (
-    <>
+    <div className={room.status === "waiting" ? "room-waiting" : "room-active"}>
       <div className="room-top">
         <div>
           <p className="eyebrow">
@@ -79,9 +81,10 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
               ? "等待朋友入座"
               : room.status === "finished"
                 ? "故事暫告一段落"
-                : "圓桌上的暗流"}
+                : definition.name}
           </h1>
         </div>
+        {room.status !== "waiting" && <button className="quiet icon-button room-leave" aria-label="離開房間" onClick={() => setLeaving(true)}><LogOut size={18} /></button>}
         <div className="room-code">
           <small>房間代碼</small>
           <button
@@ -108,7 +111,8 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
         </p>
       )}
       <div className="room-grid">
-        <aside className="panel players-panel">
+        <details className="panel players-panel" open={room.status === "waiting"}>
+          <summary className="players-summary">房間與玩家 · {players.length} 人</summary>
           <div className="section-heading">
             <h2>圓桌夥伴</h2>
             <span>
@@ -134,7 +138,7 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
                       {p.uid === uid && <small>（你）</small>}
                     </strong>
                     <small>
-                      {p.isBot
+                      {p.isProxy ? "AI 接手" : p.isBot
                         ? "AI 電腦"
                         : Object.keys(presence[p.uid]?.connections ?? {}).length
                           ? "在線"
@@ -182,16 +186,16 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
             disabled={pending || !connected}
             onClick={() => act({ type: "recover" })}
           >
-            清理離線超過 90 秒的玩家
+            {room.status === "playing" ? "離線超過 90 秒的玩家交由 AI 接手" : "清理離線超過 90 秒的玩家"}
           </button>
           <p className="fine">
-            清理遊戲中的離線玩家會中止本局。房主離開時，由最早入座的玩家接任。
+            遊戲中離席由 AI 接手本局，保留角色與進度。房主離開時，由最早入座的真人接任。
           </p>
-          <button className="quiet" onClick={() => setLeaving(true)}>
+          {room.status === "waiting" && <button className="quiet" onClick={() => setLeaving(true)}>
             <LogOut size={15} />
             離開房間
-          </button>
-        </aside>
+          </button>}
+        </details>
         <section>
           {room.status === "waiting" ? (
             <div className="panel waiting">
@@ -250,7 +254,8 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
             />
           )}
           {players.some((p) => p.isBot) && (
-            <section className="panel ai-conversation">
+            <details className="panel ai-conversation">
+              <summary>圓桌發言 · AI</summary>
               <div className="section-heading">
                 <h2>圓桌發言</h2>
                 <span>AI · {room.botLevel === "casual" ? "輕鬆" : "標準"}</span>
@@ -269,30 +274,21 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
                   <p className="muted">開始遊戲後，AI 會加入討論並自動行動。</p>
                 )}
               </div>
-            </section>
+            </details>
           )}
         </section>
       </div>
-      <AnimatePresence>
         {leaving && (
-          <motion.div
-            className="modal-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <section
-              className="panel modal"
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="leave-title"
-            >
+          <GameDialog title="離開房間" onClose={() => setLeaving(false)}>
               <h2 id="leave-title">離開這張圓桌？</h2>
               <p>
                 {room.status === "playing"
-                  ? "離開會中止本局，其他玩家可以重新開局。"
+                  ? players.filter((p) => !p.isBot).length === 1
+                    ? "你是最後一位真人，離開後房間將關閉。"
+                    : "AI 將接管你的角色、手牌與後續操作，其他玩家繼續本局。接手後本局無法重新入座；下一局可再加入。"
                   : "你的座位會空出，房主身份會自動交接。"}
               </p>
+              {error && <p className="error" role="alert">{error}</p>}
               <div className="actions">
                 <button onClick={() => setLeaving(false)}>繼續留座</button>
                 <button
@@ -300,13 +296,11 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
                   disabled={pending || !connected}
                   onClick={() => act({ type: "leave" })}
                 >
-                  確認離開
+                  {room.status === "playing" && players.filter((p) => !p.isBot).length > 1 ? "離開並交由 AI 接手" : "確認離開"}
                 </button>
               </div>
-            </section>
-          </motion.div>
+          </GameDialog>
         )}
-      </AnimatePresence>
-    </>
+    </div>
   );
 }

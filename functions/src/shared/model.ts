@@ -13,6 +13,7 @@ export type TeamVote = "approve" | "reject";
 export type MissionVote = "success" | "fail";
 export interface Player {
   isBot?: boolean;
+  isProxy?: boolean;
   uid: string;
   nickname: string;
   joinedAt: number;

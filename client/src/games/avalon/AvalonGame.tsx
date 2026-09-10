@@ -1,445 +1,120 @@
-import { useState } from "react";
-import { AnimatePresence, motion } from "motion/react";
-import { Check, Eye, Shield, Skull, Swords, X } from "lucide-react";
-import type {
-  GameAction,
-  PrivateRole,
-  Room,
-} from "../../../../functions/src/shared/model";
+﻿import { useState } from "react";
+import { Check, Eye, Crown, Shield, Skull, Swords, Bot } from "lucide-react";
+import type { GameAction, PrivateRole, Room } from "../../../../functions/src/shared/model";
 import { ROLE_NAMES } from "../../../../functions/src/shared/model";
-import {
-  getMissionTeamSize,
-  requiresTwoFails,
-} from "../../../../functions/src/shared/rules";
+import { getMissionTeamSize, requiresTwoFails } from "../../../../functions/src/shared/rules";
 import { gameAction } from "../../firebase/api";
 import { useAction } from "../../hooks/useAction";
+import { GameDialog } from "../../components/GameDialog";
+import { QuestMap, RolePortrait, VoteArt } from "./AvalonArt";
+import "./avalon.css";
 const phaseNames = {
-  ROLE_REVEAL: "身份揭曉",
-  TEAM_SELECTION: "選擇任務成員",
-  TEAM_VOTE: "表決提案",
-  MISSION_VOTE: "執行任務",
-  MISSION_RESULT: "任務結果",
-  ASSASSINATION: "刺殺梅林",
-  GAME_OVER: "終局揭曉",
+  ROLE_REVEAL: "身份揭曉", TEAM_SELECTION: "選擇任務成員", TEAM_VOTE: "隊伍表決",
+  MISSION_VOTE: "執行任務", MISSION_RESULT: "任務結果", ASSASSINATION: "刺殺梅林", GAME_OVER: "終局揭曉",
 };
-export function AvalonGame({
-  room,
-  role,
-  uid,
-  connected,
-  onRematch,
-  roomPending,
-}: {
-  room: Room;
-  role: PrivateRole | null;
-  uid: string;
-  connected: boolean;
-  onRematch: () => void;
-  roomPending: boolean;
+export function AvalonGame({ room, role, uid, connected, onRematch, roomPending }: {
+  room: Room; role: PrivateRole | null; uid: string; connected: boolean;
+  onRematch: () => void; roomPending: boolean;
 }) {
   const game = room.game!;
   const { pending, error, run } = useAction();
   const [showRole, setShowRole] = useState(false);
+  const [dismissed, setDismissed] = useState("");
+  const [target, setTarget] = useState<string | null>(null);
   const name = (id: string) => room.players[id]?.nickname ?? "已離開的玩家";
-  const act = (action: GameAction) =>
-    void run(() => gameAction(room.code, game, action));
+  const act = (action: GameAction) => void run(() => gameAction(room.code, game, action));
   const disabled = pending || !connected;
   const leader = uid === game.leaderId;
-  const submitted = game.submitted?.[uid];
+  const submitted = !!game.submitted[uid];
   const teamSize = getMissionTeamSize(game.order.length, game.round);
-  return (
-    <>
-      <div className="mission-track" aria-label="任務進度">
-        {Array.from({ length: 5 }, (_, i) => (
-          <div
-            className={`mission-dot ${game.missionResults[i]?.result ?? ""} ${game.round === i + 1 ? "current" : ""}`}
-            key={i}
-          >
-            <span>
-              {game.missionResults[i]?.result === "success" ? (
-                <Check size={19} />
-              ) : game.missionResults[i]?.result === "fail" ? (
-                <X size={19} />
-              ) : (
-                i + 1
-              )}
-            </span>
-            <small>
-              {getMissionTeamSize(game.order.length, i + 1)} 人
-              {requiresTwoFails(game.order.length, i + 1) ? " · 雙敗" : ""}
-            </small>
+  const promptKey = `${game.id}:${game.round}:${game.phase}:${game.proposalAttempt}`;
+  const needsVote = !submitted && (game.phase === "TEAM_VOTE" ||
+    (game.phase === "MISSION_VOTE" && game.selectedPlayerIds.includes(uid)));
+  const showVote = needsVote && dismissed !== promptKey && !showRole;
+  const rows = Math.ceil(game.order.length / 2);
+  const picking = game.phase === "TEAM_SELECTION";
+  const assassinating = game.phase === "ASSASSINATION" && role?.role === "assassin";
+  const last = game.missionResults.at(-1);
+  return <div className="avalon-game">
+    <div className="game-core avalon-core">
+      <QuestMap game={game} />
+      <div className="game-phase-heading"><h2>{phaseNames[game.phase]}</h2><span className="tag">提案 {game.proposalAttempt} / 5</span></div>
+      {error && !showVote && !showRole && !target && <p className="error" role="alert">{error}</p>}
+      <section className="game-stage round-table" aria-label="阿瓦隆圓桌">
+        <div className="team-picker round-seats" style={{ gridTemplateRows: `repeat(${rows}, minmax(60px, 1fr))` }}>
+          <div className="table-message" style={{ gridRow: `1 / ${rows + 1}` }}>
+            <div className="table-crest" aria-hidden="true"><Swords strokeWidth={1} /></div>
+            {game.phase === "ROLE_REVEAL" && <><h3>你的故事<br />即將開始</h3><p>查看秘密身份</p><small>{Object.keys(game.revealed).length} / {game.order.length} 已確認</small></>}
+            {picking && <>
+              <h3>{leader ? "由你組建這次的遠征隊。" : `${name(game.leaderId)} 正在組隊`}</h3><p>選擇 {teamSize} 位夥伴</p>
+              <strong className="table-count">{game.selectedPlayerIds.length}<small> / {teamSize}</small></strong>
+              {requiresTwoFails(game.order.length, game.round) && <small>本輪需兩張失敗票才失敗</small>}
+            </>}
+            {(game.phase === "TEAM_VOTE" || game.phase === "MISSION_VOTE") && <>
+              <h3>{game.phase === "TEAM_VOTE" ? "信任這支隊伍？" : "遠征進行中"}</h3><p>{submitted ? "已提交，等待夥伴" : needsVote ? "輪到你做出選擇" : "等待遠征隊回報"}</p>
+              <strong className="table-count">{Object.keys(game.submitted).length}<small> / {game.phase === "TEAM_VOTE" ? game.order.length : teamSize}</small></strong>
+            </>}
+            {game.phase === "MISSION_RESULT" && <>
+              {last?.result === "success" ? <Shield className="success-text" /> : <Skull className="fail-text" />}
+              <h3>{last?.result === "success" ? "任務成功，曙光仍在。" : "任務失敗，暗影蔓延。"}</h3><p>{last?.fails} 張失敗票</p>{!leader && <small>等待隊長繼續</small>}
+            </>}
+            {game.phase === "ASSASSINATION" && <><Skull className="fail-text" /><h3>最後一擊</h3><p>{assassinating ? "點選你認為的梅林" : "等待刺客選擇"}</p></>}
+            {game.phase === "GAME_OVER" && <><Crown className="gold" /><h2>{game.winner === "good" ? "正義陣營獲勝" : game.winner === "evil" ? "邪惡陣營獲勝" : "本局中止"}</h2><p>{game.winReason}</p></>}
           </div>
-        ))}
-      </div>
-      <div className="game-phase-heading">
-        <h2>{phaseNames[game.phase]}</h2>
-        <span className="tag">
-          第 {game.round} 輪 · 提案 {game.proposalAttempt}/5
-        </span>
-      </div>
-      {error && (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      )}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={`${game.id}:${game.phase}:${game.round}`}
-          className="panel game-stage"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0 }}
-        >
-          {game.phase === "ROLE_REVEAL" && (
-            <>
-              <p className="eyebrow">A SECRET TO KEEP</p>
-              <h2>命運，已為你選好身份。</h2>
-              <p className="muted">請確認旁邊沒有其他玩家，再翻開身份卡。</p>
-              <button
-                className="primary"
-                onClick={() => setShowRole(true)}
-                disabled={!role}
-              >
-                <Eye size={18} />
-                查看你的身份
-              </button>
-              <p className="fine">
-                {Object.keys(game.revealed).length} / {game.order.length}{" "}
-                位已確認{game.revealed[uid] ? " · 等待其他玩家" : ""}
-              </p>
-            </>
-          )}
-          {game.phase === "TEAM_SELECTION" && (
-            <>
-              <p className="eyebrow">BUILD YOUR TRUST</p>
-              <h2>
-                {leader
-                  ? "由你組建這次的遠征隊。"
-                  : `${name(game.leaderId)} 正在組隊`}
-              </h2>
-              <p className="muted">
-                請選擇 {teamSize} 位任務成員。
-                {requiresTwoFails(game.order.length, game.round) &&
-                  "本輪需要兩張失敗票才會失敗。"}
-              </p>
-              <div className="team-picker">
-                {game.order.map((id) => (
-                  <button
-                    key={id}
-                    className={
-                      game.selectedPlayerIds.includes(id) ? "selected" : ""
-                    }
-                    aria-pressed={game.selectedPlayerIds.includes(id)}
-                    disabled={disabled || !leader}
-                    onClick={() =>
-                      act({
-                        type: "select",
-                        players: game.selectedPlayerIds.includes(id)
-                          ? game.selectedPlayerIds.filter((p) => p !== id)
-                          : [...game.selectedPlayerIds, id],
-                      })
-                    }
-                  >
-                    <span className="avatar">{name(id).slice(0, 1)}</span>
-                    {name(id)}
-                    {game.selectedPlayerIds.includes(id) && <Check size={16} />}
-                  </button>
-                ))}
-              </div>
-              {leader && (
-                <button
-                  className="primary"
-                  disabled={
-                    disabled || game.selectedPlayerIds.length !== teamSize
-                  }
-                  onClick={() => act({ type: "propose" })}
-                >
-                  提交隊伍（{game.selectedPlayerIds.length}/{teamSize}）
-                </button>
-              )}
-            </>
-          )}
-          {game.phase === "TEAM_VOTE" && (
-            <>
-              <Swords className="gold" size={38} />
-              <h2>你信任這支隊伍嗎？</h2>
-              <p className="team-names">
-                {game.selectedPlayerIds.map(name).join(" · ")}
-              </p>
-              <p className="muted">
-                過半贊成即通過；五次連續否決，邪惡陣營獲勝。
-                <br />
-                所有人投完後才會公開結果。
-              </p>
-              {submitted ? (
-                <p className="success-text">已投票，等待其他玩家。</p>
-              ) : (
-                <div className="actions">
-                  <button
-                    className="primary"
-                    disabled={disabled}
-                    onClick={() => act({ type: "teamVote", vote: "approve" })}
-                  >
-                    <Check size={18} />
-                    贊成
-                  </button>
-                  <button
-                    disabled={disabled}
-                    onClick={() => act({ type: "teamVote", vote: "reject" })}
-                  >
-                    <X size={18} />
-                    反對
-                  </button>
-                </div>
-              )}
-              <p className="fine">
-                {Object.keys(game.submitted).length} / {game.order.length}{" "}
-                位已投票
-              </p>
-            </>
-          )}
-          {game.phase === "MISSION_VOTE" && (
-            <>
-              <Shield className="gold" size={42} />
-              <h2>遠征的命運，在你手中。</h2>
-              <p className="team-names">
-                {game.selectedPlayerIds.map(name).join(" · ")}
-              </p>
-              <p className="muted">任務票保持匿名。正義陣營只能選擇成功。</p>
-              {!game.selectedPlayerIds.includes(uid) ? (
-                <p>等待任務成員做出選擇…</p>
-              ) : submitted ? (
-                <p className="success-text">已提交任務票，等待結果。</p>
-              ) : (
-                <div className="actions">
-                  <button
-                    className="primary"
-                    disabled={disabled || !role}
-                    onClick={() =>
-                      act({ type: "missionVote", vote: "success" })
-                    }
-                  >
-                    任務成功
-                  </button>
-                  {role?.side === "evil" && (
-                    <button
-                      className="danger"
-                      disabled={disabled}
-                      onClick={() => act({ type: "missionVote", vote: "fail" })}
-                    >
-                      任務失敗
-                    </button>
-                  )}
-                </div>
-              )}
-              <p className="fine">
-                {Object.keys(game.submitted).length} /{" "}
-                {game.selectedPlayerIds.length} 位已提交
-              </p>
-            </>
-          )}
-          {game.phase === "MISSION_RESULT" && (
-            <>
-              <div
-                className={`result-symbol ${game.missionResults.at(-1)?.result}`}
-              >
-                {game.missionResults.at(-1)?.result === "success" ? (
-                  <Shield size={52} />
-                ) : (
-                  <Skull size={52} />
-                )}
-              </div>
-              <h2>
-                {game.missionResults.at(-1)?.result === "success"
-                  ? "任務成功，曙光仍在。"
-                  : "任務失敗，暗影漸深。"}
-              </h2>
-              <p className="muted">
-                本輪共有 {game.missionResults.at(-1)?.fails} 張失敗票。
-                {requiresTwoFails(game.order.length, game.round) &&
-                  "本輪需兩張失敗票才會失敗。"}
-              </p>
-              {leader ? (
-                <button
-                  className="primary"
-                  disabled={disabled}
-                  onClick={() => act({ type: "continue" })}
-                >
-                  繼續遊戲
-                </button>
-              ) : (
-                <p>等待隊長 {name(game.leaderId)} 繼續…</p>
-              )}
-            </>
-          )}
-          {game.phase === "ASSASSINATION" && (
-            <>
-              <Skull size={42} className="gold" />
-              <h2>最後一劍，能否改寫命運？</h2>
-              <p className="muted">
-                三次任務成功。刺客仍有最後一次機會找出梅林。
-              </p>
-              {role?.role === "assassin" ? (
-                <>
-                  <p>選擇你認為是梅林的玩家，送出後立即結算。</p>
-                  <div className="team-picker">
-                    {game.order
-                      .filter(
-                        (id) => id !== uid && !role.knowledge.includes(id),
-                      )
-                      .map((id) => (
-                        <button
-                          disabled={disabled}
-                          key={id}
-                          onClick={() =>
-                            act({ type: "assassinate", target: id })
-                          }
-                        >
-                          <Swords size={17} />
-                          刺殺 {name(id)}
-                        </button>
-                      ))}
-                  </div>
-                </>
-              ) : (
-                <p>等待刺客做出最後的選擇…</p>
-              )}
-            </>
-          )}
-          {game.phase === "GAME_OVER" && (
-            <>
-              <p className="eyebrow">THE STORY IS TOLD</p>
-              <div
-                className={`result-symbol ${game.winner === "good" ? "success" : "fail"}`}
-              >
-                <CrownResult />
-              </div>
-              <h2>
-                {game.winner === "good"
-                  ? "正義陣營獲勝"
-                  : game.winner === "evil"
-                    ? "邪惡陣營獲勝"
-                    : "本局中止"}
-              </h2>
-              <p className="muted">{game.winReason}</p>
-              <div className="role-results">
-                {Object.entries(game.roles ?? {}).map(([id, r]) => (
-                  <div key={id}>
-                    <span>{name(id)}</span>
-                    <strong>{ROLE_NAMES[r]}</strong>
-                  </div>
-                ))}
-              </div>
-              {room.hostId === uid ? (
-                <button
-                  className="primary"
-                  disabled={roomPending || !connected}
-                  onClick={onRematch}
-                >
-                  再玩一局
-                </button>
-              ) : (
-                <p>等待房主開啟下一局，或從左側離開房間。</p>
-              )}
-            </>
-          )}
-        </motion.div>
-      </AnimatePresence>
-      {game.lastTeamVote && (
-        <details className="panel vote-history" open>
-          <summary>
-            上一輪組隊表決 · {game.lastTeamVote.approved ? "通過" : "否決"}
-          </summary>
-          <div className="vote-chips">
-            {Object.entries(game.lastTeamVote.votes).map(([id, v]) => (
-              <span
-                key={id}
-                className={v === "approve" ? "success-text" : "fail-text"}
-              >
-                {name(id)} {v === "approve" ? "贊成" : "反對"}
+          {game.order.map((id, i) => {
+            const selected = game.selectedPlayerIds.includes(id);
+            const canSelect = picking && leader && (selected || game.selectedPlayerIds.length < teamSize);
+            const canAssassinate = assassinating && id !== uid && !role.knowledge.includes(id);
+            return <button key={id} className={`table-seat ${selected ? "selected" : ""} ${id === game.leaderId ? "is-leader" : ""}`}
+              style={{ gridColumn: i < rows ? 1 : 3, gridRow: i % rows + 1 }} disabled={disabled || !(canSelect || canAssassinate)}
+              aria-pressed={selected} aria-label={canAssassinate ? `刺殺 ${name(id)}` : `${name(id)}${id === uid ? "（你）" : ""}`}
+              onClick={() => canAssassinate ? setTarget(id) : act({ type: "select", players: selected ? game.selectedPlayerIds.filter((p) => p !== id) : [...game.selectedPlayerIds, id] })}>
+              <span className={`avatar color-${i % 4}`}>{name(id).slice(0, 1)}<span className="seat-number">{i + 1}</span>
+                {id === game.leaderId && <Crown className="seat-crown" size={15} aria-label="隊長" />}
+                {(selected || game.submitted[id] || game.revealed[id] && game.phase === "ROLE_REVEAL") && <Check className="seat-check" size={14} />}
               </span>
-            ))}
-          </div>
-        </details>
-      )}
-      {game.missionResults.length > 0 && (
-        <details className="panel vote-history">
-          <summary>任務紀錄</summary>
-          {game.missionResults.map((m, i) => (
-            <p key={i}>
-              第 {i + 1} 輪：{m.result === "success" ? "成功" : "失敗"} ·{" "}
-              {m.fails} 張失敗票
-              <br />
-              <small>{m.team.map(name).join("、")}</small>
-            </p>
-          ))}
-        </details>
-      )}
-      {game.phase !== "GAME_OVER" && game.phase !== "ROLE_REVEAL" && (
-        <button className="quiet" onClick={() => setShowRole(true)}>
-          <Eye size={16} />
-          查看我的身份
-        </button>
-      )}
-      <AnimatePresence>
-        {showRole && role && (
-          <motion.div
-            className="modal-backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.section
-              className={`panel role-card ${role.side}`}
-              role="dialog"
-              aria-modal="true"
-              aria-label="你的身份"
-              initial={{ rotateY: 80, opacity: 0 }}
-              animate={{ rotateY: 0, opacity: 1 }}
-            >
-              <p className="eyebrow">YOUR SECRET IDENTITY</p>
-              {role.side === "good" ? (
-                <Shield size={66} strokeWidth={1} />
-              ) : (
-                <Skull size={66} strokeWidth={1} />
-              )}
-              <h2>{ROLE_NAMES[role.role]}</h2>
-              <p className="tag">
-                {role.side === "good" ? "正義陣營" : "邪惡陣營"}
-              </p>
-              <p>
-                {role.knowledgeType === "candidates"
-                  ? "以下兩人之中，一位是梅林，一位是莫甘娜。"
-                  : role.knowledgeType === "evil"
-                    ? "你知道以下玩家屬於邪惡陣營："
-                    : "你沒有額外情報，請從討論中找出可信任的人。"}
-              </p>
-              <p className="team-names">
-                {role.knowledge.map(name).join(" · ")}
-              </p>
-              {role.role === "assassin" && (
-                <p className="fine">
-                  三次任務成功後，你可以刺殺梅林，扭轉結局。
-                </p>
-              )}
-              <button
-                className="primary"
-                onClick={() => {
-                  if (game.phase === "ROLE_REVEAL" && !game.revealed[uid])
-                    act({ type: "reveal" });
-                  setShowRole(false);
-                }}
-                disabled={disabled}
-              >
-                收起身份{game.phase === "ROLE_REVEAL" ? "，確認準備" : ""}
-              </button>
-            </motion.section>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
-  );
-}
-function CrownResult() {
-  return <Swords size={52} />;
+              <span className="seat-name">{name(id)}{id === uid && " · 你"}</span>
+              <small>{game.roles?.[id] ? ROLE_NAMES[game.roles[id]] : room.players[id]?.isBot ? <><Bot size={11} /> {room.players[id]?.isProxy ? "AI 接手" : "AI"}</> : selected ? "遠征隊員" : "圓桌騎士"}</small>
+            </button>;
+          })}
+        </div>
+      </section>
+      <div className="game-dock">
+        {game.phase !== "GAME_OVER" && <button className="quiet" disabled={!role} onClick={() => setShowRole(true)}><Eye size={18} />{game.phase === "ROLE_REVEAL" ? "查看你的身份" : "我的身份"}</button>}
+        {picking && leader && <button className="primary" disabled={disabled || game.selectedPlayerIds.length !== teamSize} onClick={() => act({ type: "propose" })}>提交隊伍（{game.selectedPlayerIds.length}/{teamSize}）</button>}
+        {needsVote && <button className="primary" onClick={() => setDismissed("")}>{game.phase === "TEAM_VOTE" ? "開啟投票" : "選擇任務牌"}</button>}
+        {game.phase === "MISSION_RESULT" && leader && <button className="primary" disabled={disabled} onClick={() => act({ type: "continue" })}>繼續遊戲</button>}
+        {game.phase === "GAME_OVER" && room.hostId === uid && <button className="primary" disabled={roomPending || !connected} onClick={onRematch}>再玩一局</button>}
+      </div>
+    </div>
+    <div className="game-extras">
+      {game.lastTeamVote && <details className="panel vote-history"><summary>上一輪組隊表決 · {game.lastTeamVote.approved ? "通過" : "否決"}</summary><div className="vote-chips">{Object.entries(game.lastTeamVote.votes).map(([id, v]) => <span key={id} className={v === "approve" ? "success-text" : "fail-text"}>{name(id)} {v === "approve" ? "✓ 贊成" : "× 反對"}</span>)}</div></details>}
+      {game.missionResults.length > 0 && <details className="panel vote-history"><summary>任務紀錄</summary>{game.missionResults.map((m, i) => <p key={i}>第 {i + 1} 輪 · {m.result === "success" ? "成功" : "失敗"} · {m.fails} 張失敗票<br /><small>{m.team.map(name).join("、")}</small></p>)}</details>}
+      <details className="panel vote-history"><summary>玩法與圖示說明</summary><p>皇冠是隊長，金框是遠征隊員。點選座位組隊；所有人投票過半才出發，平票視為否決，連續五次否決則邪惡獲勝。</p><p>正義只能選任務成功，邪惡可選成功或失敗。七人以上的第四輪需要兩張失敗票。三次成功後由刺客尋找梅林。</p></details>
+    </div>
+    {showVote && <GameDialog title={game.phase === "TEAM_VOTE" ? "隊伍表決" : "選擇任務牌"} onClose={() => setDismissed(promptKey)} className="vote-dialog">
+      <p className="eyebrow">{game.phase === "TEAM_VOTE" ? "MAKE YOUR CHOICE" : "THE FATE OF THE QUEST"}</p><h2>{game.phase === "TEAM_VOTE" ? "讓這支隊伍出發？" : "你將帶回什麼？"}</h2><p className="team-names">{game.selectedPlayerIds.map(name).join(" · ")}</p>
+      {error && <p className="error" role="alert">{error}</p>}
+      <div className="vote-options">
+        {game.phase === "TEAM_VOTE" ? <>
+          <button disabled={disabled} aria-label="贊成" onClick={() => act({ type: "teamVote", vote: "approve" })}><VoteArt kind="approve" /><strong>贊成</strong><small>讓遠征啟程</small></button>
+          <button disabled={disabled} aria-label="反對" onClick={() => act({ type: "teamVote", vote: "reject" })}><VoteArt kind="reject" /><strong>反對</strong><small>重新組建隊伍</small></button>
+        </> : <>
+          <button disabled={disabled || !role} aria-label="任務成功" onClick={() => act({ type: "missionVote", vote: "success" })}><VoteArt kind="success" /><strong>任務成功</strong><small>守護亞瑟的誓言</small></button>
+          <button disabled={disabled || role?.side !== "evil"} aria-label="任務失敗" onClick={() => act({ type: "missionVote", vote: "fail" })}><VoteArt kind="fail" /><strong>任務失敗</strong><small>{role?.side === "evil" ? "讓暗影降臨" : "僅邪惡陣營可選"}</small></button>
+        </>}
+      </div>
+      <p className="fine">{game.phase === "TEAM_VOTE" ? "全員提交後公開表決；平票即否決。" : "任務票保密，只公開失敗票數。"}</p><button className="quiet" onClick={() => setDismissed(promptKey)}>先看看圓桌</button>
+    </GameDialog>}
+    {showRole && role && <GameDialog title="你的身份" onClose={() => setShowRole(false)} className={`role-card ${role.side}`}>
+      <RolePortrait role={role.role} /><h2>{ROLE_NAMES[role.role]}</h2><p className="tag">{role.side === "good" ? "正義陣營" : "邪惡陣營"}</p>
+      <p>{role.knowledgeType === "candidates" ? "以下兩人，一位是梅林，一位是莫甘娜。" : role.knowledgeType === "evil" ? "你知道以下玩家屬於邪惡陣營：" : "你沒有額外情報，從討論中找出可信任的人。"}</p><p className="team-names">{role.knowledge.map(name).join(" · ")}</p>
+      {role.role === "assassin" && <p className="fine">三次任務成功後，你可以刺殺梅林，扭轉結局。</p>}{error && <p className="error" role="alert">{error}</p>}
+      <button className="primary" disabled={disabled} onClick={() => void run(async () => {
+        if (game.phase === "ROLE_REVEAL" && !game.revealed[uid]) await gameAction(room.code, game, { type: "reveal" });
+        setShowRole(false);
+      })}>收起身份{game.phase === "ROLE_REVEAL" ? "，確認準備" : ""}</button>
+    </GameDialog>}
+    {target && assassinating && <GameDialog title="確認刺殺目標" onClose={() => setTarget(null)}><h2>刺殺 {name(target)}？</h2><p>只有一次機會，確認後揭曉勝負。</p>{error && <p className="error" role="alert">{error}</p>}<button className="danger" disabled={disabled} onClick={() => act({ type: "assassinate", target })}>確認刺殺</button></GameDialog>}
+  </div>;
 }

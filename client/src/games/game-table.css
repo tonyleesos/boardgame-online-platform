@@ -1,0 +1,52 @@
+﻿/* Shared game surface and accessible, viewport-sized dialogs. */
+.game-dialog { position: fixed; inset: 0; margin: auto; width: min(520px, calc(100% - 24px)); max-width: none; max-height: calc(100dvh - 24px); padding: 22px; color: #efece5; overflow: auto; overscroll-behavior: contain; border: 1px solid #b89c6966; background: linear-gradient(145deg, #27372e, #111c17); box-shadow: 0 24px 100px #0009; }
+.game-dialog::backdrop { background: #060c0ade; backdrop-filter: blur(7px); }
+.dialog-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: -8px -8px 12px 0; color: #b7baa9; font-size: 12px; }
+.icon-button { min-width: 44px; min-height: 44px; padding: 10px; flex-shrink: 0; }
+.game-dialog .dialog-heading button { width: 44px; margin: 0; }
+.game-dialog p { overflow-wrap: anywhere; }
+.game-dialog h2 { font-size: 24px; }
+.game-core { display: flex; flex-direction: column; gap: 14px; }
+.game-core .game-phase-heading { margin: 0; }
+.game-dock { display: flex; gap: 8px; align-items: center; justify-content: center; padding: 10px 0; margin-top: auto; }
+.game-dock > button { flex: 1; max-width: 300px; }
+.game-extras { margin-top: 16px; }
+.room-active .room-grid { display: flex; flex-direction: column; gap: 18px; }
+.room-active .players-panel { order: 2; width: 100%; }
+.room-active .player-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0 15px; }
+.room-active .room-top { justify-content: flex-start; }
+.room-active .room-code { margin-left: auto; }
+.room-active .room-top h1 { font-size: 23px; }
+.room-active .room-top .eyebrow { font-size: 9px; margin-bottom: 2px; }
+.room-active .connection { margin: 4px 0 12px; }
+.players-summary { cursor: pointer; min-height: 44px; align-content: center; font-size: 13px; }
+.room-waiting .players-summary { display: none; }
+.room-active .players-panel > .section-heading { display: none; }
+.ai-conversation { margin-top: 16px; }
+.ai-conversation > summary { cursor: pointer; min-height: 44px; align-content: center; font-size: 13px; }
+.site:has(.room-active) .site-header { height: 64px; margin-bottom: 18px; }
+@media (max-width: 680px) {
+  .site:has(.room-active) { padding: 0 10px; }
+  .site:has(.room-active) .site-header { height: 42px; margin-bottom: 5px; }
+  .site:has(.room-active) .brand { font-size: 13px; gap: 6px; }
+  .site:has(.room-active) .brand svg { width: 19px; }
+  .site:has(.room-active) .brand small, .site:has(.room-active) .profile small { display: none; }
+  .site:has(.room-active) .profile { font-size: 10px; max-height: 34px; overflow: hidden; }
+  .room-active .room-top { gap: 6px; align-items: center; min-height: 44px; }
+  .room-active .room-top h1 { font-size: 16px; }
+  .room-active .room-top .eyebrow, .room-active .room-code > small { display: none; }
+  .room-active .room-code button { font-size: 14px; min-height: 44px; }
+  .room-active .connection:not(.offline) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .room-active .connection.offline { margin: 0 0 6px; }
+  .game-core { gap: 8px; min-height: calc(100svh - 101px); }
+  .game-core .game-phase-heading h2 { font-size: 15px; }
+  .game-core .game-phase-heading .tag { font-size: 10px; }
+  .game-dock { padding: 4px 0 max(6px, env(safe-area-inset-bottom)); }
+  .game-dock button { min-height: 44px; padding: 8px; font-size: 12px; }
+  .game-dialog { padding: 16px; }
+  .game-dialog h2 { font-size: 22px; }
+  .game-dialog .dialog-heading { margin-bottom: 8px; }
+  .game-extras { margin-top: 10px; }
+  .room-active .vote-history, .room-active .ai-conversation { padding: 10px 14px; }
+  .room-active summary { min-height: 44px; align-content: center; }
+}

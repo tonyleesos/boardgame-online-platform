@@ -1,0 +1,66 @@
+﻿.avalon-core { --quest-gold: #d8b577; }
+.quest-map { position: relative; overflow: hidden; border: 1px solid #bca06b44; border-radius: 14px; background: radial-gradient(ellipse at 50% 120%, #84724a55, transparent 75%), linear-gradient(125deg, #20382e, #14251f); padding: 15px 18px 20px; }
+.quest-caption { display: flex; justify-content: space-between; font-size: 10px; letter-spacing: .16em; color: #c7ad7f; margin-bottom: 18px; }
+.quest-landscape { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.quest-stops { position: relative; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+.quest-stop { display: flex; align-items: center; flex-direction: column; gap: 4px; text-align: center; }
+.quest-stop:nth-child(even) { transform: translateY(-5px); }
+.quest-medallion { width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid #9f997c77; border-radius: 50%; color: #a9b3a1; background: #1b2b22; box-shadow: 0 3px 10px #0003; }
+.quest-stop strong { font-size: 12px; font-weight: 500; color: #c4c7b3; }
+.quest-stop small { font-size: 10px; color: #a7af9c; }
+.quest-stop.current .quest-medallion { border-color: #e3bf7e; color: #f6d898; background: #54492c; box-shadow: 0 0 0 4px #c9aa6c1a, 0 0 20px #bd995b20; }
+.quest-stop.success .quest-medallion { color: #b8e5be; background: #31583d; }
+.quest-stop.fail .quest-medallion { color: #f6b9b1; background: #622f30; }
+.round-table { padding: 18px; border-radius: 22px; border: 1px solid #b3945d44; background: radial-gradient(ellipse at 50% 40%, #85754b24, transparent 60%), repeating-radial-gradient(ellipse at center, transparent 0 62px, #d3b87808 63px 64px), #182a21; }
+.round-seats.team-picker { display: grid; grid-template-columns: minmax(100px, 1fr) minmax(140px, 1.5fr) minmax(100px, 1fr); gap: 8px 16px; margin: 0; }
+.table-message { grid-column: 2; align-self: center; padding: 12px; text-align: center; overflow-wrap: anywhere; }
+.table-message h3, .table-message h2 { font-size: 21px; line-height: 1.5; color: #e4cfaa; margin: 12px 0; }
+.table-message p { font-size: 12px; color: #aeb9a6; margin: 10px 0; }
+.table-message small { font-size: 11px; color: #aaa78d; display: block; }
+.table-message > svg { margin: auto; }
+.table-crest { width: 70px; height: 70px; border: 1px solid #c6a96844; border-radius: 50%; display: grid; place-items: center; margin: 0 auto 12px; box-shadow: 0 0 0 7px #c9ad7910; }
+.table-crest svg { width: 38px; height: 38px; color: #d2b77e; }
+.table-count { font: 36px Georgia, serif; color: #e0c491; }
+.table-count small { display: inline; font-size: 17px; }
+.round-seats .table-seat { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 7px 5px; border: 1px solid transparent; text-align: center; border-radius: 12px; background: #0d1a154d; }
+.round-seats .table-seat:disabled { opacity: 1; cursor: default; }
+.round-seats .table-seat.selected { border-color: #d0b16e; background: #c8a96714; }
+.table-seat .avatar { position: relative; width: 38px; height: 38px; border: 1px solid #c6bf9766; font-size: 16px; }
+.table-seat .seat-name { max-width: 100%; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.table-seat > small { font-size: 10px; color: #a5b3a1; display: flex; gap: 3px; align-items: center; }
+.seat-number { position: absolute; bottom: -2px; left: -4px; border-radius: 50%; background: #15241a; color: #d9bd85; font-size: 9px; min-width: 15px; border: 1px solid #ad976055; }
+.seat-crown { position: absolute; top: -8px; right: -5px; color: #f5cb77; }
+.seat-check { position: absolute; bottom: -2px; right: -6px; padding: 1px; background: #bdd7a8; border-radius: 50%; color: #23381f; }
+.avalon-portrait { width: min(230px, 60vw); aspect-ratio: 1; margin: 0 auto 15px; background-image: url('/art/avalon-roles.png'); background-size: 300% 200%; border-radius: 12px 12px 45% 45%; border: 2px solid #d5b87d; box-shadow: 0 10px 30px #0007; }
+.portrait-merlin { background-position: 0 0; }.portrait-percival { background-position: 50% 0; }.portrait-servant { background-position: 100% 0; }.portrait-assassin { background-position: 0 100%; }.portrait-morgana { background-position: 50% 100%; }.portrait-minion { background-position: 100% 100%; }
+.vote-dialog { text-align: center; }
+.vote-dialog .team-names { font-size: 14px; }
+.vote-options { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 20px 0; }
+.vote-options > button { display: flex; flex-direction: column; padding: 12px; border-color: #bda16b55; gap: 8px; }
+.vote-options > button > strong { font-size: 19px; }
+.vote-options small { font-size: 11px; color: #bcb9a8; }
+.vote-art { position: relative; width: 100%; aspect-ratio: 4 / 5; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 3px double #cebb84; border-radius: 50% 50% 10px 10px; color: #e6daba; background: radial-gradient(ellipse at 50% 35%, #a8b27b55, transparent 65%), repeating-conic-gradient(from 10deg, #b6a27408 0 15deg, transparent 15deg 30deg), #30483f; box-shadow: inset 0 0 0 5px #14241b, 0 6px 12px #0005; }
+.vote-art > svg { width: 52%; height: 52%; filter: drop-shadow(0 2px 4px #0008); }
+.vote-art-reject, .vote-art-fail { background-color: #542b34; color: #f4c3ac; }
+.vote-ornament { position: absolute; top: 10%; font-size: 16px; color: #d3b67c; }
+.vote-seal { position: absolute; bottom: 6%; background: #ba954a; color: #362617; width: 25px; height: 25px; border-radius: 50%; box-shadow: inset 0 0 0 3px #b28b4144; font-size: 17px; }
+.role-card.game-dialog { padding: 22px; }
+.role-card.game-dialog h2 { font-size: 27px; }
+.role-card.game-dialog > p { margin-bottom: 12px; }
+.role-card.game-dialog > button { margin-top: 6px; }
+@media (max-width: 680px) {
+  .quest-map { padding: 10px 5px 12px; }
+  .quest-caption { font-size: 8px; margin: 0 6px 12px; }
+  .quest-medallion { width: 35px; height: 35px; }
+  .quest-medallion svg { width: 20px; }
+  .quest-stop strong { font-size: 10px; }.quest-stop small { font-size: 9px; }
+  .round-table { padding: 10px 6px; border-radius: 14px; flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  .round-seats.team-picker { grid-template-columns: minmax(68px, 1fr) minmax(112px, 1.5fr) minmax(68px, 1fr); gap: 4px; }
+  .round-seats .table-seat { padding: 5px 2px; }
+  .table-seat .avatar { width: 32px; height: 32px; font-size: 14px; }
+  .table-seat .seat-name { font-size: 10px; }.table-seat > small { font-size: 9px; }
+  .table-message { padding: 6px; }.table-message h3, .table-message h2 { font-size: 17px; }.table-message p { font-size: 11px; }.table-message small { font-size: 10px; }
+  .table-crest { width: 50px; height: 50px; }.table-crest svg { width: 28px; }
+  .vote-art { max-height: 190px; }.vote-options { gap: 10px; }.vote-options > button { padding: 9px; }
+  .avalon-portrait { width: min(210px, 31dvh); }
+}

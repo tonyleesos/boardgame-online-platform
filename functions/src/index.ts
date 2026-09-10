@@ -2,8 +2,9 @@ import { initializeApp } from "firebase-admin/app";
 import { getDatabase } from "firebase-admin/database";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { randomInt, randomUUID, createHash } from "node:crypto";
-import { applyGameAction, finish, startGame } from "./engine";
-import { startBomb, applyBombAction, finishBomb } from "./timebomb-engine";
+import { applyGameAction, startGame } from "./engine";
+import { startBomb, applyBombAction } from "./timebomb-engine";
+import { leaveSeat } from "./membership";
 import { advanceOneBot, botToken } from "./bots";
 import { GAME_LIMITS } from "./shared/model";
 import { bombToken } from "./shared/timebomb";
@@ -208,7 +209,10 @@ export const joinRoom = callable(async (uid, data) => {
   const name = nickname(data.nickname);
   await mutate(roomCode, (session) => {
     const room = session.public;
-    if (room.players[uid]) return session;
+    if (room.players[uid]) {
+      ensure(!room.players[uid].isBot, "此座位已由 AI 接手，請等待本局結束後再加入");
+      return session;
+    }
     ensure(room.mode !== "practice", "此房間為單人練習，請建立自己的練習桌");
     ensure(room.status === "waiting", "遊戲已開始，僅原玩家可重新連線");
     ensure(
@@ -234,7 +238,7 @@ export const roomAction = callable(async (uid, data) => {
   const now = Date.now();
   await mutate(roomCode, (session) => {
     const room = session.public;
-    ensure(room.players[uid], "你不在房間內");
+    ensure(room.players[uid] && !room.players[uid].isBot, "你不在房間內");
     switch (action.type) {
       case "ready":
         ensure(room.status === "waiting", "遊戲已開始");
@@ -285,23 +289,7 @@ export const roomAction = callable(async (uid, data) => {
         delete room.players[action.botId];
         break;
       case "leave": {
-        if (room.status === "playing") {
-          if (room.timebomb)
-            finishBomb(session, undefined, "有玩家離開，本局中止");
-          else finish(session, undefined, "有玩家離開，本局中止");
-        }
-        delete room.players[uid];
-        if (session.private) delete session.private[uid];
-        if (session.timebombPrivate) delete session.timebombPrivate[uid];
-        if (session.presence) delete session.presence[uid];
-        const remaining = Object.values(room.players)
-          .filter((p) => !p.isBot)
-          .sort(
-            (a, b) => a.joinedAt - b.joinedAt || a.uid.localeCompare(b.uid),
-          );
-        if (!remaining.length) return null;
-        if (room.hostId === uid) room.hostId = remaining[0].uid;
-        break;
+        return leaveSeat(session, uid);
       }
       case "rematch":
         ensure(room.hostId === uid, "只有房主可以再開一局");
@@ -314,6 +302,10 @@ export const roomAction = callable(async (uid, data) => {
         session.private = {};
         session.timebombPrivate = {};
         session.secret = { teamVotes: {}, missionVotes: {} };
+        // A proxy occupies the seat only until the current game ends.
+        Object.values(room.players).forEach((p) => {
+          if (p.isProxy) delete room.players[p.uid];
+        });
         Object.values(room.players).forEach((p) => {
           p.ready = !!p.isBot;
         });
@@ -330,16 +322,8 @@ export const roomAction = callable(async (uid, data) => {
           )
           .map((p) => p.uid);
         ensure(stale.length > 0, "尚無離線超過 90 秒的玩家");
-        if (room.status === "playing") {
-          if (room.timebomb)
-            finishBomb(session, undefined, "玩家長時間離線，本局中止");
-          else finish(session, undefined, "玩家長時間離線，本局中止");
-        }
         for (const id of stale) {
-          delete room.players[id];
-          if (session.private) delete session.private[id];
-          if (session.timebombPrivate) delete session.timebombPrivate[id];
-          if (session.presence) delete session.presence[id];
+          leaveSeat(session, id);
         }
         if (!room.players[room.hostId])
           room.hostId = Object.values(room.players)
