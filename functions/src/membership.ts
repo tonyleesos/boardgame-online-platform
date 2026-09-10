@@ -1,5 +1,6 @@
 import type { Session } from "./shared/model";
 import { ensure } from "./shared/rules";
+import { finishDecorum } from "./decorum/engine";
 
 /** Keep the seat ID stable so secret votes, knowledge and wire slots survive.
  * Callable handlers and database rules deny this former human ID once it is a bot.
@@ -8,6 +9,7 @@ export function leaveSeat(session: Session, uid: string): Session | null {
   const room = session.public;
   const player = room.players[uid];
   ensure(player && !player.isBot, "你不在房間內");
+  if (room.gameId === "decorum" && room.status === "playing") finishDecorum(session, "player-left");
   if (room.status === "playing") {
     player.isBot = true;
     player.isProxy = true;
@@ -26,6 +28,7 @@ export function leaveSeat(session: Session, uid: string): Session | null {
     delete room.players[uid];
     if (session.private) delete session.private[uid];
     if (session.timebombPrivate) delete session.timebombPrivate[uid];
+    if (session.decorumPrivate) delete session.decorumPrivate[uid];
   }
   if (session.presence) delete session.presence[uid];
   const humans = Object.values(room.players)

@@ -60,6 +60,8 @@ export interface Room {
   players: Record<string, Player>;
   game?: Game;
   timebomb?: BombGame;
+  decorum?: DecorumPublicState;
+  decorumScenarioId?: string;
   mode?: "friends" | "practice";
   bombVariant?: BombVariant;
   botLevel?: "casual" | "standard";
@@ -74,10 +76,12 @@ export interface Session {
   >;
   private: Record<string, PrivateRole>;
   timebombPrivate?: Record<string, BombPrivate>;
+  decorumPrivate?: Record<string, DecorumPrivate>;
   secret: {
     teamVotes: Record<string, TeamVote>;
     missionVotes: Record<string, MissionVote>;
     bombHands?: Record<string, Array<Wire | null>>;
+    decorumShares?: Record<string, Record<string, string>>;
   };
 }
 export type GameAction =
@@ -89,6 +93,7 @@ export type GameAction =
   | { type: "continue" }
   | { type: "assassinate"; target: string };
 export type RoomAction =
+  | { type: "decorScenario"; scenarioId: string }
   | { type: "addBot" }
   | { type: "removeBot"; botId: string }
   | { type: "ready"; ready: boolean }
@@ -96,9 +101,10 @@ export type RoomAction =
   | { type: "start" }
   | { type: "rematch" }
   | { type: "recover" };
-export type PlatformGameAction = GameAction | BombAction;
+export type PlatformGameAction = GameAction | BombAction | DecorumAction;
 export const GAME_LIMITS: Record<string, { min: number; max: number }> = {
   avalon: { min: 5, max: 10 },
+  decorum: { min: 2, max: 4 },
   timebomb: { min: 4, max: 6 },
   "timebomb-classic": { min: 4, max: 8 },
 };
@@ -117,3 +123,4 @@ import type {
   BombVariant,
   Wire,
 } from "./timebomb";
+import type { DecorumPublicState, DecorumPrivate, DecorumAction } from "./decorum";

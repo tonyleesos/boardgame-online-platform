@@ -6,8 +6,14 @@ export interface GameDefinition {
   minPlayers: number;
   maxPlayers: number;
   enabled: boolean;
+  supportsBots?: boolean;
 }
 export const games: GameDefinition[] = [
+  {
+    id: "decorum", name: "同房異夢", subtitle: "DÉCORUM · A HOME FOR ALL",
+    description: "一個家，幾種理想生活。用一次次佈置與小小回應，找到室友之間的默契。",
+    minPlayers: 2, maxPlayers: 4, enabled: true, supportsBots: false,
+  },
   {
     id: "avalon",
     name: "阿瓦隆",

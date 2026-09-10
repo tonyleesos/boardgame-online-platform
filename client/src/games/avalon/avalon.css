@@ -64,3 +64,28 @@
   .vote-art { max-height: 190px; }.vote-options { gap: 10px; }.vote-options > button { padding: 9px; }
   .avalon-portrait { width: min(210px, 31dvh); }
 }
+.rejection-track { display: grid; grid-template-columns: 1fr auto; gap: 8px 14px; padding: 12px 16px; border: 1px solid #bca06b33; border-radius: 12px; background: #201f1966; }
+.rejection-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 12px; color: #d7c39f; }
+.rejection-heading > span { margin-left: auto; font-variant-numeric: tabular-nums; }
+.rejection-marks { display: flex; gap: 6px; }
+.rejection-marks > span { width: 25px; height: 25px; display: grid; place-items: center; border: 1px solid #c6a96844; border-radius: 50%; font-size: 10px; color: #a9aa99; }
+.rejection-marks .rejected { color: #edb6a4; background: #713a3c; border-color: #be7872; }
+.rejection-track > small { grid-column: 1 / -1; font-size: 11px; color: #aeb3a0; }
+.rejection-track.at-risk { border-color: #d98d7c80; background: #713a3c30; }
+.rejection-track.at-risk > small { color: #efb9a7; }
+.mission-result-dialog { text-align: center; }
+.mission-result-art { width: min(180px, 32dvh); margin: 18px auto; animation: card-reveal 600ms 100ms both; }
+.mission-result-dialog.result-success h2 { color: #b8e5be; }
+.mission-result-dialog.result-fail h2 { color: #f6b9b1; }
+.mission-result-dialog > .primary { width: 100%; }
+.mission-ballots { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px; margin: 18px 0; }
+.mission-ballots > span { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; }
+.vote-options > button { transition: transform 180ms, background 180ms, border-color 180ms; animation: card-reveal 450ms 70ms backwards; }
+.vote-options > button:nth-child(2) { animation-delay: 140ms; }
+.vote-options > button:hover:not(:disabled) { transform: translateY(-4px); }
+@media (max-width: 680px) {
+  .rejection-track { padding: 9px 10px; gap: 6px 10px; }
+  .rejection-heading { font-size: 11px; gap: 5px; }
+  .rejection-marks { gap: 4px; }
+  .rejection-marks > span { width: 22px; height: 22px; }
+}

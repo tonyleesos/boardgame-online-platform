@@ -14,7 +14,7 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "emulators": "npm run build --workspace functions && firebase emulators:start --project demo-boardgame --only auth,database,functions",
-    "test:services": "node tests/integration.mjs && node tests/timebomb-integration.mjs",
+    "test:services": "node tests/integration.mjs && node tests/timebomb-integration.mjs && node tests/decorum-integration.mjs",
     "test:integration": "npm run build --workspace functions && firebase emulators:exec --project demo-boardgame --only auth,database,functions \"npm run test:services\""
   },
   "repository": {

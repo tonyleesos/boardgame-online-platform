@@ -16,7 +16,7 @@ export function VoteArt({ kind }: { kind: "approve" | "reject" | "success" | "fa
 
 const destinations = ["卡美洛", "迷霧森林", "巨龍山隘", "聖湖", "聖杯之城"];
 const landmarks = [Castle, Trees, Mountain, Waves, Crown];
-export function QuestMap({ game }: { game: Game }) {
+export function QuestMap({ game, concealLatest = false }: { game: Game; concealLatest?: boolean }) {
   return <section className="quest-map" aria-label="遠征任務版">
     <div className="quest-caption"><span>THE QUEST FOR AVALON</span><span>遠征 {game.round} / 5</span></div>
     <svg className="quest-landscape" viewBox="0 0 800 180" preserveAspectRatio="none" aria-hidden="true">
@@ -26,7 +26,7 @@ export function QuestMap({ game }: { game: Game }) {
     </svg>
     <div className="quest-stops">
       {landmarks.map((Icon, i) => {
-        const result = game.missionResults[i]?.result;
+        const result = concealLatest && i === game.missionResults.length - 1 ? undefined : game.missionResults[i]?.result;
         const doubleFail = requiresTwoFails(game.order.length, i + 1);
         return <div key={i} className={`quest-stop ${result ?? ""} ${game.round === i + 1 ? "current" : ""}`}
           aria-label={`第 ${i + 1} 輪 ${destinations[i]}，${getMissionTeamSize(game.order.length, i + 1)} 人${doubleFail ? "，需兩張失敗票" : ""}，${result === "success" ? "成功" : result === "fail" ? "失敗" : "未完成"}`}

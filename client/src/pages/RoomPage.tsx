@@ -8,6 +8,8 @@ import { useAction } from "../hooks/useAction";
 import { roomAction } from "../firebase/api";
 import { AvalonGame } from "../games/avalon/AvalonGame";
 import { TimeBombGame } from "../games/timebomb/TimeBombGame";
+import { DecorumGame } from "../games/decorum/DecorumGame";
+import { DECORUM_SCENARIOS } from "../../../functions/src/shared/decorum";
 import { useBots } from "../hooks/useBots";
 import { games } from "../games/catalog";
 import type { RoomAction } from "../../../functions/src/shared/model";
@@ -30,6 +32,7 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
     room,
     role,
     bombRole,
+    decorumPrivate,
     presence,
     connected,
     loaded,
@@ -66,8 +69,10 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
   );
   const host = room.hostId === uid;
   const definition = games.find((g) => g.id === room.gameId)!;
+  const isDecorum = room.gameId === "decorum";
+  const decorScenario = DECORUM_SCENARIOS.find((s) => s.id === room.decorumScenarioId) ?? DECORUM_SCENARIOS.find((s) => s.playerCount === players.length);
   const allReady =
-    players.length >= definition.minPlayers && players.every((p) => p.ready);
+    players.length >= definition.minPlayers && players.every((p) => p.ready) && (!isDecorum || decorScenario?.playerCount === players.length);
   return (
     <div className={room.status === "waiting" ? "room-waiting" : "room-active"}>
       <div className="room-top">
@@ -170,7 +175,7 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
               ))}
             </AnimatePresence>
           </ul>
-          {host && room.status === "waiting" && (
+          {host && room.status === "waiting" && !isDecorum && (
             <button
               className="button add-bot"
               disabled={
@@ -186,10 +191,10 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
             disabled={pending || !connected}
             onClick={() => act({ type: "recover" })}
           >
-            {room.status === "playing" ? "離線超過 90 秒的玩家交由 AI 接手" : "清理離線超過 90 秒的玩家"}
+            {room.status === "playing" ? isDecorum ? "清理離線室友並中止本局" : "離線超過 90 秒的玩家交由 AI 接手" : "清理離線超過 90 秒的玩家"}
           </button>
           <p className="fine">
-            遊戲中離席由 AI 接手本局，保留角色與進度。房主離開時，由最早入座的真人接任。
+            {isDecorum ? "離線可重連。室友明確離開或被清理會中止合租，房主由最早入座的室友接任。" : "遊戲中離席由 AI 接手本局，保留角色與進度。房主離開時，由最早入座的真人接任。"}
           </p>
           {room.status === "waiting" && <button className="quiet" onClick={() => setLeaving(true)}>
             <LogOut size={15} />
@@ -203,11 +208,12 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
               <p className="eyebrow">THE NIGHT IS YOUNG</p>
               <h2>所有人到齊，好戲就開場。</h2>
               <p className="muted">
-                把房號分享給朋友，準備好迎接你的秘密身份。
+                {isDecorum ? "把房號分享給朋友，一起佈置理想的家。" : "把房號分享給朋友，準備好迎接你的秘密身份。"}
                 <br />
                 需要 {definition.minPlayers}–{definition.maxPlayers}{" "}
-                位玩家，且所有人都已準備。AI 會自動準備。
+                位玩家，且所有人都已準備。{!isDecorum && "AI 會自動準備。"}
               </p>
+              {isDecorum && <div className="decor-scenario-picker"><label htmlFor="decor-scenario">合租劇本（由房主選擇）</label><select id="decor-scenario" value={decorScenario?.id ?? ""} disabled={!host || pending || !connected} onChange={(e) => act({ type: "decorScenario", scenarioId: e.target.value })}>{!decorScenario && <option value="" disabled>等待室友入座後選擇劇本</option>}{DECORUM_SCENARIOS.map((s) => <option key={s.id} value={s.id}>{s.playerCount} 人 · {s.name} · 難度 {s.difficulty}/5</option>)}</select><p>{decorScenario?.description ?? "提供 2–4 人的原創合作劇本，不使用商業版劇本文字。"}</p>{decorScenario && decorScenario.playerCount !== players.length && <p className="error">此劇本需要 {decorScenario.playerCount} 位玩家，目前有 {players.length} 位。</p>}<p className="fine">更換劇本後，所有室友需要重新準備。</p></div>}
               <div className="actions">
                 <button
                   className={room.players[uid].ready ? "" : "primary"}
@@ -233,7 +239,7 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
                 {!host && " · 等待房主開始遊戲"}
               </p>
             </div>
-          ) : room.gameId === "timebomb" ||
+          ) : isDecorum ? <DecorumGame room={room} privateData={decorumPrivate} uid={uid} connected={connected} onRematch={() => act({ type: "rematch" })} roomPending={pending} /> : room.gameId === "timebomb" ||
             room.gameId === "timebomb-classic" ? (
             <TimeBombGame
               room={room}
@@ -283,7 +289,8 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
               <h2 id="leave-title">離開這張圓桌？</h2>
               <p>
                 {room.status === "playing"
-                  ? players.filter((p) => !p.isBot).length === 1
+                  ? isDecorum ? "離開會中止這局同房異夢並公開所有心願。若只是暫時離線，可關閉頁面後回到原房間。"
+                  : players.filter((p) => !p.isBot).length === 1
                     ? "你是最後一位真人，離開後房間將關閉。"
                     : "AI 將接管你的角色、手牌與後續操作，其他玩家繼續本局。接手後本局無法重新入座；下一局可再加入。"
                   : "你的座位會空出，房主身份會自動交接。"}
@@ -296,7 +303,7 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
                   disabled={pending || !connected}
                   onClick={() => act({ type: "leave" })}
                 >
-                  {room.status === "playing" && players.filter((p) => !p.isBot).length > 1 ? "離開並交由 AI 接手" : "確認離開"}
+                  {room.status === "playing" && !isDecorum && players.filter((p) => !p.isBot).length > 1 ? "離開並交由 AI 接手" : "確認離開"}
                 </button>
               </div>
           </GameDialog>

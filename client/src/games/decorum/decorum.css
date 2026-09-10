@@ -1,0 +1,121 @@
+.decorum-game, .decorum-dialog {
+  --decor-ink: #39463b; --decor-muted: #74776b; --decor-paper: #f7f1e5;
+  --decor-green: #557563; --decor-line: #d7d0bd; color: var(--decor-ink);
+}
+.decorum-game { background: var(--decor-paper); border-radius: 24px; padding: 28px; box-shadow: 0 16px 50px #0002; }
+.decorum-game .eyebrow, .decorum-dialog .eyebrow { color: #92704a; font-size: 10px; letter-spacing: .19em; }
+.decorum-game button, .decorum-dialog button { color: var(--decor-ink); border-color: var(--decor-line); background: #fffaf0; }
+.decorum-game button:hover:not(:disabled), .decorum-dialog button:hover:not(:disabled) { background: #f0e7d7; border-color: #748976; }
+.decorum-game button:focus-visible, .decorum-dialog button:focus-visible, .decorum-dialog select:focus-visible { outline: 3px solid #557563; outline-offset: 3px; }
+.decorum-game .primary, .decorum-dialog .primary { background: var(--decor-green); border-color: var(--decor-green); color: #fff9ee; }
+.decorum-game .primary:hover:not(:disabled), .decorum-dialog .primary:hover:not(:disabled) { background: #3f604e; color: #fff9ee; }
+.decor-intro { display: flex; gap: 20px; align-items: center; justify-content: space-between; padding-bottom: 20px; border-bottom: 1px solid var(--decor-line); }
+.decor-intro h2 { font-size: 28px; margin: 4px 0 8px; letter-spacing: .05em; }
+.decor-intro p:last-child { font-size: 13px; margin: 0; color: var(--decor-muted); }
+.decor-intro > svg { color: #87997b; flex-shrink: 0; }
+.decor-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 20px 0; }
+.decor-metrics > div { display: flex; align-items: center; justify-content: center; gap: 9px; border-right: 1px solid var(--decor-line); color: #727b6b; }
+.decor-metrics > div:last-child { border-right: 0; }
+.decor-metrics > div > span { font-size: 11px; }
+.decor-metrics strong { display: block; font-size: 21px; color: #485a49; }
+.decor-metrics small { font-size: 11px; font-weight: 400; color: var(--decor-muted); }
+.decor-roommates { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 18px; }
+.decor-roommate { display: flex; flex-wrap: wrap; align-items: center; gap: 7px 10px; padding: 10px; background: #fffaf3; border: 1px solid #ded7c5; border-radius: 12px; font-size: 12px; }
+.decor-roommate.current { border-color: #8a9a7f; box-shadow: inset 0 3px #8a9a7f; }
+.decorum-game .player-identity .avatar, .decorum-dialog .player-identity .avatar { color: #435943; background: #dee6d1; border-color: #a9b89b; }
+.decorum-game .player-identity .color-1, .decorum-dialog .player-identity .color-1 { background: #ead9e6; color: #745970; border-color: #bf9bb5; }
+.decorum-game .player-identity .color-2, .decorum-dialog .player-identity .color-2 { background: #f0dcc6; color: #826040; border-color: #c6a17b; }
+.decorum-game .player-identity .color-3, .decorum-dialog .player-identity .color-3 { background: #d2e5e9; color: #426875; border-color: #8bafbb; }
+.decor-satisfied { display: inline-flex; align-items: center; gap: 3px; color: #877768; font-size: 10px; }
+.decor-satisfied.yes { color: #4f795c; }
+.reaction-bubble { display: inline-flex; gap: 4px; align-items: center; font-size: 10px; border: 1px solid #ddd6c5; padding: 3px 7px; border-radius: 10px 10px 10px 0; background: #f5eedf; }
+.reaction-bubble.positive { color: #3e6c50; background: #e5eddf; }.reaction-bubble.negative { color: #985c50; background: #f4e2d8; }
+.decor-turn { text-align: center; padding: 18px; border: 1px solid #d9d6c2; background: #eeefdf; border-radius: 14px; margin-bottom: 22px; }
+.decor-turn h3 { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; font-size: 17px; margin: 0 0 8px; }
+.decor-turn p, .decor-turn small { font-size: 12px; color: #687661; margin: 0; }
+.decor-reactions { display: flex; justify-content: center; gap: 10px; margin-top: 14px; }
+.decor-reactions button { flex-direction: column; gap: 5px; min-width: 92px; padding: 10px 14px; font-size: 12px; }
+.decor-reactions .positive { color: #4c7351; }.decor-reactions .negative { color: #a36552; }
+.decor-house { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 12px; border-radius: 18px; background: #c5b499; box-shadow: 0 8px 0 #a89679, 0 14px 18px #71604620; border: 1px solid #ae9979; margin-bottom: 24px; }
+.decor-room { position: relative; min-width: 0; overflow: hidden; border-radius: 9px; border: 4px solid #fffcf2; background: repeating-linear-gradient(0deg, #e7d4b7 0 27px, #d6c2a3 28px, #e7d4b7 29px); padding: 0 10px 12px; }
+.decor-wall { position: absolute; top: 0; left: 0; right: 0; height: 51%; background: var(--wall-color); box-shadow: inset 0 -6px #00000008, 0 3px 0 #fffcf266; }
+.decor-room header { display: flex; align-items: center; justify-content: space-between; gap: 5px; position: relative; min-height: 52px; }
+.decor-room header button { background: #fff7e8e6; border: 0; border-radius: 6px; padding: 5px 8px; font-size: 12px; gap: 5px; min-height: 36px; }
+.decor-room header .wall-paint-button { background: #fff7e8b3; font-size: 10px; }
+.decor-room button:disabled { opacity: 1; cursor: default; }
+.decor-slots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; position: relative; }
+.decor-slot { display: flex; flex-direction: column; gap: 0 !important; min-width: 0; width: 100%; padding: 0 3px 7px !important; background: #fff6e45c !important; border: 1px solid #fff9ee90 !important; border-radius: 9px; }
+.decor-slot-art { width: 100%; aspect-ratio: 1; display: grid; place-items: center; min-height: 0; }
+.furniture-art { width: 100%; height: auto; max-height: 125px; filter: drop-shadow(0 3px 3px #66452216); }
+.decor-slot.empty .decor-slot-art > svg { color: #847a61; border: 1px dashed #847a6199; border-radius: 50%; width: 32px; height: 32px; padding: 4px; }
+.decor-slot > span:not(.decor-slot-art) { font-size: 11px; color: #5d5243; }
+.decor-slot > small { font-size: 9px; color: #716046; text-align: center; overflow-wrap: anywhere; }
+.decor-room.editable .decor-slot:hover:not(:disabled) { border-color: #547461 !important; background: #fff6e4c9 !important; transform: translateY(-2px); }
+.decor-slot { transition: transform 180ms, background 180ms; }
+.bedroom-residents { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; position: relative; padding-top: 8px; font-size: 10px; }
+.bedroom-residents > span { display: inline-flex; align-items: center; gap: 4px; flex: 1; }
+.bedroom-residents button { min-height: 36px; font-size: 10px; padding: 4px 7px; gap: 4px; }
+.decor-dock { display: flex; flex-wrap: wrap; justify-content: center; gap: 9px; position: sticky; bottom: 8px; z-index: 2; padding: 10px; background: #f7f1e5ed; border: 1px solid #d7d0bd; border-radius: 13px; box-shadow: 0 6px 20px #5e53371a; backdrop-filter: blur(8px); }
+.decor-dock button { min-height: 44px; padding: 10px 15px; font-size: 13px; }
+.decor-dock .primary { flex: 1; }.decor-dock small { font-size: 11px; opacity: .8; }
+.decor-help { color: #747568; font-size: 12px; text-align: center; margin: 12px 0; }
+.decor-last-action { display: flex; align-items: center; gap: 7px; font-size: 11px; color: #7b796a; justify-content: center; margin: 17px 0 0; }
+.decor-rules { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--decor-line); font-size: 12px; }
+.decor-rules summary { cursor: pointer; min-height: 36px; color: #5a6d56; }
+.decor-rules p { color: #77776b; line-height: 1.85; }
+.decorum-dialog.game-dialog { width: min(580px, calc(100% - 24px)); background: linear-gradient(145deg, #fffcf3, #f0e8d7); border: 1px solid #dfd4bc; box-shadow: 0 25px 100px #0007; border-radius: 20px; padding: 26px; }
+.decorum-dialog::backdrop { background: #172319bb; backdrop-filter: blur(7px); }
+.decorum-dialog .dialog-heading { color: #7e8172; }.decorum-dialog .dialog-heading button { background: transparent; border: 0; }
+.decorum-dialog h2 { font-size: 24px; text-align: center; color: #445b45; margin: 10px 0 18px; }
+.decorum-dialog > .eyebrow, .decorum-dialog > p { text-align: center; }
+.decorum-dialog h3 { display: flex; align-items: center; gap: 7px; font-size: 14px; }
+.decorum-dialog label { display: block; font-size: 12px; color: #6e725f; margin: 14px 0 6px; }
+.decorum-dialog select { color: #3f503e; background: #fffdf6; border-color: #cfc7b1; font-size: 13px; }
+.decorum-dialog .error, .decorum-game .error { color: #9e3f35; background: #fae8df; border-color: #d9ada0; }
+.decor-tabs { display: flex; gap: 5px; flex-wrap: wrap; border-bottom: 1px solid #d5d1bf; padding-bottom: 10px; }
+.decor-tabs button { flex: 1; padding: 8px; min-height: 40px; font-size: 12px; }
+.decorum-dialog button[aria-pressed="true"] { background: #e5ebd7; border-color: #5d7b60; box-shadow: 0 0 0 1px #5d7b60; }
+.paint-options, .furniture-catalog { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 18px 0; }
+.paint-options button { flex-direction: column; gap: 6px; padding: 14px; font-size: 13px; }
+.paint-options button > span { width: 65px; height: 48px; display: grid; place-items: center; color: #fff9ee; border-radius: 8px; box-shadow: inset 0 0 0 4px #ffffff22; }
+.paint-options small { font-size: 10px; }
+.furniture-catalog button { display: flex; flex-direction: column; padding: 10px; min-width: 0; font-size: 11px; text-align: center; }
+.furniture-catalog .furniture-art { width: 90px; }
+.decor-remove { width: 100%; font-size: 12px; }
+.decor-preview { display: flex; align-items: center; gap: 12px; border: 1px dashed #9ba886; padding: 12px; border-radius: 10px; background: #e9eedf; font-size: 12px; margin: 16px 0; }
+.decor-preview .furniture-art { width: 48px; flex-shrink: 0; }.paint-dot { width: 28px; height: 28px; border: 3px solid #fff8e7; border-radius: 50%; flex-shrink: 0; }
+.decorum-dialog .decor-confirm { width: 100%; margin-top: 12px; }
+.condition-list { list-style: none; padding: 0; margin: 16px 0 24px; display: grid; gap: 10px; }
+.condition-list li { display: flex; gap: 10px; align-items: flex-start; padding: 14px; border-radius: 10px; border: 1px solid #e1d1bd; background: #fbf1e4; font-size: 13px; line-height: 1.7; }
+.condition-list li > svg { flex-shrink: 0; margin-top: 4px; color: #a8795e; }
+.condition-list li.fulfilled { border-color: #bbc8ac; background: #eaf0df; }.condition-list li.fulfilled > svg { color: #567857; }
+.condition-list small { display: block; font-size: 10px; color: #89836f; margin-top: 5px; }
+.condition-mark { color: #a7795f; background: #eadbca; width: 25px; height: 25px; flex-shrink: 0; border-radius: 50%; display: grid; place-items: center; }
+.fulfilled .condition-mark { background: #cfdec1; color: #4d7651; }
+.condition-list.shared li { background: #edf0ed; border-color: #c9d5ca; }
+.roommate-choices p { font-size: 13px; }.roommate-choices button { margin: 6px; font-size: 13px; }
+.meeting-heart { width: 75px; height: 75px; display: grid; place-items: center; margin: 14px auto; background: #efd8c8; color: #b36e56; border: 1px solid #dfb39b; border-radius: 50%; }
+.decorum-result { text-align: center; }.decorum-result > p { font-size: 13px; }
+.decor-result-icon { display: flex; align-items: center; justify-content: center; color: #708763; gap: 8px; margin: 10px auto 20px; }
+.decor-result-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-block: 1px solid #d8d2be; padding: 17px 0; margin: 20px 0; gap: 10px; }
+.decor-result-stats span { font-size: 10px; }.decor-result-stats strong { display: block; font-size: 24px; color: #5e7858; }
+.revealed-wishes { text-align: left; }.revealed-wishes h3 { margin-bottom: 8px; }.revealed-wishes .condition-list { gap: 6px; margin: 8px 0 18px; }.revealed-wishes li { font-size: 12px; padding: 10px; }
+.decor-rematch { display: flex; margin: 18px auto 0; }
+.decor-scenario-picker { text-align: left; margin: 20px 0; padding: 15px; border: 1px solid #b8aa7d66; border-radius: 10px; }
+.decor-scenario-picker label { font-size: 13px; }.decor-scenario-picker p { margin: 10px 0 0; font-size: 12px; }
+@media (max-width: 680px) {
+  .decorum-game { padding: 14px 10px; border-radius: 16px; }
+  .decor-intro { padding: 0 4px 14px; gap: 10px; }.decor-intro h2 { font-size: 22px; }.decor-intro > svg { width: 30px; }.decor-intro p:last-child { font-size: 11px; }
+  .decor-metrics { padding: 14px 0; }.decor-metrics > div { gap: 5px; }.decor-metrics svg { width: 14px; }.decor-metrics > div > span { font-size: 9px; }.decor-metrics strong { font-size: 18px; }.decor-metrics small { font-size: 9px; }
+  .decor-roommates { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-bottom: 12px; }.decor-roommate { padding: 8px; gap: 5px; font-size: 10px; }.decor-roommate .avatar { width: 23px; height: 23px; font-size: 10px; }.decor-satisfied { font-size: 9px; }
+  .decor-turn { padding: 14px 9px; margin-bottom: 14px; }.decor-turn h3 { font-size: 14px; }.decor-turn p, .decor-turn small { font-size: 11px; }
+  .decor-reactions { gap: 7px; }.decor-reactions button { min-width: 0; flex: 1; padding: 9px 7px; }
+  .decor-house { padding: 6px; gap: 6px; border-radius: 10px; }.decor-room { border-width: 2px; padding: 0 4px 8px; }
+  .decor-room header { min-height: 60px; align-content: center; flex-wrap: wrap; gap: 2px; padding: 4px 0 6px; }.decor-room header button { min-height: 24px; padding: 2px 5px; font-size: 10px; }.decor-room header button > svg { width: 13px; }.decor-room header .wall-paint-button { font-size: 9px; }
+  .decor-slots { gap: 3px; }.decor-slot { padding: 0 1px 5px !important; min-height: 75px; }.decor-slot > span:not(.decor-slot-art) { font-size: 9px; }.decor-slot > small { font-size: 8px; line-height: 1.4; }.decor-slot.empty .decor-slot-art > svg { width: 23px; height: 23px; }
+  .bedroom-residents { font-size: 9px; padding-top: 7px; }.bedroom-residents > span { flex-wrap: wrap; }.bedroom-residents button { min-height: 32px; }
+  .decor-dock { padding: 7px; gap: 5px; bottom: max(5px, env(safe-area-inset-bottom)); }.decor-dock button { padding: 8px; font-size: 11px; gap: 5px; }.decor-dock small { font-size: 9px; }
+  .decorum-dialog.game-dialog { padding: 20px 16px; }.decorum-dialog h2 { font-size: 20px; }.decorum-dialog .eyebrow { font-size: 8px; }
+  .decorum-dialog.decorum-drawer, .decorum-dialog.decorum-action-sheet { inset: auto 0 0; margin: 0 auto; max-height: 90dvh; width: min(580px, 100%); border-radius: 22px 22px 0 0; padding-bottom: max(20px, env(safe-area-inset-bottom)); }
+  .condition-list li { font-size: 12px; padding: 12px; }.decor-tabs button { padding: 7px; font-size: 11px; }.decor-preview { padding: 9px; }.furniture-catalog .furniture-art { width: 75px; }
+}

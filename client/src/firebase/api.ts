@@ -58,6 +58,10 @@ export const bombAction = (code: string, game: BombGame, action: BombAction) =>
   call("gameAction", { code, action, phaseToken: bombToken(game) });
 export const advanceBots = (code: string, token: string) =>
   call<{ moved: boolean; idle: boolean }>("advanceBots", { code, token });
+export const decorumAction = (code: string, game: DecorumPublicState, action: DecorumAction) =>
+  call("gameAction", { code, action, phaseToken: decorumToken(game) });
+import { decorumToken } from "../../../functions/src/shared/decorum";
+import type { DecorumPublicState, DecorumAction } from "../../../functions/src/shared/decorum";
 import type {
   BombGame,
   BombAction,

@@ -18,7 +18,7 @@ export function RoomEntryPage({ join = false }: { join?: boolean }) {
   const { pending, error, run } = useAction();
   const game = games.find((g) => g.id === gameId && g.enabled);
   const [params] = useSearchParams();
-  const practice = !join && params.get("mode") === "practice";
+  const practice = !join && game?.supportsBots !== false && params.get("mode") === "practice";
   const [playerCount, setPlayerCount] = useState(game?.minPlayers ?? 5);
   const [botLevel, setBotLevel] = useState<"casual" | "standard">("standard");
   return (

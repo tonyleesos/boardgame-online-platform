@@ -4,6 +4,9 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { randomInt, randomUUID, createHash } from "node:crypto";
 import { applyGameAction, startGame } from "./engine";
 import { startBomb, applyBombAction } from "./timebomb-engine";
+import { startDecorum, applyDecorumAction } from "./decorum/engine";
+import { DECORUM_SCENARIOS, decorumToken } from "./shared/decorum";
+import type { DecorumAction } from "./shared/decorum";
 import { leaveSeat } from "./membership";
 import { advanceOneBot, botToken } from "./bots";
 import { GAME_LIMITS } from "./shared/model";
@@ -152,6 +155,7 @@ export const createRoom = callable(async (uid, data) => {
     "無效的 AI 難度",
   );
   const limits = GAME_LIMITS[data.gameId];
+  ensure(data.gameId !== "decorum" || data.mode !== "practice", "同房異夢需要 2–4 位真人合作");
   const variant = data.gameId === "timebomb-classic" ? "classic" : "evolution";
   ensure(
     data.bombVariant === undefined || data.bombVariant === variant,
@@ -240,6 +244,12 @@ export const roomAction = callable(async (uid, data) => {
     const room = session.public;
     ensure(room.players[uid] && !room.players[uid].isBot, "你不在房間內");
     switch (action.type) {
+      case "decorScenario":
+        ensure(room.gameId === "decorum" && room.hostId === uid && room.status === "waiting", "只有房主能在等待時選擇劇本");
+        ensure(DECORUM_SCENARIOS.some((v) => v.id === action.scenarioId), "找不到這個劇本");
+        room.decorumScenarioId = action.scenarioId;
+        Object.values(room.players).forEach((p) => { p.ready = false; });
+        break;
       case "ready":
         ensure(room.status === "waiting", "遊戲已開始");
         ensure(typeof action.ready === "boolean", "無效的準備狀態");
@@ -249,7 +259,8 @@ export const roomAction = callable(async (uid, data) => {
         ensure(room.hostId === uid, "只有房主可以開始");
         room.activity = [];
         delete room.botActionAt;
-        if (room.gameId === "timebomb" || room.gameId === "timebomb-classic")
+        if (room.gameId === "decorum") startDecorum(session, gameId, shuffled(seed));
+        else if (room.gameId === "timebomb" || room.gameId === "timebomb-classic")
           startBomb(
             session,
             gameId,
@@ -259,6 +270,7 @@ export const roomAction = callable(async (uid, data) => {
         else startGame(session, gameId, shuffled(seed));
         break;
       case "addBot": {
+        ensure(room.gameId !== "decorum", "同房異夢僅提供真人合作");
         ensure(
           room.hostId === uid && room.status === "waiting",
           "只有房主能在等待時新增 AI",
@@ -296,11 +308,13 @@ export const roomAction = callable(async (uid, data) => {
         ensure(room.status === "finished", "遊戲尚未結束");
         delete room.game;
         delete room.timebomb;
+        delete room.decorum;
         delete room.botActionAt;
         room.activity = [];
         room.status = "waiting";
         session.private = {};
         session.timebombPrivate = {};
+        session.decorumPrivate = {};
         session.secret = { teamVotes: {}, missionVotes: {} };
         // A proxy occupies the seat only until the current game ends.
         Object.values(room.players).forEach((p) => {
@@ -349,6 +363,14 @@ export const gameAction = callable(async (uid, data) => {
       session.public.players[uid] && !session.public.players[uid].isBot,
       "你不在房間內",
     );
+    if (
+      session.public.gameId === "decorum"
+    ) {
+      const game = session.public.decorum;
+      ensure(game, "遊戲尚未開始");
+      ensure(data.phaseToken === decorumToken(game), "遊戲階段已變更，請確認畫面後再操作");
+      return applyDecorumAction(session, uid, data.action as DecorumAction);
+    }
     if (
       session.public.gameId === "timebomb" ||
       session.public.gameId === "timebomb-classic"

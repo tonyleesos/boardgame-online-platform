@@ -32,23 +32,18 @@
   background-position: 100% 100%;
 }
 .bomb-score {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  margin: 0 0 20px;
-  padding: 14px 16px;
-  background: #352d2266;
-  border: 1px solid #b78d4b30;
-  border-radius: 10px;
 }
-.bomb-score > span {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 12px;
-  color: #decbac;
-}
+.bomb-stat { padding: 16px; border: 1px solid #b78d4b40; border-radius: 12px; background: linear-gradient(135deg, #493c2855, #1b2620); }
+.bomb-stat-label { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #d0b78f; }
+.bomb-stat > strong { display: block; font-size: 28px; color: #f0d7a7; font-variant-numeric: tabular-nums; margin: 5px 0 10px; }
+.bomb-stat > strong > small { font-size: 12px; color: #b1b5a1; font-weight: 400; }
+.stat-segments { display: flex; gap: 4px; }
+.stat-segments > i { flex: 1; height: 4px; border-radius: 3px; background: #ffffff15; }
+.stat-segments > .filled { background: #d2af72; box-shadow: 0 0 8px #d2af7230; }
+.bomb-stat:last-child .filled { background: #9dcdab; }
 .bomb-track {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -136,9 +131,11 @@
 }
 .wire-players {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
 }
 .wire-player {
+  min-width: 0;
   padding: 18px;
 }
 .wire-player.has-scissors {
@@ -165,7 +162,8 @@
   flex-shrink: 0;
 }
 .wire-hand {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 9px;
   align-items: flex-start;
 }
@@ -177,14 +175,15 @@
   border-radius: 9px;
   min-height: 0;
   min-width: 0;
-  flex: 0 1 91px;
+  width: 100%;
+  transition: transform 180ms ease;
   position: relative;
 }
 .cut-card:disabled {
   opacity: 1;
 }
 .cut-card:disabled .wire-card {
-  filter: brightness(0.8);
+  filter: brightness(0.95);
 }
 .cut-card:not(:disabled):hover {
   transform: translateY(-5px);
@@ -296,6 +295,7 @@
   margin-top: 5px;
 }
 .revealed-card {
+  animation: card-reveal 600ms 100ms both;
   width: 140px;
   margin: 8px auto 22px;
 }
@@ -549,4 +549,33 @@
   .claim-form button {
     width: 100%;
   }
+}
+
+.wire-player-top .player-identity .avatar { width: 34px; height: 34px; }
+.wire-player-top small, .scissors-badge { display: inline-flex; align-items: center; gap: 4px; }
+.scissors-badge { color: #edcb91; border: 1px solid #c49a6255; border-radius: 20px; padding: 3px 7px; }
+.wire-player-meta { display: flex; justify-content: space-between; gap: 8px; margin: 0 0 15px; color: #b6b9a6; font-size: 11px; }
+.wire-player-meta > span { display: inline-flex; align-items: center; gap: 5px; }
+.wire-player.can-cut { background: linear-gradient(145deg, #32463488, #19251e); border-color: #bca06b70; }
+.wire-player .slot-number { display: flex; align-items: center; justify-content: center; gap: 4px; }
+.cut-hint { display: flex; align-items: center; justify-content: center; gap: 6px; margin: 10px 0 0; color: #d9c08e; font-size: 11px; }
+.empty-hand { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; justify-content: center; min-height: 100px; color: #a8b7a2; font-size: 12px; border: 1px dashed #ffffff20; border-radius: 8px; }
+.bomb-stage h3 { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 7px; }
+.bomb-stage:not(.bomb-stage-feature) { padding: 18px; margin-bottom: 0; }
+.bomb-stage:not(.bomb-stage-feature) p { margin: 6px 0; font-size: 12px; }
+.bomb-action-dialog { text-align: center; }
+.effect-choices { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin: 18px 0; }
+.effect-choices > button { display: flex; flex-direction: column; width: 125px; padding: 10px; }
+.cut-history .identity-list { justify-content: flex-start; }
+@media (max-width: 800px) { .wire-players { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 680px) {
+  .bomb-score { gap: 6px; padding: 0; }
+  .bomb-stat { padding: 10px 8px; }
+  .bomb-stat-label { gap: 4px; font-size: 10px; }
+  .bomb-stat > strong { font-size: 23px; margin: 4px 0 7px; }
+  .bomb-stat > strong > small { font-size: 10px; }
+  .bomb-stat-label svg { width: 16px; height: 16px; }
+  .bomb-stage:not(.bomb-stage-feature) { padding: 13px 10px; }
+  .wire-player-top .player-identity .avatar { width: 29px; height: 29px; }
+  .wire-player-meta { font-size: 10px; }
 }
