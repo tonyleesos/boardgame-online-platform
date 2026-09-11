@@ -150,6 +150,10 @@ for (const ending of ["good", "assassinated", "three-fails"] as const) test(`Ava
     g.round = 3;
     applyGameAction(s, uid, { type: "missionVote", vote: "success" });
     applyGameAction(s, evil, { type: "missionVote", vote: "fail" });
+    // An AI leader can continue while another player is still reading the reveal.
+    await save();
+    await expect(page.getByRole("dialog", { name: "任務結果", exact: true })).toBeVisible();
+    applyGameAction(s, g.leaderId, { type: "continue" });
   } else {
     await page.getByRole("button", { name: "我的身份", exact: true }).click();
     g.phase = "ASSASSINATION";

@@ -81,7 +81,7 @@ for (const variant of ["classic", "evolution"])
       page.getByRole("dialog", { name: "你的身份與引線" }),
     ).toBeVisible();
     await expect(page.locator(".private-hand .wire-card")).toHaveCount(5);
-    await expect(page.locator(".modal-backdrop")).toHaveCSS("opacity", "1");
+    await expect(page.locator("dialog:modal")).toHaveCount(1);
     await page.screenshot({
       path: `.tools/screenshots/timebomb-${variant}-private.png`,
       fullPage: true,
@@ -101,7 +101,7 @@ for (const variant of ["classic", "evolution"])
     });
     await page.getByRole("button", { name: "收起情報，確認準備" }).click();
     await expect(
-      page.getByRole("heading", { name: "交換情報", exact: true }),
+      page.getByRole("dialog", { name: "交換情報", exact: true }),
     ).toBeVisible({ timeout: 20000 });
     await expect(page.locator(".bomb-stage")).toHaveCSS("opacity", "1");
     for (const width of [360, 390, 430, 768, 1280]) {
@@ -141,6 +141,7 @@ for (const variant of ["classic", "evolution"])
       }
     }
     await expect(page.getByRole("heading", { name: /陣營獲勝/ })).toBeVisible();
+    await page.locator(".ai-conversation summary").click();
     await expect(page.locator(".ai-messages p").first()).toBeVisible();
     await page.screenshot({
       path: `.tools/screenshots/timebomb-${variant}-result.png`,

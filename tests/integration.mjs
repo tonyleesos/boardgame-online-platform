@@ -200,9 +200,13 @@ await call(host, "roomAction", { code, action: { type: "start" } });
 assert.notEqual((await read(host, pub)).game.id, previousId);
 await call(host, "roomAction", { code, action: { type: "leave" } });
 room = await read(players[1], pub);
-assert.equal(room.status, "finished");
+assert.equal(room.status, "playing");
+assert.equal(room.players[host.localId].isProxy, true);
+assert.match(room.players[host.localId].nickname, /^[\u4e00-\u9fff]+AI$/);
 assert.notEqual(room.hostId, host.localId);
 await read(host, pub, true);
+await read(host, `sessions/${code}/private/${host.localId}`, true);
+await call(host, "roomAction", { code, action: { type: "ready", ready: true } }, true);
 const recoveryHost = players[9],
   recoveryGuest = players[10];
 const recovery = await call(recoveryHost, "createRoom", {

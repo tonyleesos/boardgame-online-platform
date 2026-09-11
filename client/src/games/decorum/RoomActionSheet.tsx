@@ -30,7 +30,7 @@ export function RoomActionSheet({ room, game, uid, initialMode, name, disabled, 
     {preview && <div className="decor-preview" role="status">
       {preview.type === "decorRoommate" ? <div className="move-preview"><BedDouble size={32} /><span>你<ArrowRight size={18} />{ROOM_LABELS[room.type]}</span>{preview.swapWith && <small>與 {name(preview.swapWith)} 交換房間</small>}</div>
         : <div className="room-comparison"><div><small>現在</small><RoomScene room={room} /></div><ArrowRight size={20} /><div><small>確認後</small><RoomScene room={previewRoom} /></div></div>}
-      <span>{object ? `${preview.type === "decorAdd" ? "加入" : "換成"}${objectLabel(object)}` : preview.type === "decorPaint" ? `${COLOR_LABELS[room.wallColor]} → ${COLOR_LABELS[preview.color]}` : preview.type === "decorRemove" ? `移除${OBJECT_LABELS[preview.objectType]}` : "確認後交換室友位置"}</span>
+      <span>{object ? `${preview.type === "decorAdd" ? "加入" : "換成"}${objectLabel(object)}` : preview.type === "decorPaint" ? `${COLOR_LABELS[room.wallColor]} → ${COLOR_LABELS[preview.color]}` : preview.type === "decorRemove" ? `移除${OBJECT_LABELS[preview.objectType]}` : preview.type === "decorRoommate" && preview.swapWith ? "確認後交換室友位置" : "確認後搬入新房間"}</span>
     </div>}
     {error && <p className="error" role="alert">{error}</p>}
     <button className="primary decor-confirm" disabled={disabled || !preview} onClick={() => preview && onConfirm(preview)}>確認這次佈置</button><p className="decor-help">每回合只做一件事，確認後等待室友回應。</p>

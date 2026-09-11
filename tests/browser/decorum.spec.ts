@@ -26,6 +26,10 @@ async function move(page: Page, room: Room, action: HouseAction) {
     await page.getByRole("button", { name: action.type === "decorRemove" ? `移除${OBJECT_LABELS[type]}` : `選擇${objectLabel(object!)}`, exact: true }).click();
   }
   await expect(page.locator(".decor-preview")).toBeVisible();
+  if (action.type === "decorPaint" && action.color === "green") {
+    await expect(page.locator(".room-comparison .room-scene")).toHaveCount(2);
+    await page.screenshot({ path: `.tools/screenshots/decorum-${room.decorum!.scenarioId}-preview.png`, animations: "disabled" });
+  }
   await page.getByRole("button", { name: "確認這次佈置", exact: true }).click();
   await expect(page.locator(".decorum-action-sheet")).not.toBeVisible();
 }
@@ -124,7 +128,12 @@ for (const [count, scenarioId] of [[2, "demo-two-01"], [2, "demo-two-02"], [3, "
         await expect(actor.page.getByRole("heading", { name: "這次改變，你覺得如何？" })).toBeVisible();
         await actor.page.getByRole("button", { name: "沒意見", exact: true }).click();
       }
-      room = await read<Room>(host, code, "public");
+      // A click completes before the callable commits. Wait for the next turn
+      // before choosing its actor, otherwise the test may target the old seat.
+      await expect.poll(async () => {
+        room = await read<Room>(host, code, "public");
+        return room.decorum!.phase;
+      }).not.toBe("REACTION");
     };
     // Four players first settle into bedrooms according to their private assignment.
     // Read-only per-player credentials; every mutation still uses the real UI/callable.

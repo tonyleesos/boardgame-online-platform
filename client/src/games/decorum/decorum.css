@@ -63,12 +63,13 @@
 .decor-rules { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--decor-line); font-size: 12px; }
 .decor-rules summary { cursor: pointer; min-height: 36px; color: #5a6d56; }
 .decor-rules p { color: #77776b; line-height: 1.85; }
-.decorum-dialog.game-dialog { width: min(580px, calc(100% - 24px)); background: linear-gradient(145deg, #fffcf3, #f0e8d7); border: 1px solid #dfd4bc; box-shadow: 0 25px 100px #0007; border-radius: 20px; padding: 26px; }
+.decorum-dialog.game-dialog { color: var(--decor-ink); width: min(580px, calc(100% - 24px)); background: linear-gradient(145deg, #fffcf3, #f0e8d7); border: 1px solid #dfd4bc; box-shadow: 0 25px 100px #0007; border-radius: 20px; padding: 26px; }
 .decorum-dialog::backdrop { background: #172319bb; backdrop-filter: blur(7px); }
 .decorum-dialog .dialog-heading { color: #7e8172; }.decorum-dialog .dialog-heading button { background: transparent; border: 0; }
 .decorum-dialog h2 { font-size: 24px; text-align: center; color: #445b45; margin: 10px 0 18px; }
 .decorum-dialog > .eyebrow, .decorum-dialog > p { text-align: center; }
-.decorum-dialog h3 { display: flex; align-items: center; gap: 7px; font-size: 14px; }
+.decorum-dialog > p { color: #68715e; }
+.decorum-dialog h3 { display: flex; align-items: center; gap: 7px; font-size: 14px; color: #4f634b; }
 .decorum-dialog label { display: block; font-size: 12px; color: #6e725f; margin: 14px 0 6px; }
 .decorum-dialog select { color: #3f503e; background: #fffdf6; border-color: #cfc7b1; font-size: 13px; }
 .decorum-dialog .error, .decorum-game .error { color: #9e3f35; background: #fae8df; border-color: #d9ada0; }
@@ -133,6 +134,10 @@
 .meeting-wishes { display: grid; gap: 9px; }.meeting-wishes > button { justify-content: flex-start; padding: 12px; gap: 10px; min-width: 0; }
 .meeting-card-number { width: 24px; height: 24px; flex-shrink: 0; border-radius: 50%; background: #e8dfcc; display: grid; place-items: center; font-size: 12px; }
 .meeting-recipients { display: flex; flex-wrap: wrap; gap: 8px; }.meeting-recipients button { flex: 1; min-height: 48px; padding: 9px; font-size: 12px; }
+.meeting-recipients button { position: relative; min-width: 0; padding: 12px 6px; }
+.meeting-recipients .player-identity { flex-direction: column; width: 100%; gap: 6px; }
+.meeting-recipients .player-identity > span:last-child { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.meeting-recipients button > svg { position: absolute; right: 5px; top: 5px; }
 .decorum-meeting .decor-help { display: flex; align-items: center; justify-content: center; gap: 5px; }
 .decorum-meeting .meeting-heart { width: 52px; height: 52px; margin: 8px auto; }.decorum-meeting .meeting-heart svg { width: 28px; }
 .decorum-meeting > h2 { margin: 8px 0; }.decorum-meeting > p { font-size: 12px; }
