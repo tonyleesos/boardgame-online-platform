@@ -67,3 +67,7 @@ import type {
   BombAction,
 } from "../../../functions/src/shared/timebomb";
 import { bombToken } from "../../../functions/src/shared/timebomb";
+
+import { splendorToken } from '../../../functions/src/shared/splendor';
+import type { SplendorAction, SplendorPublicState } from '../../../functions/src/shared/splendor';
+export const splendorAction = (code: string, game: SplendorPublicState, action: SplendorAction) => call('gameAction', {code, action, phaseToken: splendorToken(game)});

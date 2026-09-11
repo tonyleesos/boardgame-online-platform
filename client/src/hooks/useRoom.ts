@@ -1,3 +1,5 @@
+import { normalizeSplendor } from '../../../functions/src/shared/splendor';
+import type { SplendorPrivate } from '../../../functions/src/shared/splendor';
 import { useEffect, useState } from "react";
 import {
   onValue,
@@ -24,6 +26,7 @@ export function useRoom(code: string, uid: string) {
   const [role, setRole] = useState<PrivateRole | null>(null);
   const [bombRole, setBombRole] = useState<BombPrivate | null>(null);
   const [decorumPrivate, setDecorumPrivate] = useState<DecorumPrivate | null>(null);
+  const [splendorPrivate, setSplendorPrivate] = useState<SplendorPrivate | null>(null);
   const [presence, setPresence] = useState<Record<string, Presence>>({});
   const [connected, setConnected] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -47,6 +50,7 @@ export function useRoom(code: string, uid: string) {
           setRole(null);
           setBombRole(null);
           setDecorumPrivate(null);
+          setSplendorPrivate(null);
         }
       }
     };
@@ -72,6 +76,7 @@ export function useRoom(code: string, uid: string) {
           g.history ??= [];
           for (const id of g.order) g.hands[id] ??= [];
         }
+        if (value?.splendor) normalizeSplendor(value.splendor);
         setRoom(value);
         setLoaded(true);
         setError("");
@@ -109,6 +114,7 @@ export function useRoom(code: string, uid: string) {
         setDecorumPrivate(value);
       }, fail,
     );
+    const unsubscribeSplendor = onValue(ref(db, `sessions/${code}/splendorPrivate/${uid}`), snap => { const value = snap.val() as SplendorPrivate | null; if (value) value.reserved ??= {}; setSplendorPrivate(value); }, fail);
     const unsubscribeConnection = onValue(
       ref(db, ".info/connected"),
       (snap) => {
@@ -141,6 +147,7 @@ export function useRoom(code: string, uid: string) {
       unsubscribePresence();
       unsubscribeBomb();
       unsubscribeDecorum();
+      unsubscribeSplendor();
       unsubscribeConnection();
       if (connection)
         void update(ref(db, `sessions/${code}/presence/${uid}`), {
@@ -149,5 +156,5 @@ export function useRoom(code: string, uid: string) {
         }).catch(() => {});
     };
   }, [code, uid]);
-  return { room, role, bombRole, decorumPrivate, presence, connected, loaded, error };
+  return { room, role, bombRole, decorumPrivate, splendorPrivate, presence, connected, loaded, error };
 }

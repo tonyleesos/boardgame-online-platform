@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, Users, Swords, Timer, Sparkles, House } from "lucide-react";
+import { ArrowRight, Users, Swords, Timer, Sparkles, House, Gem } from "lucide-react";
 import { motion } from "motion/react";
 import { games } from "../games/catalog";
 export function GameSelectPage() {
@@ -40,7 +40,7 @@ export function GameSelectPage() {
                   "即將登場"
                 )}
               </span>
-              {game.id === "decorum" ? <House strokeWidth={.8} /> : game.id === "avalon" ? (
+              {game.id === "splendor" ? <Gem strokeWidth={.8} /> : game.id === "decorum" ? <House strokeWidth={.8} /> : game.id === "avalon" ? (
                 <Swords strokeWidth={0.7} />
               ) : (
                 <Timer strokeWidth={0.7} />
@@ -55,7 +55,7 @@ export function GameSelectPage() {
               <p className="meta">
                 <Users size={16} />
                 {game.minPlayers}–{game.maxPlayers} 人
-                <span>{game.id === "decorum" ? "合作 · 佈置 · 默契" : "推理 · 陣營 · 朋友"}</span>
+                <span>{game.id === "splendor" ? "寶石 · 收藏 · 策略" : game.id === "decorum" ? "合作 · 佈置 · 默契" : "推理 · 陣營 · 朋友"}</span>
               </p>
               {game.enabled ? (
                 <div className="actions">

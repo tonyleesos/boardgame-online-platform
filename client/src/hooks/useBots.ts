@@ -12,7 +12,7 @@ export function useBots(room: Room | null, connected: boolean) {
     ? `${room.game.id}:${room.game.revision}`
     : room?.timebomb
       ? `${room.timebomb.id}:${room.timebomb.revision}`
-      : "";
+      : room?.splendor ? `${room.splendor.id}:${room.splendor.revision}` : "";
   useEffect(() => {
     if (!enabled || !code) return;
     let active = true,

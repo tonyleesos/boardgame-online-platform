@@ -11,6 +11,9 @@ export function leaveSeat(session: Session, uid: string): Session | null {
   const player = room.players[uid];
   ensure(player && !player.isBot, "你不在房間內");
   if (room.gameId === "decorum" && room.status === "playing") finishDecorum(session, "player-left");
+  if (room.gameId === "splendor" && room.status === "playing" && room.splendor) {
+    room.splendor.aborted = true; room.splendor.phase = "GAME_OVER"; room.splendor.winners = []; room.splendor.revision++; room.status = "finished";
+  }
   if (room.status === "playing") {
     player.nickname = botNickname(room.players, `${room.code}:${uid}`);
     player.isBot = true;
@@ -30,6 +33,7 @@ export function leaveSeat(session: Session, uid: string): Session | null {
     delete room.players[uid];
     if (session.private) delete session.private[uid];
     if (session.timebombPrivate) delete session.timebombPrivate[uid];
+    if (session.splendorPrivate) delete session.splendorPrivate[uid];
     if (session.decorumPrivate) delete session.decorumPrivate[uid];
   }
   if (session.presence) delete session.presence[uid];

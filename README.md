@@ -1,6 +1,22 @@
 # 圓桌之夜 · Boardgame Online Platform
 
-React / TypeScript / Vite 桌遊平台，使用 Firebase Anonymous Auth、Realtime Database 與 callable Cloud Functions。大廳提供 Avalon（5–10 人）、驚爆倫敦原版（4–8 人）、驚爆倫敦：危機進化（4–6 人）及同房異夢（2–4 人）。前三款支援 AI 練習與補位；同房異夢由真人合作。
+React / TypeScript / Vite 桌遊平台，使用 Firebase Anonymous Auth、Realtime Database 與 callable Cloud Functions。大廳提供 Avalon（5–10 人）、驚爆倫敦原版（4–8 人）、驚爆倫敦：危機進化（4–6 人）、同房異夢（2–4 人）與璀璨寶石（2–4 人）。除了同房異夢，其他遊戲皆支援 AI 練習與補位。
+
+## 璀璨寶石 · 珠寶收藏與交易
+
+在大廳建立璀璨寶石房間，邀請 2–4 位朋友。房主可選基礎遊戲、城市、貿易站、東方之路或要塞；每次只啟用一種擴充。所有人準備後開始。以圖示選寶石，再確認拿取；點卡牌查看價格、永久折扣、黃金用量並購買或保留。手機與平板保留完整市場，底部固定顯示自己的寶石與折扣。
+
+想自己練習，可點「單人練習 · 與 AI 對局」，選擇 1–3 位 AI 與輕鬆／標準難度。朋友房的房主也可以在等待區新增／移除 AI。AI 會自動準備、拿取、購買、保留、退幣、選貴族與操作擴充；只使用公開資訊和自己的保留卡，不需額外 API key。暫時離線會保留人類座位，不會自動替人類作策略決定。
+
+使用原創 SVG 圖示、場景與示範卡組，沒有商業版美術或完整牌表。基礎遊戲支援貴族、暗牌保留、10 枚代幣上限、15 聲望最後一輪與同分判定。擴充使用明確定義的原創示範效果；詳細玩法、測試與部署步驟見 [璀璨寶石實作說明](docs/SPLENDOR_IMPLEMENTATION.md)。
+
+```sh
+npx vitest run tests/splendor.test.ts
+# 先啟動 npm run emulators，再執行：
+node tests/splendor-integration.mjs
+npx playwright test tests/browser/splendor.spec.ts
+npx playwright test tests/browser/splendor-practice.spec.ts
+```
 
 ## 同房異夢 · 圖像化合租解謎
 
@@ -60,26 +76,26 @@ npm run emulators
 
 ## 連接既有 Firebase 專案
 
-專案 ID：`boardgame-online-platform`，既有 Web App：`1:769265872941:web:02f295d845103fbd5a48a4`。請沿用此專案，無須重新註冊 App。
+正式專案 ID：`boardgame-online-platfor-c5ebd`（以 `.firebaserc` 為準），既有 Web App：`1:901989736962:web:d742face7f4ddee90b3d1b`。請沿用此專案，無須重新註冊 App。
 
-目前程式與本機驗證已完成，**正式 Firebase 專案存取、Console 設定與部署尚未驗證**。這次工具登入帳號無法選取此專案；提供 Web config 並不等於具有部署權限。
+前後端必須連到相同專案，並將 Functions、資料庫規則與 Hosting 同步部署。若大廳已顯示新遊戲但建房回報「此遊戲尚未開放 [400]」，請確認正式 Functions 已更新，而非只部署前端。
 
 1. 以有專案權限的帳號進入 Firebase Console。
 2. **Authentication → Sign-in method → Anonymous**：啟用匿名登入。
 3. **Realtime Database → Create database**：選擇適合台灣玩家的可用亞洲區域，例如 Console 若提供 Singapore (`asia-southeast1`)，並以 locked mode 建立。資料庫區域與 Functions 區域不必相同。
 4. 複製 Console 顯示的完整資料庫 URL，不要自行猜測。
-5. 將 `client/.env.example` 複製為 `client/.env.local`，填入 API key 與 `VITE_FIREBASE_DATABASE_URL`。此工作目錄已放入使用者提供的 Web config，仍留白尚未取得的 database URL；該檔案被 Git 忽略。
-6. 將 `functions/.env.example` 複製為 `functions/.env.boardgame-online-platform`，`DATABASE_URL` 填相同的實際 URL。這也適用於具名或非預設資料庫。
-7. Functions 使用第二代 callable functions、Node.js 22、`asia-east1`。部署前確認專案已啟用 **Blaze 計費**及具備部署權限；本次沒有更動計費或進行正式部署。
+5. 將 `client/.env.example` 複製為 `client/.env.local`，填入 API key 與 `VITE_FIREBASE_DATABASE_URL`。此工作目錄已設定正式 Web config，該檔案被 Git 忽略。
+6. 將 `functions/.env.example` 複製為 `functions/.env.boardgame-online-platfor-c5ebd`，`DATABASE_URL` 填相同的實際 URL。目前使用 `https://boardgame-online-platfor-c5ebd-default-rtdb.asia-southeast1.firebasedatabase.app`。
+7. Functions 使用第二代 callable functions、Node.js 22、`asia-east1`。部署前確認專案已啟用 **Blaze 計費**及具備部署權限。
 
 `client/.env.local` 的主要欄位：
 
 | 變數 | 用途 |
 | --- | --- |
 | `VITE_FIREBASE_API_KEY` | Console 提供的 Web API key |
-| `VITE_FIREBASE_AUTH_DOMAIN` | `boardgame-online-platform.firebaseapp.com` |
+| `VITE_FIREBASE_AUTH_DOMAIN` | `boardgame-online-platfor-c5ebd.firebaseapp.com` |
 | `VITE_FIREBASE_DATABASE_URL` | Console 顯示的實際 Realtime Database URL |
-| `VITE_FIREBASE_PROJECT_ID` | `boardgame-online-platform` |
+| `VITE_FIREBASE_PROJECT_ID` | `boardgame-online-platfor-c5ebd` |
 | `VITE_FIREBASE_APP_ID` | 既有 Web App ID |
 | `VITE_FIREBASE_FUNCTIONS_REGION` | `asia-east1`，必須與 Functions 原始碼相同 |
 
@@ -119,14 +135,12 @@ E2E 會自行啟動測試前端（5174）。`playwright.config.ts` 預設 Edge�
 
 ## 部署
 
-確認 `.firebaserc`、兩端環境變數、Blaze 與登入帳號後，先部署規則及 Functions，再部署前端。不要以公開 test rules 取代本專案規則。
+確認 `.firebaserc`、兩端環境變數、Blaze 與登入帳號後，使用統一部署指令，同時更新 Functions、規則與前端。不要以公開 test rules 取代本專案規則。
 
 ```sh
 npx firebase login
 npx firebase projects:list
-npm run build
-npx firebase deploy --project boardgame-online-platform --only database,functions
-npx firebase deploy --project boardgame-online-platform --only hosting
+npm run deploy
 ```
 
 若資料庫為非預設具名 instance，請先在 Firebase CLI 設定該 database target，並將 `firebase.json` 的 database 設定指向該 target，確保規則部署至 `DATABASE_URL` 對應的 instance。

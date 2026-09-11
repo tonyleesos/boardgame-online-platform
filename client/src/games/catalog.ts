@@ -9,6 +9,7 @@ export interface GameDefinition {
   supportsBots?: boolean;
 }
 export const games: GameDefinition[] = [
+  { id: "splendor", name: "璀璨寶石", subtitle: "SPLENDOR · THE GEM ATELIER", description: "從一枚寶石，到一座珠寶王國。收集、打造，讓你的收藏閃耀全場。", minPlayers: 2, maxPlayers: 4, enabled: true, supportsBots: true },
   {
     id: "decorum", name: "同房異夢", subtitle: "DÉCORUM · A HOME FOR ALL",
     description: "一個家，幾種理想生活。用一次次佈置與小小回應，找到室友之間的默契。",

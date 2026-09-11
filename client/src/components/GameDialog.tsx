@@ -3,16 +3,18 @@ import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
 /** Native modal provides focus trapping, Escape and an inert background. */
-export function GameDialog({ title, children, onClose, className = "" }: {
+export function GameDialog({ title, children, onClose, className = "", dismissible = true }: {
   title: string;
   children: ReactNode;
   onClose: () => void;
   className?: string;
+  dismissible?: boolean;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const [closing, setClosing] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const close = () => {
+    if (!dismissible) return;
     if (closing) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return onClose();
     setClosing(true);
@@ -36,7 +38,7 @@ export function GameDialog({ title, children, onClose, className = "" }: {
       onCancel={(event) => { event.preventDefault(); close(); }}>
       <div className="dialog-heading">
         <span>{title}</span>
-        <button className="quiet icon-button" aria-label="關閉視窗" onClick={close}><X size={20} /></button>
+        {dismissible && <button className="quiet icon-button" aria-label="關閉視窗" onClick={close}><X size={20} /></button>}
       </div>
       {children}
     </dialog>, document.body,

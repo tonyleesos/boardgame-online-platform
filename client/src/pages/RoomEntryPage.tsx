@@ -85,11 +85,10 @@ export function RoomEntryPage({ join = false }: { join?: boolean }) {
               }
             >
               <option value="casual">輕鬆 · 更多隨機選擇</option>
-              <option value="standard">標準 · 參考公開紀錄推理</option>
+              <option value="standard">{gameId === "splendor" ? "標準 · 規劃寶石與卡牌交易" : "標準 · 參考公開紀錄推理"}</option>
             </select>
             <p className="fine">
-              策略型 AI
-              只知道自己的情報，不會偷看你的身份或牌序。發言可能是虛張聲勢。
+              {gameId === "splendor" ? "AI 會規劃拿取、保留與購買，只使用公開市場和自己的保留卡。" : "策略型 AI 只知道自己的情報，不會偷看你的身份或牌序。發言可能是虛張聲勢。"}
             </p>
           </>
         )}

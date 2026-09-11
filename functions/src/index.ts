@@ -1,3 +1,6 @@
+import { startSplendorGame, applySplendorAction, validateSplendorConfig } from './splendor/engine';
+import { splendorToken } from './shared/splendor';
+import type { SplendorAction } from './shared/splendor';
 import { initializeApp } from "firebase-admin/app";
 import { getDatabase } from "firebase-admin/database";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
@@ -245,6 +248,12 @@ export const roomAction = callable(async (uid, data) => {
     const room = session.public;
     ensure(room.players[uid] && !room.players[uid].isBot, "你不在房間內");
     switch (action.type) {
+      case "splendorConfig":
+        ensure(room.gameId === "splendor" && room.hostId === uid && room.status === "waiting", "只有房主能在等待時設定遊戲");
+        validateSplendorConfig(action.config);
+        room.splendorConfig = action.config;
+        Object.values(room.players).forEach(p => { p.ready = !!p.isBot; });
+        break;
       case "decorScenario":
         ensure(room.gameId === "decorum" && room.hostId === uid && room.status === "waiting", "只有房主能在等待時選擇劇本");
         ensure(DECORUM_SCENARIOS.some((v) => v.id === action.scenarioId), "找不到這個劇本");
@@ -260,7 +269,8 @@ export const roomAction = callable(async (uid, data) => {
         ensure(room.hostId === uid, "只有房主可以開始");
         room.activity = [];
         delete room.botActionAt;
-        if (room.gameId === "decorum") startDecorum(session, gameId, shuffled(seed));
+        if (room.gameId === "splendor") startSplendorGame(session, gameId, shuffled(seed));
+        else if (room.gameId === "decorum") startDecorum(session, gameId, shuffled(seed));
         else if (room.gameId === "timebomb" || room.gameId === "timebomb-classic")
           startBomb(
             session,
@@ -310,6 +320,8 @@ export const roomAction = callable(async (uid, data) => {
         delete room.game;
         delete room.timebomb;
         delete room.decorum;
+        delete room.splendor;
+        session.splendorPrivate = {};
         delete room.botActionAt;
         room.activity = [];
         room.status = "waiting";
@@ -326,6 +338,7 @@ export const roomAction = callable(async (uid, data) => {
         });
         break;
       case "recover": {
+        ensure(room.gameId !== "splendor" || room.status !== "playing", "璀璨寶石保留離線玩家座位，請等待重新連線");
         // Presence and membership share this transaction, so a reconnect forces
         // a retry and cannot be removed using an outdated offline snapshot.
         const stale = Object.values(room.players)
@@ -364,6 +377,11 @@ export const gameAction = callable(async (uid, data) => {
       session.public.players[uid] && !session.public.players[uid].isBot,
       "你不在房間內",
     );
+    if (session.public.gameId === "splendor") {
+      const game = session.public.splendor;
+      ensure(game && data.phaseToken === splendorToken(game), "遊戲階段已變更，請確認畫面後再操作");
+      return applySplendorAction(session, uid, data.action as SplendorAction);
+    }
     if (
       session.public.gameId === "decorum"
     ) {

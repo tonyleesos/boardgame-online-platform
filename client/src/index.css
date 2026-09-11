@@ -1075,3 +1075,16 @@ select {
 .game-card.decorum .game-art:after { content: "A HOME FOR ALL"; color: #53684d; letter-spacing: .18em; font-size: 13px; }
 .game-card.decorum .art-rings { border-color: #8fa07c55; }
 .game-card.decorum .game-art > .tag { background: #fff4d9cc; color: #53684d; }
+
+.game-card.splendor .game-art {
+  background: radial-gradient(
+    ellipse at 50% 45%,
+    #326d70,
+    #19313e 55%,
+    #151f30
+  );
+}
+.game-card.splendor .game-art > svg {
+  color: #ebcf98;
+  filter: drop-shadow(0 0 25px #d0edc655);
+}
