@@ -1,5 +1,5 @@
 ﻿import { useState } from "react";
-import { Check, Eye, Crown, ShieldX, Skull, Swords, Bot, X } from "lucide-react";
+import { Check, Eye, Crown, ShieldX, Skull, Swords, Bot, X, Trophy, ThumbsUp, ThumbsDown } from "lucide-react";
 import type { GameAction, PrivateRole, Room } from "../../../../functions/src/shared/model";
 import { ROLE_NAMES } from "../../../../functions/src/shared/model";
 import { getMissionTeamSize, requiresTwoFails } from "../../../../functions/src/shared/rules";
@@ -22,6 +22,7 @@ export function AvalonGame({ room, role, uid, connected, onRematch, roomPending 
   const [showRole, setShowRole] = useState(false);
   const [dismissed, setDismissed] = useState("");
   const [seenResult, setSeenResult] = useState("");
+  const [seenVictory, setSeenVictory] = useState("");
   const [target, setTarget] = useState<string | null>(null);
   const name = (id: string) => room.players[id]?.nickname ?? "已離開的玩家";
   const identity = (id: string) => <PlayerIdentity name={name(id)} index={game.order.indexOf(id)} />;
@@ -39,14 +40,18 @@ export function AvalonGame({ room, role, uid, connected, onRematch, roomPending 
   const assassinating = game.phase === "ASSASSINATION" && role?.role === "assassin";
   const last = game.missionResults.at(-1);
   const resultKey = `${game.id}:${game.missionResults.length}`;
+  const ended = game.phase === "GAME_OVER";
+  const showVictory = ended && seenVictory !== game.id;
+  const victoryTitle = game.winner === "good" ? "好人陣營勝利" : game.winner === "evil" ? "壞人陣營勝利" : "本局中止";
+  const closeVictory = () => { setSeenVictory(game.id); setSeenResult(resultKey); setShowRole(false); };
   // Retain the reveal when an AI leader advances before this player dismisses it.
   const unseenResult = !!last && seenResult !== resultKey;
-  const showResult = unseenResult && !showRole;
+  const showResult = unseenResult && (!showRole || ended) && !showVictory;
   const rejections = game.lastTeamVote?.approved ? 0 : Math.min(5,
     game.proposalAttempt - 1 + (game.phase === "GAME_OVER" && game.winner === "evil" && game.proposalAttempt === 5 ? 1 : 0));
   return <div className="avalon-game">
     <div className="game-core avalon-core">
-      <QuestMap game={game} concealLatest={unseenResult} />
+      <QuestMap game={game} concealLatest={unseenResult && !ended} />
       <section className={`rejection-track ${rejections >= 4 ? "at-risk" : ""}`} aria-label={`連續否決 ${rejections} / 5 次`}>
         <div className="rejection-heading"><ShieldX size={19} /><strong>連續否決</strong><span>{rejections} / 5 次</span></div>
         <div className="rejection-marks" aria-hidden="true">{Array.from({ length: 5 }, (_, i) => <span key={i} className={i < rejections ? "rejected" : ""}>{i < rejections ? <X size={16} /> : i + 1}</span>)}</div>
@@ -99,10 +104,11 @@ export function AvalonGame({ room, role, uid, connected, onRematch, roomPending 
         {last && <button className="quiet" onClick={() => setSeenResult("")}>查看任務結果</button>}
         {game.phase === "MISSION_RESULT" && leader && !unseenResult && <button className="primary" disabled={disabled} onClick={() => act({ type: "continue" })}>繼續遊戲</button>}
         {game.phase === "GAME_OVER" && room.hostId === uid && <button className="primary" disabled={roomPending || !connected} onClick={onRematch}>再玩一局</button>}
+        {ended && <button className="quiet" onClick={() => setSeenVictory("")}><Trophy size={18} />查看勝負</button>}
       </div>
     </div>
     <div className="game-extras">
-      {game.lastTeamVote && <details className="panel vote-history"><summary>上一輪組隊表決 · {game.lastTeamVote.approved ? "通過" : "否決"}</summary><div className="vote-chips">{Object.entries(game.lastTeamVote.votes).map(([id, v]) => <span key={id} className={`vote-chip ${v === "approve" ? "success-text" : "fail-text"}`}>{identity(id)} {v === "approve" ? "✓ 贊成" : "× 反對"}</span>)}</div></details>}
+      {game.lastTeamVote && <details className="panel vote-history"><summary>上一輪組隊表決 · {game.lastTeamVote.approved ? "通過" : "否決"}</summary><div className="vote-chips">{Object.entries(game.lastTeamVote.votes).map(([id, v]) => <span key={id} className={`vote-chip ${v === "approve" ? "success-text" : "fail-text"}`}>{identity(id)} {v === "approve" ? <><ThumbsUp size={15} />贊成</> : <><ThumbsDown size={15} />反對</>}</span>)}</div></details>}
       {game.missionResults.length > 0 && <details className="panel vote-history"><summary>任務紀錄</summary>{game.missionResults.map((m, i) => <p key={i}>第 {i + 1} 輪 · {m.result === "success" ? "成功" : "失敗"} · {m.fails} 張失敗票<br /><small>{m.team.map(name).join("、")}</small></p>)}</details>}
       <details className="panel vote-history"><summary>玩法與圖示說明</summary><p>皇冠是隊長，金框是遠征隊員。點選座位組隊；所有人投票過半才出發，平票視為否決，連續五次否決則邪惡獲勝。</p><p>正義只能選任務成功，邪惡可選成功或失敗。七人以上的第四輪需要兩張失敗票。三次成功後由刺客尋找梅林。</p></details>
     </div>
@@ -125,7 +131,7 @@ export function AvalonGame({ room, role, uid, connected, onRematch, roomPending 
       <div className="mission-result-art"><VoteArt kind={last.result} /></div>
       <h2>{last.result === "success" ? "任務成功" : "任務失敗"}</h2>
       <p>{last.result === "success" ? "誓言未滅，曙光仍在。" : "暗影蔓延，信任出現裂痕。"}</p>
-      <div className="mission-ballots"><span><Check size={17} />{last.team.length - last.fails} 張成功票</span><span><X size={17} />{last.fails} 張失敗票</span></div>
+      <div className="mission-ballots"><span><Trophy size={17} />{last.team.length - last.fails} 張成功票</span><span><Skull size={17} />{last.fails} 張失敗票</span></div>
       <div className="identity-list">{last.team.map((id) => <span key={id}>{identity(id)}</span>)}</div>
       <p className="fine">{requiresTwoFails(game.order.length, game.missionResults.length) ? "本輪需兩張失敗票才算任務失敗。" : "本輪只要一張失敗票，任務即失敗。"}任務票不公開投票者。</p>
       {error && <p className="error" role="alert">{error}</p>}
@@ -134,7 +140,7 @@ export function AvalonGame({ room, role, uid, connected, onRematch, roomPending 
         setSeenResult(resultKey);
       })}>繼續遊戲</button> : <button className="primary" onClick={() => setSeenResult(resultKey)}>返回圓桌</button>}
     </GameDialog>}
-    {showRole && role && <GameDialog title="你的身份" onClose={() => setShowRole(false)} className={`role-card ${role.side}`}>
+    {showRole && role && !ended && <GameDialog title="你的身份" onClose={() => setShowRole(false)} className={`role-card ${role.side}`}>
       <RolePortrait role={role.role} /><h2>{ROLE_NAMES[role.role]}</h2><p className="tag">{role.side === "good" ? "正義陣營" : "邪惡陣營"}</p>
       <p>{role.knowledgeType === "candidates" ? "以下兩人，一位是梅林，一位是莫甘娜。" : role.knowledgeType === "evil" ? "你知道以下玩家屬於邪惡陣營：" : "你沒有額外情報，從討論中找出可信任的人。"}</p><div className="team-names identity-list">{role.knowledge.map((id) => <span key={id}>{identity(id)}</span>)}</div>
       {role.role === "assassin" && <p className="fine">三次任務成功後，你可以刺殺梅林，扭轉結局。</p>}{error && <p className="error" role="alert">{error}</p>}
@@ -144,5 +150,14 @@ export function AvalonGame({ room, role, uid, connected, onRematch, roomPending 
       })}>收起身份{game.phase === "ROLE_REVEAL" ? "，確認準備" : ""}</button>
     </GameDialog>}
     {target && assassinating && !showResult && !showRole && <GameDialog title="確認刺殺目標" onClose={() => setTarget(null)}><h2>刺殺 {name(target)}？</h2><p>只有一次機會，確認後揭曉勝負。</p>{error && <p className="error" role="alert">{error}</p>}<button className="danger" disabled={disabled} onClick={() => act({ type: "assassinate", target })}>確認刺殺</button></GameDialog>}
+    {showVictory && <GameDialog title="阿瓦隆終局揭曉" onClose={closeVictory} className={`avalon-victory victory-${game.winner ?? "none"}`}>
+      <p className="eyebrow">THE LEGEND IS WRITTEN · 終局揭曉</p>
+      <div className="victory-emblem" aria-hidden="true">{game.winner === "evil" ? <Skull /> : game.winner === "good" ? <Crown /> : <Swords />}</div>
+      <h2>{victoryTitle}</h2>
+      <p className="victory-subtitle">{game.winner === "good" ? "曙光重返卡美洛" : game.winner === "evil" ? "暗影籠罩圓桌" : "冒險暫告一段落"}</p>
+      <p>{game.winReason}</p>
+      <div className="victory-score"><span><Trophy />{game.missionResults.filter((m) => m.result === "success").length}<small>任務成功</small></span><span><Skull />{game.missionResults.filter((m) => m.result === "fail").length}<small>任務失敗</small></span></div>
+      <button className="primary" onClick={closeVictory}><Eye size={18} />查看全員身份與圓桌</button>
+    </GameDialog>}
   </div>;
 }

@@ -103,6 +103,39 @@
 .decor-rematch { display: flex; margin: 18px auto 0; }
 .decor-scenario-picker { text-align: left; margin: 20px 0; padding: 15px; border: 1px solid #b8aa7d66; border-radius: 10px; }
 .decor-scenario-picker label { font-size: 13px; }.decor-scenario-picker p { margin: 10px 0 0; font-size: 12px; }
+.decor-timeline { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; padding: 0 0 16px; color: #7d6959; font-size: 11px; }
+.decor-timeline > span, .decor-timeline > div, .decor-timeline > div > span { display: inline-flex; gap: 5px; align-items: center; }
+.decor-timeline > div { gap: 10px; }.decor-timeline .completed { color: #537459; }.decor-timeline .now { color: #a75847; font-weight: 700; }
+.decor-turn-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); list-style: none; margin: -6px 0 16px; padding: 0; gap: 7px; }
+.decor-turn-steps li { display: flex; justify-content: center; align-items: center; gap: 6px; padding: 8px 4px; border-radius: 9px; color: #817967; font-size: 11px; border: 1px dashed #d1c8b2; }
+.decor-turn-steps [aria-current="step"] { background: #e0e9d6; color: #456343; border: 1px solid #a6b999; }
+.meeting-progress { display: inline-flex; gap: 4px; align-items: center; font-size: 10px; color: #886351; }
+.wish-content { flex: 1; min-width: 0; }
+.condition-visual { display: block; width: 100%; text-align: left; }
+.condition-visual > span, .wish-group, .wish-clause { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; }
+.wish-chip { display: inline-flex; align-items: center; gap: 5px; background: #fffcf4; border: 1px solid #d9d2bf; border-radius: 7px; padding: 5px 7px; font-size: 11px; line-height: 1.35; color: #4f5e49; }
+.wish-chip svg { flex-shrink: 0; color: #718165; }
+.wish-color { width: 17px; height: 17px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px #0002; flex-shrink: 0; }
+.wish-count { font-size: 20px; color: #4d6b50; font-variant-numeric: tabular-nums; padding: 0 4px; }
+.wish-operator { font-size: 11px; color: #94664e; padding: 0 3px; }
+.wish-group { padding: 5px; border: 1px dashed #c9bba2; border-radius: 9px; background: #e4dac91a; }
+.wish-description { font-size: 11px; margin-top: 8px; color: #786b57; }.wish-description summary { cursor: pointer; min-height: 28px; display: list-item; }
+.room-scene { position: relative; min-width: 0; overflow: hidden; padding: 8px 5px 3px; border: 3px solid #fffbef; border-radius: 10px; background: linear-gradient(var(--wall-color) 0 57%, #e3cbaa 57% 60%, #eddcc1 60%); box-shadow: 0 3px 0 #c5ad8d; }
+.scene-label { display: inline-flex; align-items: center; gap: 4px; padding: 2px 5px; border-radius: 5px; background: #fffaf0e3; color: #4e5949; font-size: 10px; }
+.scene-furniture { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; }.scene-furniture > span { display: grid; place-items: center; aspect-ratio: 1; }
+.scene-empty { opacity: .45; color: #6c5940; border-bottom: 1px dashed currentColor; }.scene-furniture .furniture-art { width: 100%; max-height: 80px; }
+.decor-preview { flex-direction: column; text-align: center; }
+.room-comparison { display: grid; grid-template-columns: minmax(0, 1fr) 20px minmax(0, 1fr); align-items: center; gap: 8px; width: 100%; }.room-comparison small { display: block; margin-bottom: 6px; }
+.move-preview { display: grid; justify-items: center; gap: 8px; }.move-preview > span { display: flex; align-items: center; gap: 10px; }
+.result-house { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 10px; margin-bottom: 22px; border-radius: 14px; background: #cfbd9f; }.result-house small { font-size: 10px; }
+.decor-tabs button { flex-direction: column; min-width: 50px; }
+.meeting-field { min-width: 0; border: 0; padding: 0; margin: 20px 0; }.meeting-field legend { font-size: 12px; color: #786650; margin-bottom: 10px; }.meeting-field .decor-reactions { margin: 0; }.meeting-field .decor-reactions button { flex: 1; }
+.meeting-wishes { display: grid; gap: 9px; }.meeting-wishes > button { justify-content: flex-start; padding: 12px; gap: 10px; min-width: 0; }
+.meeting-card-number { width: 24px; height: 24px; flex-shrink: 0; border-radius: 50%; background: #e8dfcc; display: grid; place-items: center; font-size: 12px; }
+.meeting-recipients { display: flex; flex-wrap: wrap; gap: 8px; }.meeting-recipients button { flex: 1; min-height: 48px; padding: 9px; font-size: 12px; }
+.decorum-meeting .decor-help { display: flex; align-items: center; justify-content: center; gap: 5px; }
+.decorum-meeting .meeting-heart { width: 52px; height: 52px; margin: 8px auto; }.decorum-meeting .meeting-heart svg { width: 28px; }
+.decorum-meeting > h2 { margin: 8px 0; }.decorum-meeting > p { font-size: 12px; }
 @media (max-width: 680px) {
   .decorum-game { padding: 14px 10px; border-radius: 16px; }
   .decor-intro { padding: 0 4px 14px; gap: 10px; }.decor-intro h2 { font-size: 22px; }.decor-intro > svg { width: 30px; }.decor-intro p:last-child { font-size: 11px; }
@@ -118,4 +151,11 @@
   .decorum-dialog.game-dialog { padding: 20px 16px; }.decorum-dialog h2 { font-size: 20px; }.decorum-dialog .eyebrow { font-size: 8px; }
   .decorum-dialog.decorum-drawer, .decorum-dialog.decorum-action-sheet { inset: auto 0 0; margin: 0 auto; max-height: 90dvh; width: min(580px, 100%); border-radius: 22px 22px 0 0; padding-bottom: max(20px, env(safe-area-inset-bottom)); }
   .condition-list li { font-size: 12px; padding: 12px; }.decor-tabs button { padding: 7px; font-size: 11px; }.decor-preview { padding: 9px; }.furniture-catalog .furniture-art { width: 75px; }
+  .wish-chip { padding: 4px 5px; font-size: 10px; }.wish-chip svg { width: 16px; height: 16px; }.wish-group { padding: 4px; }.wish-count { font-size: 18px; }
+  .decor-timeline { font-size: 10px; padding-inline: 3px; }.decor-timeline > div { gap: 9px; }
+  .decor-room header button { min-height: 36px; }.decor-room header { min-height: 78px; }
+  .decor-turn-steps li { flex-direction: column; font-size: 10px; }
+  .meeting-wishes > button { padding: 9px; gap: 7px; }.meeting-field { margin: 15px 0; }
+  .room-comparison { gap: 5px; }.room-scene { padding: 5px 3px 2px; border-width: 2px; }.scene-label { font-size: 9px; }
+  .wish-description summary { min-height: 36px; }
 }

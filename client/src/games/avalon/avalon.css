@@ -42,8 +42,12 @@
 .vote-art { position: relative; width: 100%; aspect-ratio: 4 / 5; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 3px double #cebb84; border-radius: 50% 50% 10px 10px; color: #e6daba; background: radial-gradient(ellipse at 50% 35%, #a8b27b55, transparent 65%), repeating-conic-gradient(from 10deg, #b6a27408 0 15deg, transparent 15deg 30deg), #30483f; box-shadow: inset 0 0 0 5px #14241b, 0 6px 12px #0005; }
 .vote-art > svg { width: 52%; height: 52%; filter: drop-shadow(0 2px 4px #0008); }
 .vote-art-reject, .vote-art-fail { background-color: #542b34; color: #f4c3ac; }
-.vote-ornament { position: absolute; top: 10%; font-size: 16px; color: #d3b67c; }
-.vote-seal { position: absolute; bottom: 6%; background: #ba954a; color: #362617; width: 25px; height: 25px; border-radius: 50%; box-shadow: inset 0 0 0 3px #b28b4144; font-size: 17px; }
+.vote-art.team-ballot-art { aspect-ratio: 1; border: 2px solid #87b9d1; border-radius: 50%; color: #c4ebff; background: radial-gradient(circle, #32536e, #192e42); box-shadow: inset 0 0 0 7px #142534, 0 6px 12px #0005; }
+.vote-art.team-ballot-art.vote-art-reject { color: #ffccb1; border-color: #ca977a; background: radial-gradient(circle, #6f4933, #39271f); }
+.team-ballot-art > svg { width: 44%; height: 44%; }
+.vote-art.quest-card-art { border-radius: 12px; }
+.vote-ornament { position: absolute; top: 10%; font-size: 10px; letter-spacing: .1em; color: inherit; }
+.vote-seal { position: absolute; bottom: 9%; color: inherit; font-size: 10px; letter-spacing: .12em; opacity: .8; }
 .role-card.game-dialog { padding: 22px; }
 .role-card.game-dialog h2 { font-size: 27px; }
 .role-card.game-dialog > p { margin-bottom: 12px; }
@@ -83,6 +87,19 @@
 .vote-options > button { transition: transform 180ms, background 180ms, border-color 180ms; animation: card-reveal 450ms 70ms backwards; }
 .vote-options > button:nth-child(2) { animation-delay: 140ms; }
 .vote-options > button:hover:not(:disabled) { transform: translateY(-4px); }
+.avalon-victory.game-dialog { width: min(600px, calc(100% - 24px)); text-align: center; border: 2px solid #dbbf7a; background: radial-gradient(ellipse at 50% 25%, #54765f77, transparent 65%), #102c25; box-shadow: 0 0 80px #d5b66044, 0 28px 100px #000a; }
+.avalon-victory::backdrop { background: #07120fdf; backdrop-filter: blur(9px); }
+.avalon-victory.victory-evil { border-color: #e59d85; background: radial-gradient(ellipse at 50% 25%, #b3535177, transparent 65%), #301922; }
+.victory-emblem { width: min(150px, 24dvh); aspect-ratio: 1; display: grid; place-items: center; margin: 24px auto; border: 2px solid currentColor; border-radius: 50%; color: #ffe0a0; box-shadow: 0 0 0 10px #dcc08415, 0 0 60px #d3b46c33; animation: card-reveal 650ms both; }
+.victory-emblem svg { width: 58%; height: 58%; stroke-width: 1.3; }
+.victory-evil .victory-emblem { color: #ffb49d; }
+.avalon-victory h2 { font-size: clamp(30px, 7vw, 46px); color: #ffe6b4; margin: 12px 0; letter-spacing: .06em; }
+.avalon-victory.victory-evil h2 { color: #ffc3b1; }
+.avalon-victory .victory-subtitle { color: #d9c09a; font-size: 16px; }
+.victory-score { display: flex; justify-content: center; gap: 40px; padding: 20px 0; margin: 18px 0; border-block: 1px solid #d8bb7733; }
+.victory-score > span { display: grid; grid-template-columns: auto auto; gap: 6px 10px; align-items: center; font-size: 26px; }
+.victory-score small { grid-column: 1 / -1; font-size: 12px; color: #d2c5b0; }
+.avalon-victory > .primary { width: 100%; min-height: 48px; }
 @media (max-width: 680px) {
   .rejection-track { padding: 9px 10px; gap: 6px 10px; }
   .rejection-heading { font-size: 11px; gap: 5px; }

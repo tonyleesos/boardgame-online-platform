@@ -158,6 +158,7 @@ for (const gameId of ["avalon", "timebomb", "timebomb-classic"]) {
   const pub = `sessions/${code}/public`;
   let room = await read(host, pub);
   assert.equal(Object.values(room.players).filter((p) => !p.isBot).length, 1);
+  for (const p of Object.values(room.players).filter((p) => p.isBot)) assert.match(p.nickname, /^[\u4e00-\u9fff]+AI$/);
   const bot = Object.values(room.players).find((p) => p.isBot);
   await call(people[1], "joinRoom", { code, nickname: "Uninvited" }, true);
   await call(
@@ -177,6 +178,9 @@ for (const gameId of ["avalon", "timebomb", "timebomb-classic"]) {
     action: { type: "removeBot", botId: bot.uid },
   });
   await call(host, "roomAction", { code, action: { type: "addBot" } });
+  const replaced = Object.values((await read(host, pub)).players);
+  assert.equal(new Set(replaced.map((p) => p.nickname)).size, replaced.length);
+  for (const p of replaced.filter((p) => p.isBot)) assert.match(p.nickname, /^[\u4e00-\u9fff]+AI$/);
   await call(host, "roomAction", {
     code,
     action: { type: "ready", ready: true },

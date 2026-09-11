@@ -139,9 +139,8 @@ test("five independent browsers complete Avalon, reconnect, rematch, and mobile 
         await pages[i]
           .getByRole("button", { name: "任務成功", exact: true })
           .click();
-      await expect(
-        lp.getByRole("heading", { name: "任務成功，曙光仍在。" }),
-      ).toBeVisible();
+      for (const p of pages) await expect(p.getByRole("dialog", { name: "任務結果", exact: true }).getByRole("heading", { name: "任務成功", exact: true })).toBeVisible();
+      for (const p of pages.filter((p) => p !== lp)) await p.getByRole("dialog", { name: "任務結果", exact: true }).getByRole("button", { name: "返回圓桌", exact: true }).click();
       await lp.getByRole("button", { name: "繼續遊戲", exact: true }).click();
     }
     const assassin = pages[roles.indexOf("刺客")];
@@ -149,14 +148,16 @@ test("five independent browsers complete Avalon, reconnect, rematch, and mobile 
     await assassin
       .getByRole("button", { name: `刺殺 ${merlinName}`, exact: true })
       .click();
+    await assassin.getByRole("button", { name: "確認刺殺", exact: true }).click();
     for (const p of pages)
       await expect(
-        p.getByRole("heading", { name: "邪惡陣營獲勝" }),
+        p.getByRole("dialog", { name: "阿瓦隆終局揭曉" }).getByRole("heading", { name: "壞人陣營勝利" }),
       ).toBeVisible();
     await pages[0].screenshot({
       path: ".tools/screenshots/result.png",
       fullPage: true,
     });
+    await pages[0].getByRole("button", { name: "查看全員身份與圓桌" }).click();
     await pages[0].getByRole("button", { name: "再玩一局" }).click();
     for (const p of pages)
       await expect(

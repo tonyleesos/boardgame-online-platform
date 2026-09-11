@@ -30,11 +30,12 @@ async function nextHumanMove(page: Page, gameId: string) {
   await expect
     .poll(
       async () => {
+        if (gameId === "avalon" && await page.getByRole("dialog", { name: "阿瓦隆終局揭曉" }).isVisible()) return (next = "done");
         if (await page.getByRole("heading", { name: /陣營獲勝/ }).isVisible())
           return (next = "done");
         for (const name of gameId === "timebomb"
           ? ["送出宣言", "繼續剪線", "收回剩餘引線，進入下一輪"]
-          : ["贊成", "任務成功", "繼續遊戲"]) {
+          : ["贊成", "任務成功", "繼續遊戲", "返回圓桌", "確認刺殺"]) {
           if (await usable(page, name)) return (next = name);
         }
         if (gameId === "timebomb") {
@@ -51,8 +52,7 @@ async function nextHumanMove(page: Page, gameId: string) {
             return (next = "team");
           if (
             await page
-              .locator(".team-picker button")
-              .filter({ hasText: "刺殺" })
+              .locator('.team-picker button[aria-label^="刺殺 "]:enabled')
               .count()
           )
             return (next = "assassinate");
@@ -181,8 +181,7 @@ test("solo Avalon completes a legal game against four AI players", async ({
       await expect(submit).not.toBeVisible();
     } else if (next === "assassinate")
       await page
-        .locator(".team-picker button")
-        .filter({ hasText: "刺殺" })
+        .locator('.team-picker button[aria-label^="刺殺 "]:enabled')
         .first()
         .click();
     else {
@@ -195,7 +194,7 @@ test("solo Avalon completes a legal game against four AI players", async ({
         .toBe(false);
     }
   }
-  await expect(page.getByRole("heading", { name: /陣營獲勝/ })).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "阿瓦隆終局揭曉" })).toBeVisible();
   await page.screenshot({
     path: ".tools/screenshots/avalon-ai-result.png",
     fullPage: true,

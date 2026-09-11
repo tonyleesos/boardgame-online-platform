@@ -29,7 +29,7 @@ async function move(page: Page, room: Room, action: HouseAction) {
   await page.getByRole("button", { name: "確認這次佈置", exact: true }).click();
   await expect(page.locator(".decorum-action-sheet")).not.toBeVisible();
 }
-for (const count of [2, 3, 4]) test(`${count} real browsers complete Decorum with private conditions, realtime reactions and reconnect`, async ({ browser }) => {
+for (const [count, scenarioId] of [[2, "demo-two-01"], [2, "demo-two-02"], [3, "demo-three-01"], [4, "demo-four-01"]] as const) test(`${scenarioId}: ${count} browsers complete Decorum with meetings, private conditions and reconnect`, async ({ browser }) => {
   test.setTimeout(180000);
   const contexts = await Promise.all(Array.from({ length: count }, () => browser.newContext({ viewport: { width: 1280, height: 950 } })));
   const actors: Actor[] = [];
@@ -57,7 +57,6 @@ for (const count of [2, 3, 4]) test(`${count} real browsers complete Decorum wit
       await actor.page.getByRole("button", { name: "加入房間", exact: true }).click();
       await expect(actor.page.getByRole("heading", { name: "等待朋友入座" })).toBeVisible();
     }
-    const scenarioId = count === 2 ? "demo-two-01" : count === 3 ? "demo-three-01" : "demo-four-01";
     await host.page.getByLabel("合租劇本（由房主選擇）").selectOption(scenarioId);
     await expect(host.page.getByLabel("合租劇本（由房主選擇）")).toHaveValue(scenarioId);
     await expect(host.page.getByRole("button", { name: /新增 AI/ })).toHaveCount(0);
@@ -67,6 +66,7 @@ for (const count of [2, 3, 4]) test(`${count} real browsers complete Decorum wit
       await actor.page.getByRole("button", { name: /我的秘密心願/ }).click();
       const dialog = actor.page.getByRole("dialog", { name: "我的秘密心願", exact: true });
       await expect(dialog.locator(".condition-list:not(.shared) li")).toHaveCount(3);
+      await expect(dialog.locator(".condition-list:not(.shared) .condition-visual")).toHaveCount(3);
       if (actor === host) {
         await actor.page.setViewportSize({ width: 390, height: 844 });
         await actor.page.screenshot({ path: `.tools/screenshots/decorum-${count}-private-mobile.png`, animations: "disabled" });
@@ -75,6 +75,47 @@ for (const count of [2, 3, 4]) test(`${count} real browsers complete Decorum wit
       await expect(dialog).not.toBeVisible();
     }
     let room = await read<Room>(host, code, "public");
+    // Reach the meeting with authenticated, legal moves; no database edits.
+    const call = async (actor: Actor, action: object) => {
+      const g = room.decorum!;
+      const response = await fetch("http://127.0.0.1:5001/demo-boardgame/asia-east1/gameAction", { method: "POST", headers: { Authorization: `Bearer ${actor.idToken}`, "Content-Type": "application/json" }, body: JSON.stringify({ data: { code, phaseToken: `${g.id}:${g.round}:${g.phase}:${g.currentPlayerIndex}:${g.turn}`, action } }) });
+      expect((await response.json()).error).toBeUndefined();
+    };
+    while (!["HEART_TO_HEART", "HOUSE_MEETING"].includes(room.decorum!.phase)) {
+      const g = room.decorum!;
+      const active = actors.find((a) => a.uid === g.playerOrder[g.currentPlayerIndex])!;
+      await call(active, { type: "decorPaint", roomId: "living", color: g.house.rooms.find((r) => r.id === "living")!.wallColor === "red" ? "yellow" : "red" });
+      room = await read<Room>(host, code, "public");
+      await Promise.all(actors.filter((a) => a !== active).map((a) => call(a, { type: "decorReact", reaction: "neutral" })));
+      room = await read<Room>(host, code, "public");
+    }
+    const meetingRound = room.decorum!.round;
+    const wishesAtMeeting = await Promise.all(actors.map((a) => read<DecorumPrivate>(a, code, `decorumPrivate/${a.uid}`)));
+    for (const [i, actor] of actors.entries()) {
+      const dialog = actor.page.getByRole("dialog", { name: count === 2 ? "室友談心" : "房屋會議", exact: true });
+      await expect(dialog).toBeVisible();
+      await expect(dialog.locator(".meeting-wishes button")).toHaveCount(3);
+      await dialog.getByRole("button", { name: "喜歡", exact: true }).click();
+      await dialog.getByRole("button", { name: `分享心願 2：${wishesAtMeeting[i].conditions[1].description}`, exact: true }).click();
+      const recipient = actors[(i + 1) % count];
+      const recipientName = room.players[recipient.uid].nickname;
+      await dialog.getByRole("button", { name: `分享給 ${recipientName}`, exact: true }).click();
+      if (i === 0) {
+        await actor.page.setViewportSize({ width: 360, height: 844 });
+        expect(await actor.page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+        await actor.page.screenshot({ path: `.tools/screenshots/decorum-${scenarioId}-meeting-mobile.png`, animations: "disabled" });
+      }
+      await dialog.getByRole("button", { name: `交給 ${recipientName}`, exact: true }).click();
+      await expect(dialog).not.toBeVisible();
+    }
+    room = await read<Room>(host, code, "public");
+    expect(room.decorum!.round).toBe(meetingRound + 1);
+    expect(room.decorum!.phase).toBe("PLAYER_ACTION");
+    for (const [i, actor] of actors.entries()) {
+      const shared = await read<DecorumPrivate>(actor, code, `decorumPrivate/${actor.uid}`);
+      expect(shared.sharedConditionsReceived).toHaveLength(1);
+      expect(shared.sharedConditionsReceived[0].ownerId).toBe(actors[(i + count - 1) % count].uid);
+    }
     const afterMove = async () => {
       room = await read<Room>(host, code, "public");
       if (room.decorum!.phase === "GAME_OVER") return;
@@ -119,6 +160,7 @@ for (const count of [2, 3, 4]) test(`${count} real browsers complete Decorum wit
       const result = actor.page.getByRole("dialog", { name: "合租成果", exact: true });
       await expect(result.getByRole("heading", { name: "我們，都喜歡這個家。" })).toBeVisible();
       await expect(result.locator(".condition-list li")).toHaveCount(count * 3);
+      await expect(result.getByLabel("最終房屋").locator(".room-scene")).toHaveCount(4);
     }
     await host.page.screenshot({ path: `.tools/screenshots/decorum-${count}-victory.png`, animations: "disabled" });
     await host.page.getByRole("dialog", { name: "合租成果" }).getByRole("button", { name: "再合租一次", exact: true }).click();

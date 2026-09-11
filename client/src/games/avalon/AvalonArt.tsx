@@ -1,4 +1,4 @@
-import { Castle, Trees, Mountain, Waves, Crown, ShieldCheck, ShieldX, Sparkles, Skull } from "lucide-react";
+import { Castle, Trees, Mountain, Waves, Crown, ThumbsUp, ThumbsDown, Trophy, Skull } from "lucide-react";
 import type { Game, Role } from "../../../../functions/src/shared/model";
 import { ROLE_NAMES } from "../../../../functions/src/shared/model";
 import { getMissionTeamSize, requiresTwoFails } from "../../../../functions/src/shared/rules";
@@ -8,9 +8,10 @@ export function RolePortrait({ role }: { role: Role }) {
 }
 
 export function VoteArt({ kind }: { kind: "approve" | "reject" | "success" | "fail" }) {
-  const Icon = { approve: ShieldCheck, reject: ShieldX, success: Sparkles, fail: Skull }[kind];
-  return <span className={`vote-art vote-art-${kind}`} aria-hidden="true">
-    <span className="vote-ornament">✦</span><Icon strokeWidth={1.2} /><span className="vote-seal">{kind === "approve" || kind === "success" ? "✧" : "×"}</span>
+  const Icon = { approve: ThumbsUp, reject: ThumbsDown, success: Trophy, fail: Skull }[kind];
+  const ballot = kind === "approve" || kind === "reject";
+  return <span className={`vote-art ${ballot ? "team-ballot-art" : "quest-card-art"} vote-art-${kind}`} aria-hidden="true">
+    <span className="vote-ornament">{ballot ? "隊伍表決" : "秘密任務牌"}</span><Icon strokeWidth={ballot ? 1.8 : 1.2} /><span className="vote-seal">{ballot ? "公開" : "秘密"}</span>
   </span>;
 }
 
@@ -31,7 +32,7 @@ export function QuestMap({ game, concealLatest = false }: { game: Game; concealL
         return <div key={i} className={`quest-stop ${result ?? ""} ${game.round === i + 1 ? "current" : ""}`}
           aria-label={`第 ${i + 1} 輪 ${destinations[i]}，${getMissionTeamSize(game.order.length, i + 1)} 人${doubleFail ? "，需兩張失敗票" : ""}，${result === "success" ? "成功" : result === "fail" ? "失敗" : "未完成"}`}
           aria-current={game.round === i + 1 ? "step" : undefined}>
-          <span className="quest-medallion">{result === "success" ? <ShieldCheck /> : result === "fail" ? <ShieldX /> : <Icon />}</span>
+          <span className="quest-medallion">{result === "success" ? <Trophy /> : result === "fail" ? <Skull /> : <Icon />}</span>
           <strong>{destinations[i]}</strong>
           <small>{getMissionTeamSize(game.order.length, i + 1)} 人{doubleFail && " · 雙敗"}</small>
         </div>;

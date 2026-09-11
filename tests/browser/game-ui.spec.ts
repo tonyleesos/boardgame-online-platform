@@ -72,6 +72,8 @@ test("Avalon avatars, rejection track, mission reveal and modal priority", async
   propose();
   await save();
   const vote = page.getByRole("dialog", { name: "隊伍表決", exact: true });
+  await expect(vote.locator(".team-ballot-art .lucide-thumbs-up")).toHaveCount(1);
+  await expect(vote.locator(".quest-card-art")).toHaveCount(0);
   await expect(vote.locator(".player-identity .avatar")).toHaveCount(2);
   expect(await vote.locator(".avatar").first().getAttribute("class")).toContain("color-0");
   for (const width of [360, 390, 768, 1280]) await fits(page, width);
@@ -87,6 +89,7 @@ test("Avalon avatars, rejection track, mission reveal and modal priority", async
   ids.filter((id) => id !== uid).forEach((id) => applyGameAction(s, id, { type: "teamVote", vote: "approve" }));
   await save();
   await expect(page.getByLabel("連續否決 0 / 5 次")).toBeAttached();
+  await expect(page.locator(".quest-card-art .lucide-trophy")).toHaveCount(1);
   await page.getByRole("button", { name: "任務成功", exact: true }).click();
   applyGameAction(s, ids[1], { type: "missionVote", vote: "success" });
   await save();
@@ -121,9 +124,54 @@ test("Avalon avatars, rejection track, mission reveal and modal priority", async
   ids.forEach((id) => applyGameAction(fifthRejection, id, { type: "teamVote", vote: "reject" }));
   Object.assign(s, fifthRejection);
   await save();
+  const victory = page.getByRole("dialog", { name: "阿瓦隆終局揭曉", exact: true });
+  await expect(victory.getByRole("heading", { name: "壞人陣營勝利" })).toBeVisible();
+  await expect(page.locator("dialog[open]")).toHaveCount(1);
+  await fits(page, 360);
+  await page.screenshot({ animations: "disabled", path: ".tools/screenshots/avalon-victory-evil-mobile.png" });
+  await victory.getByRole("button", { name: "查看全員身份與圓桌" }).click();
+  await expect(page.locator("dialog[open]")).toHaveCount(0);
   await expect(page.getByLabel("連續否決 5 / 5 次")).toBeVisible();
   await expect(page.getByRole("heading", { name: "邪惡陣營獲勝" })).toBeVisible();
   expect(errors).toEqual([]);
+});
+
+for (const ending of ["good", "assassinated", "three-fails"] as const) test(`Avalon victory priority: ${ending}`, async ({ page }) => {
+  const { session: s, uid, ids, save } = await fixture(page, "avalon", 6);
+  ids.forEach((id) => applyGameAction(s, id, { type: "reveal" }));
+  await save();
+  const g = s.public.game!;
+  const evil = ids.find((id) => s.private[id].role === "assassin")!;
+  const merlin = ids.find((id) => s.private[id].role === "merlin")!;
+  if (ending === "three-fails") {
+    g.phase = "MISSION_VOTE";
+    g.selectedPlayerIds = [uid, evil];
+    g.missionResults = [1, 2].map(() => ({ result: "fail", team: [uid, evil], fails: 1 }));
+    g.round = 3;
+    applyGameAction(s, uid, { type: "missionVote", vote: "success" });
+    applyGameAction(s, evil, { type: "missionVote", vote: "fail" });
+  } else {
+    await page.getByRole("button", { name: "我的身份", exact: true }).click();
+    g.phase = "ASSASSINATION";
+    g.missionResults = [1, 2, 3].map(() => ({ result: "success", team: ids.slice(0, 2), fails: 0 }));
+    g.round = 3;
+    applyGameAction(s, evil, { type: "assassinate", target: ending === "good" ? ids.find((id) => s.private[id].side === "good" && id !== merlin)! : merlin });
+  }
+  await save();
+  const victory = page.getByRole("dialog", { name: "阿瓦隆終局揭曉" });
+  await expect(victory.getByRole("heading", { name: ending === "good" ? "好人陣營勝利" : "壞人陣營勝利" })).toBeVisible();
+  await expect(page.locator("dialog[open]")).toHaveCount(1);
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await expect(victory.locator(".victory-emblem")).toHaveCSS("animation-name", "none");
+  await page.screenshot({ animations: "disabled", path: `.tools/screenshots/avalon-victory-${ending}.png` });
+  await page.keyboard.press("Escape");
+  await expect(page.locator("dialog[open]")).toHaveCount(0);
+  g.revision++; await save();
+  await expect(page.locator("dialog[open]")).toHaveCount(0);
+  await page.getByRole("button", { name: "查看勝負" }).click();
+  await expect(victory).toBeVisible();
+  await page.reload();
+  await expect(victory).toBeVisible();
 });
 
 for (const gameId of ["timebomb-classic", "timebomb"]) test(`${gameId}: opening cards, private dialog, direct cut and mobile layout`, async ({ page }) => {

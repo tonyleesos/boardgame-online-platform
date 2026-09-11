@@ -1,6 +1,7 @@
 import type { Session } from "./shared/model";
 import { ensure } from "./shared/rules";
 import { finishDecorum } from "./decorum/engine";
+import { botNickname } from "./bot-names";
 
 /** Keep the seat ID stable so secret votes, knowledge and wire slots survive.
  * Callable handlers and database rules deny this former human ID once it is a bot.
@@ -11,6 +12,7 @@ export function leaveSeat(session: Session, uid: string): Session | null {
   ensure(player && !player.isBot, "你不在房間內");
   if (room.gameId === "decorum" && room.status === "playing") finishDecorum(session, "player-left");
   if (room.status === "playing") {
+    player.nickname = botNickname(room.players, `${room.code}:${uid}`);
     player.isBot = true;
     player.isProxy = true;
     player.ready = true;

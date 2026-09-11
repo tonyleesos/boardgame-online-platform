@@ -8,6 +8,7 @@ import { startDecorum, applyDecorumAction } from "./decorum/engine";
 import { DECORUM_SCENARIOS, decorumToken } from "./shared/decorum";
 import type { DecorumAction } from "./shared/decorum";
 import { leaveSeat } from "./membership";
+import { botNickname } from "./bot-names";
 import { advanceOneBot, botToken } from "./bots";
 import { GAME_LIMITS } from "./shared/model";
 import { bombToken } from "./shared/timebomb";
@@ -195,7 +196,7 @@ export const createRoom = callable(async (uid, data) => {
       const botId = `bot_${i}`;
       session.public.players[botId] = {
         uid: botId,
-        nickname: `AI ${["艾達", "華生", "貝克", "露西", "雷斯", "福克斯", "奧斯卡", "艾琳", "亨利"][i - 1]}`,
+        nickname: botNickname(session.public.players, `${roomCode}:${botId}`),
         joinedAt: now + i,
         ready: true,
         isBot: true,
@@ -282,7 +283,7 @@ export const roomAction = callable(async (uid, data) => {
         const botId = `bot_${gameId}`;
         room.players[botId] = {
           uid: botId,
-          nickname: `AI 夥伴 ${Object.values(room.players).filter((p) => p.isBot).length + 1}`,
+          nickname: botNickname(room.players, seed),
           isBot: true,
           ready: true,
           joinedAt: now,

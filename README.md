@@ -1,6 +1,22 @@
 # 圓桌之夜 · Boardgame Online Platform
 
-React / TypeScript / Vite 桌遊平台，使用 Firebase Anonymous Auth、Realtime Database 與 callable Cloud Functions。大廳提供 Avalon（5–10 人）、驚爆倫敦原版（4–8 人）及驚爆倫敦：危機進化（4–6 人）三個入口，皆可單人與 AI 練習，或在好友房加入 AI 補位。
+React / TypeScript / Vite 桌遊平台，使用 Firebase Anonymous Auth、Realtime Database 與 callable Cloud Functions。大廳提供 Avalon（5–10 人）、驚爆倫敦原版（4–8 人）、驚爆倫敦：危機進化（4–6 人）及同房異夢（2–4 人）。前三款支援 AI 練習與補位；同房異夢由真人合作。
+
+## 同房異夢 · 圖像化合租解謎
+
+建立同房異夢房間，邀請 2–4 位朋友，由房主選擇符合人數的原創劇本。每人打開「我的秘密心願」閱讀圖卡，再按「讀完了，準備入住」。四個劇本包含兩個雙人、一個三人、一個四人劇本，每個都有經測試驗證的解法；解法僅存在測試資料，不會打包至前端。
+
+點房間牆面或家具位置，挑選物品／顏色，查看「現在 → 確認後」的房間對照，再確認佈置。每回合可新增、移除、同類替換、粉刷，已滿足全部個人心願時可略過；四人劇本另可交換臥室。室友用三種表情回應，所有人回應後換人。
+
+秘密心願以房間、家具、顏色、風格與數量圖示呈現，自己的條件會即時顯示 ✓／✗，文字保留於「心願詳解」。圖卡只有本人、合法收件人或終局揭曉後可見。UI 不提供自由文字聊天。
+
+雙人於第 15、20、25 輪結束後談心；三／四人於第 5、10、15、20、25 輪結束後開會。選表情、心願卡、收件人後送出，只有指定室友收到該條件。雙人分享持續累積；多人新分享取代前次分享。上方愛心時程與室友完成標記提示進度。所有人同時滿意立即獲勝，30 輪耗盡則失敗，結算顯示最終房屋、所有心願與分數。
+
+沿用既有匿名登入、房間、即時同步與斷線重連；`decorumPrivate/{uid}` 只允許本人讀取，所有操作與條件判定由 Functions 驗證。詳細對照見 [Decorum 實作狀態](docs/DECORUM_IMPLEMENTATION.md)。
+
+## 阿瓦隆結算與圖示
+
+結束時會優先彈出醒目的「好人陣營勝利／壞人陣營勝利」，關閉後查看圓桌與全員身份，也可隨時按「查看勝負」重開。隊伍表決使用圓形拇指贊成／反對票，秘密任務使用長方形聖杯／骷髏牌；戰報與任務地圖沿用相同任務圖示。AI 玩家名稱統一為隨機名稱加 `AI`（例如 `艾琳AI`），包括練習、補位及离席接手。
 
 ## 單人 AI 練習與驚爆倫敦
 
@@ -84,7 +100,7 @@ npm run lint
 npm test
 ```
 
-`npm test` 執行 Avalon、兩版驚爆倫敦及 AI 策略的 62 項測試。`lint` 包含前端 ESLint 與 Functions 嚴格 TypeScript 檢查。
+`npm test` 執行 Avalon、兩版驚爆倫敦、AI 命名／策略及同房異夢的規則測試。`lint` 包含前端 ESLint 與 Functions 嚴格 TypeScript 檢查。
 
 ```sh
 # 自行啟動並關閉 Emulator，需 Java；執行時不可已有相同 port 的 Emulator
@@ -93,7 +109,7 @@ npm run test:integration
 # 若 Emulator 已在執行，直接跑整合測試
 npm run test:services
 
-# Emulator 已執行時：多人 Avalon 及三種單人 AI 模式跑完整遊戲
+# Emulator 已執行時：多人 Avalon、AI 練習及四個同房異夢劇本跑完整遊戲
 npm run test:e2e
 ```
 
@@ -140,6 +156,7 @@ sessions/{code}/
   public/     房間、玩家、公開遊戲狀態；僅成員可讀，僅伺服器可寫
   private/    每位 uid 的 Avalon 角色與知識；本人可讀，僅伺服器可寫
   timebombPrivate/ 每位 uid 的陣營及手牌組成；本人可讀，僅伺服器可寫
+  decorumPrivate/ 每位 uid 的秘密條件及合法收到的分享；本人可讀，僅伺服器可寫
   secret/     未結算投票及驚爆倫敦實際牌序；客戶端一律不可讀寫
   presence/   uid/connections 與 lastSeen；成員可讀，僅本人可寫
 ```
@@ -150,7 +167,7 @@ sessions/{code}/
 
 Presence 使用每個分頁獨立 connection 與 `onDisconnect`。重新整理不移除成員。離線超過 90 秒可由任何留在房間的玩家清理；清理時與重新連線一起交易，避免使用過期判斷。房主明確離開或被清理時，依加入時間、uid 排序交接給最早玩家。最後一人離開則刪除 session。
 
-遊戲中離開／清理玩家會中止本局、公開終局資訊；新房主可再玩一局。這避免遊戲永久卡在缺席者的投票。尚未提供代投或中途補位。
+Avalon／驚爆倫敦遊戲中明確離開或被清理時，由 AI 保留座位及秘密資訊接手至本局結束。同房異夢則中止本局並揭曉所有心願，新房主可再開一局。短暫離線仍可等待玩家重連。
 
 ## 範圍與已知限制
 
