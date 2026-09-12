@@ -1,0 +1,9 @@
+# 璀璨寶石插畫
+
+`splendor-atlas.png` 由內建 image_gen 工具生成，未後製。為接近實體桌遊閱讀體驗的原創文藝復興插畫，並非官方卡面。程式以 SVG viewBox 裁切 3 × 3 圖集，保持原始比例；卡牌資訊與寶石另由 HTML/CSS/SVG 呈現。
+
+第一排：雪山礦場、綠色礦場、紅色礦場。第二排：珠寶商、商船、商隊。第三排：宮殿、威尼斯街景、貴族肖像。
+
+完整生成提示詞：
+
+> Create a production game illustration texture atlas, a single square image divided into an EXACT 3 by 3 grid of equal square cells, edge-to-edge artwork with absolutely NO gutters, NO borders, NO text, NO letters, NO numerals, NO symbols, NO card UI. Painterly realistic historical board game art, richly detailed Renaissance oil painting, natural pigments, atmospheric light, grounded proportions. Each cell is its own separate composition, objects contained within that cell, easy to recognize at small size. Row 1: left a rocky diamond mine and wooden mining gantry in snowy mountains in cool silver blue; middle a lush emerald hillside quarry with timber mine entrance and rough green stones in warm olive green; right ruby mining excavation in ochre red desert cliffs, cart and timber supports. Row 2: left a Renaissance merchant in brown cap examining a gemstone at his workbench, close view of hands and tools; middle a Mediterranean trading ship with cream sails at an old stone harbor, blue sea; right a camel caravan and red-robed merchant traveling a dusty golden route. Row 3: left grand Renaissance palace courtyard with arches and pale marble towers under blue sky; middle bustling Venetian canal street with ornate terracotta palazzi, bridge and merchants in sunlight; right intimate Renaissance oil portrait of a noblewoman in dark emerald velvet and pearls with a nobleman in burgundy velvet behind her, dark warm background, half-length. Cohesive premium physical boardgame illustration style reminiscent of gem-trading Renaissance tabletop cards, original compositions, no modern elements. Every square should be fully painted to its edges. This atlas will be displayed one cell at a time using CSS background-position.

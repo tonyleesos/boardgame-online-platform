@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   ArrowDownToLine,
   ArrowRight,
@@ -56,7 +56,13 @@ import { splendorAction } from "../../firebase/api";
 import { useAction } from "../../hooks/useAction";
 import type { Presence } from "../../hooks/useRoom";
 import { GameDialog } from "../../components/GameDialog";
-import { CardScene, GemIcon, GemAmount } from "./SplendorArt";
+import { Artwork, CardScene, GemIcon, GemAmount } from "./SplendorArt";
+import { SplendorTransfer } from "./SplendorTransfer";
+import {
+  captureTransfer,
+  type TransferPlayback,
+} from "./splendorTransferGeometry";
+import { describeTransfer } from "./splendorTransfers";
 import "./splendor.css";
 
 const EFFECT_NAMES = {
@@ -146,18 +152,14 @@ function DevelopmentTile({
   return (
     <button
       className={`sp-card ${affordable ? "affordable" : ""} ${small ? "small" : ""}`}
+      data-sp-source={`card:${card.id}`}
       onClick={onClick}
       aria-label={`${card.name}，${card.tier} 階，${GEM_NAMES[card.bonusColor]}加成，${card.prestige} 聲望`}
     >
       <CardScene card={card} />
       <span className="sp-card-head">
         <span className="sp-prestige">
-          {card.prestige > 0 && (
-            <>
-              {card.prestige}
-              <Star size={12} fill="currentColor" />
-            </>
-          )}
+          {card.prestige > 0 && card.prestige}
         </span>
         <span className="sp-card-bonus">
           <GemIcon color={card.bonusColor} size={30} />
@@ -174,11 +176,13 @@ function DevelopmentTile({
           <small>{game.players[h.ownerUid].nickname.slice(0, 2)}</small>
         </span>
       )}
+      <span className="sp-card-cost">
+        <Cost values={card.cost} />
+      </span>
       <span className="sp-card-foot">
         <small>
           {card.source === "orient" && <Sparkles size={11} />} {card.name}
         </small>
-        <Cost values={card.cost} />
       </span>
       {affordable && (
         <span className="sp-affordable">
@@ -221,6 +225,10 @@ function Board({
   game: SplendorPublicState;
 }) {
   const { pending, error, run } = useAction();
+  const boardRef = useRef<HTMLDivElement>(null);
+  const transferId = useRef(0);
+  const [transfer, setTransfer] = useState<TransferPlayback | null>(null);
+  const clearTransfer = useCallback(() => setTransfer(null), []);
   const [selection, setSelection] = useState<GemColor[]>([]),
     [double, setDouble] = useState(false);
   const [selected, setSelected] = useState<{
@@ -248,12 +256,19 @@ function Board({
   };
   const act = (a: SplendorAction) =>
     void run(async () => {
+      setTransfer(null);
+      const playback = captureTransfer(
+        describeTransfer(a, g, p, selected?.id),
+        boardRef.current,
+        ++transferId.current,
+      );
       await splendorAction(room.code, g, a);
       setSelected(null);
       setBlind(null);
       setSelection([]);
       setReturns(emptyTokens());
       setChoice({});
+      setTransfer(playback);
     });
   const selectGem = (c: GemColor) => {
     setSelectionRevision(g.revision);
@@ -303,7 +318,7 @@ function Board({
           }[g.phase]
         : `等待 ${current.nickname}`;
   return (
-    <div className="sp-game">
+    <div className="sp-game" ref={boardRef}>
       <header className="sp-heading">
         <div>
           <span className="sp-eyebrow">THE GEM ATELIER</span>
@@ -418,11 +433,13 @@ function Board({
         <div className="sp-patron-row">
           {(g.config.module === "cities" ? g.cities : g.nobles).map((n, i) => (
             <div key={n.id} className={`sp-patron patron-${i}`}>
-              <span className="sp-patron-seal">
+              <span
+                className={`sp-patron-seal ${g.config.module === "cities" ? "" : "sp-patron-portrait"}`}
+              >
                 {g.config.module === "cities" ? (
                   <Castle size={26} />
                 ) : (
-                  <Crown size={26} />
+                  <Artwork cell={8} />
                 )}
               </span>
               <div>
@@ -468,6 +485,7 @@ function Board({
                   >
                     <button
                       className={`sp-deck tier-${tier}`}
+                      data-sp-source={`deck:${source}${tier}`}
                       aria-label={`保留 ${source === "orient" ? "東方" : "基礎"} ${tier} 階暗牌`}
                       disabled={
                         !primary ||
@@ -547,8 +565,10 @@ function Board({
                 }
                 onClick={() => selectGem(c as GemColor)}
               >
-                <span className="sp-chip">
-                  <GemIcon color={c} size={38} />
+                <span className="sp-chip" data-sp-source={`token:${c}`}>
+                  <span className="sp-chip-face">
+                    <GemIcon color={c} size={38} />
+                  </span>
                 </span>
                 <b>{g.bank[c]}</b>
                 <small>{c === "gold" ? "保留獲得" : GEM_NAMES[c]}</small>
@@ -679,6 +699,24 @@ function Board({
             {calculatePrestige(p)}
             <small> / {g.config.module === "cities" ? "城市" : 15}</small>
           </b>
+          <span
+            className="sp-dock-cards"
+            data-sp-destination="cards"
+            aria-label={`已購入 ${p.purchasedCardIds.length} 張發展卡`}
+          >
+            <Layers size={13} />
+            {p.purchasedCardIds.length}
+            <small>張</small>
+          </span>
+          <span
+            className="sp-dock-cards"
+            data-sp-destination="reserves"
+            aria-label={`已保留 ${p.reservedCards.length} 張卡牌`}
+          >
+            <Bookmark size={13} />
+            {p.reservedCards.length}
+            <small>/ 3</small>
+          </span>
           <span>
             <Gem size={13} />
             {tokenTotal(p.tokens)} / {applyTradingPostModifiers(p).tokenLimit}
@@ -690,7 +728,12 @@ function Board({
             持有
           </span>
           {TOKEN_COLORS.map((c) => (
-            <GemAmount key={c} color={c} count={p.tokens[c]} />
+            <GemAmount
+              key={c}
+              color={c}
+              count={p.tokens[c]}
+              destination={`token:${c}`}
+            />
           ))}
         </div>
         <div className="sp-inventory">
@@ -1078,7 +1121,7 @@ function Board({
             <p>
               <ShoppingBag />
               <span>
-                <b>買卡牌</b>支付左下價格，獲得右上寶石的永久折扣。
+                <b>買卡牌</b>左上是聲望，左側圓圈是費用，右上寶石是永久折扣。
               </span>
             </p>
             <p>
@@ -1141,6 +1184,14 @@ function Board({
             開始打造收藏
           </button>
         </GameDialog>
+      )}
+      {transfer && (
+        <SplendorTransfer
+          key={transfer.id}
+          playback={transfer}
+          boardRef={boardRef}
+          onComplete={clearTransfer}
+        />
       )}
     </div>
   );

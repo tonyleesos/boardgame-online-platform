@@ -370,7 +370,7 @@
   border: 1px solid #e5dab877 !important;
   border-radius: 9px !important;
   padding: 0 !important;
-  background: #18313d !important;
+  background: #e5dfcc !important;
   box-shadow:
     0 5px 0 #06132088,
     0 7px 13px #0004;
@@ -411,7 +411,8 @@
   font-weight: bold;
   font-size: 30px;
   line-height: 1;
-  color: #ffedc1;
+  color: #fffdf2;
+  font-style: italic;
   text-shadow:
     0 2px 2px #000,
     1px 0 3px #000;
@@ -424,10 +425,10 @@
   display: flex;
   align-items: center;
   gap: 1px;
-  background: #0716248c;
+  background: #f7f1dbe8;
   padding: 4px;
-  border-radius: 50%;
-  border: 1px solid #e5d6a777;
+  border-radius: 7px;
+  border: 1px solid #fff8;
   box-shadow: 0 2px 5px #0005;
 }
 .sp-card-bonus b {
@@ -580,66 +581,63 @@
   min-height: 82px;
   gap: 4px;
 }
+/* Physical-style chips: saturated edges, ivory inset, individual gem cuts. */
+.sp-token {
+  --chip-edge: #e3e1d6;
+  --chip-dark: #8b918d;
+}
+.sp-token-blue {
+  --chip-edge: #166bab;
+  --chip-dark: #07345b;
+}
+.sp-token-green {
+  --chip-edge: #138658;
+  --chip-dark: #08432f;
+}
+.sp-token-red {
+  --chip-edge: #bd2532;
+  --chip-dark: #661923;
+}
+.sp-token-black {
+  --chip-edge: #30312d;
+  --chip-dark: #10120f;
+}
+.sp-token-gold {
+  --chip-edge: #f0cc36;
+  --chip-dark: #a77a12;
+}
 .sp-chip {
   position: relative;
   width: 53px;
   height: 51px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 25%, #7b8e99, #1c3545 70%);
-  border: 2px solid #a0b8c4;
+  background: var(--chip-edge);
+  border: 2px solid var(--chip-edge);
   display: grid;
   place-items: center;
   box-shadow:
-    0 3px 0 #354b56,
-    0 5px 0 #93a5ae,
-    0 8px 0 #243946,
-    0 11px 9px #0005;
+    inset 0 0 0 2px #ffffff70,
+    0 3px 0 var(--chip-dark),
+    0 5px 0 var(--chip-edge),
+    0 7px 0 var(--chip-dark),
+    0 10px 9px #0006;
   transition: transform 0.18s;
 }
-.sp-token-blue .sp-chip {
-  background: radial-gradient(circle at 35% 25%, #51a9da, #124466);
-  border-color: #79c9f2;
+.sp-chip-face {
+  display: grid;
+  place-items: center;
+  width: 76%;
+  height: 76%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 25%, #fffdf2, #d2cdbc);
+  border: 1px solid #fff4d5;
   box-shadow:
-    0 3px 0 #125079,
-    0 5px 0 #639eba,
-    0 8px 0 #183d60,
-    0 11px 9px #0005;
+    0 0 0 2px var(--chip-dark),
+    inset 0 1px 4px #80756560;
 }
-.sp-token-green .sp-chip {
-  background: radial-gradient(circle at 35% 25%, #52b28a, #155940);
-  border-color: #80dcb1;
-  box-shadow:
-    0 3px 0 #1c634c,
-    0 5px 0 #66ab91,
-    0 8px 0 #174634,
-    0 11px 9px #0005;
-}
-.sp-token-red .sp-chip {
-  background: radial-gradient(circle at 35% 25%, #cc7f83, #7b263f);
-  border-color: #e899a2;
-  box-shadow:
-    0 3px 0 #6e3141,
-    0 5px 0 #b46d7c,
-    0 8px 0 #502f37,
-    0 11px 9px #0005;
-}
-.sp-token-black .sp-chip {
-  background: radial-gradient(circle at 35% 25%, #696e85, #242637);
-  border-color: #a8a4b8;
-  box-shadow:
-    0 3px 0 #323449,
-    0 5px 0 #6c6f83,
-    0 8px 0 #282637,
-    0 11px 9px #0005;
-}
-.sp-token-gold .sp-chip {
-  background: radial-gradient(circle at 35% 25%, #dfbd6f, #896020);
-  border-color: #f4d695;
-  box-shadow:
-    0 3px 0 #916626,
-    0 5px 0 #d1b579,
-    0 8px 0 #765324,
-    0 11px 9px #0005;
+.sp-chip-face .sp-gem {
+  width: 90%;
+  height: 90%;
 }
 .sp-token > b {
   position: absolute;
@@ -1564,5 +1562,346 @@
   .sp-dialog * {
     animation: none !important;
     transition: none !important;
+  }
+}
+
+/* Card-reading order follows the tabletop: prestige, bonus, vertical cost. */
+.sp-card-cost {
+  position: absolute;
+  left: 5px;
+  bottom: 24px;
+  z-index: 1;
+}
+.sp-card-cost .sp-cost {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+.sp-card-cost .sp-amount {
+  position: relative;
+  width: 25px;
+  height: 25px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid #ffffe9;
+  background: var(--cost-color);
+  box-shadow:
+    0 1px 3px #000b,
+    inset 0 0 0 2px #ffffff25;
+  color: #fff;
+  font:
+    bold 17px/1 Georgia,
+    serif;
+  text-shadow: 0 1px 2px #000;
+}
+.sp-card-cost .sp-gem {
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  right: -8px;
+  bottom: -1px;
+}
+.sp-card-cost .sp-amount b {
+  position: relative;
+  margin-right: 2px;
+}
+.sp-white {
+  --cost-color: #f3f1df;
+}
+.sp-blue {
+  --cost-color: #1763a4;
+}
+.sp-green {
+  --cost-color: #157846;
+}
+.sp-red {
+  --cost-color: #b82931;
+}
+.sp-black {
+  --cost-color: #282923;
+}
+.sp-gold {
+  --cost-color: #d0a523;
+}
+.sp-card-cost .sp-white {
+  color: #252d2b;
+  text-shadow: none;
+}
+.sp-card-foot {
+  padding: 7px 7px 5px;
+  background: linear-gradient(transparent, #111a16de);
+}
+.sp-card-foot > small {
+  padding-left: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+.sp-card-head {
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 6px;
+  background: linear-gradient(100deg, #f6f2dd88, #f6f2dd55 65%, #f6f2ddd9);
+}
+.sp-card-bonus {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.sp-card-bonus b {
+  color: #292b20;
+}
+.sp-protected {
+  left: auto;
+  right: 4px;
+  top: 44px;
+  max-width: calc(100% - 40px);
+  flex-wrap: wrap;
+}
+.sp-patron-seal.sp-patron-portrait {
+  position: relative;
+  width: 52px;
+  height: 58px;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.sp-patron-portrait .sp-scene {
+  width: 100%;
+  height: 100%;
+}
+.sp-deck {
+  border: 2px solid #e5dcb9 !important;
+  background:
+    radial-gradient(ellipse at 70% 25%, #67934955, transparent 50%),
+    linear-gradient(160deg, #29592a, #102e1f) !important;
+}
+.sp-deck.tier-2 {
+  background:
+    radial-gradient(ellipse at 70% 25%, #ffe38655, transparent 50%),
+    linear-gradient(160deg, #b39238, #624315) !important;
+}
+.sp-deck.tier-3 {
+  background:
+    radial-gradient(ellipse at 70% 25%, #45afd055, transparent 50%),
+    linear-gradient(160deg, #146789, #113041) !important;
+}
+.sp-deck > span {
+  font-weight: 700;
+  color: #fff4ca;
+}
+.sp-card.small .sp-card-cost {
+  bottom: 20px;
+}
+.sp-card.small .sp-card-cost .sp-amount {
+  width: 18px;
+  height: 18px;
+  font-size: 13px;
+}
+.sp-card.small .sp-card-cost .sp-cost {
+  gap: 2px;
+}
+.sp-card.small .sp-card-cost .sp-gem {
+  width: 11px;
+  height: 11px;
+  right: -6px;
+}
+@media (max-width: 520px) {
+  .sp-card-cost {
+    left: 3px;
+    bottom: 18px;
+  }
+  .sp-card-cost .sp-cost {
+    gap: 2px;
+  }
+  .sp-card-cost .sp-amount {
+    width: 17px;
+    height: 17px;
+    font-size: 12px;
+  }
+  .sp-card-cost .sp-gem {
+    width: 10px;
+    height: 10px;
+    right: -6px;
+  }
+  .sp-card-head {
+    padding: 4px;
+  }
+  .sp-card-foot {
+    padding: 4px;
+  }
+  .sp-patron-seal.sp-patron-portrait {
+    width: 38px;
+    height: 46px;
+  }
+  .sp-chip-face .sp-gem {
+    width: 90%;
+    height: 90%;
+  }
+}
+
+/* Keep four-color prices below the header on narrow market and reserve cards. */
+.sp-card {
+  container-type: inline-size;
+  min-height: 140px;
+}
+.sp-card.small {
+  min-height: 144px;
+}
+@container (max-width: 110px) {
+  .sp-card-cost .sp-amount {
+    width: 18px;
+    height: 18px;
+    font-size: 13px;
+  }
+  .sp-card-cost .sp-cost {
+    gap: 2px;
+  }
+  .sp-card-cost .sp-gem {
+    width: 11px;
+    height: 11px;
+    right: -6px;
+  }
+}
+@media (max-width: 520px) {
+  .sp-card {
+    min-height: 136px;
+  }
+}
+
+.sp-dock-cards {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #ead7a9;
+  white-space: nowrap;
+}
+.sp-dock-cards small {
+  font-size: 9px;
+  color: #a6bcc3;
+}
+.sp-dock [data-sp-destination] {
+  border-radius: 8px;
+}
+.sp-transfer-layer {
+  --chip-edge: #e3e1d6;
+  --chip-dark: #8b918d;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow: visible;
+  background: transparent;
+  color: #f7ebca;
+  pointer-events: none;
+  z-index: 10000;
+}
+.sp-transfer-layer::backdrop {
+  background: transparent;
+  pointer-events: none;
+}
+.sp-transfer-layer * {
+  pointer-events: none;
+}
+.sp-transfer-item {
+  position: absolute;
+  left: 0;
+  top: 0;
+  will-change: transform, opacity;
+}
+.sp-transfer-item[hidden] {
+  display: none;
+}
+.sp-transfer-gem {
+  width: 56px;
+  height: 56px;
+  filter: drop-shadow(0 0 12px #efd58c99);
+}
+.sp-transfer-card {
+  width: 86px;
+  height: 118px;
+  border: 2px solid #f2d695;
+  border-radius: 9px;
+  overflow: hidden;
+  background: #18342b;
+  box-shadow:
+    0 8px 24px #0008,
+    0 0 18px #e5c48066;
+}
+.sp-transfer-card .sp-deck {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+}
+.sp-transfer-card-bonus {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  padding: 2px;
+  border-radius: 4px;
+  background: #fff3d4d9;
+}
+.sp-transfer-card > small {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8px 4px 4px;
+  background: linear-gradient(transparent, #071a16ed);
+  font-size: 10px;
+  color: #fff4da;
+}
+.sp-transfer-receipt {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(350px, calc(100vw - 24px));
+  box-sizing: border-box;
+  padding: 12px 16px;
+  border: 1px solid #e5c580b3;
+  border-radius: 12px;
+  background: linear-gradient(120deg, #24493ef5, #122b29fa);
+  box-shadow: 0 8px 28px #0007;
+  font-family: inherit;
+}
+.sp-transfer-receipt > svg {
+  flex-shrink: 0;
+  color: #a3efc3;
+}
+.sp-transfer-receipt strong {
+  display: block;
+  font-size: 14px;
+  color: #fff0c4;
+}
+.sp-transfer-receipt small {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #d0e1d5;
+}
+@media (max-width: 520px) {
+  .sp-dock-title {
+    flex-wrap: wrap;
+    gap: 7px;
+  }
+  .sp-dock-cards {
+    gap: 2px;
+  }
+  .sp-transfer-receipt {
+    padding: 10px 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-transfer-item {
+    display: none;
   }
 }
