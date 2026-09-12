@@ -44,6 +44,8 @@ export interface Game {
   submitted: Record<string, boolean>;
   revealed: Record<string, boolean>;
   lastTeamVote?: {
+    /** Identifies a completed ballot even when consecutive votes are identical. */
+    revision?: number;
     votes: Record<string, TeamVote>;
     approved: boolean;
     team: string[];

@@ -106,3 +106,356 @@
   .rejection-marks { gap: 4px; }
   .rejection-marks > span { width: 22px; height: 22px; }
 }
+
+/* Public ballots remain on the same seats while the expedition assembles. */
+.seat-ballot {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  margin-top: 3px;
+  border: 1px solid;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  animation: ballot-unseal 0.4s both;
+}
+.ballot-approve {
+  color: #c7edca;
+  background: #284e3f;
+  border-color: #83b29880;
+}
+.ballot-reject {
+  color: #ffd0bc;
+  background: #603a32;
+  border-color: #c6887180;
+}
+.expedition-scene {
+  max-width: 320px;
+  margin: auto;
+}
+.expedition-scene h3 {
+  font-size: clamp(16px, 2.1vw, 23px);
+}
+.expedition-theatre {
+  height: 102px;
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid #c8ad7040;
+  background: radial-gradient(ellipse at 50% 100%, #718d6040, transparent 70%);
+}
+.expedition-mountains {
+  position: absolute;
+  width: 140px;
+  height: 90px;
+  left: calc(50% - 70px);
+  bottom: 7px;
+  color: #71887566;
+  stroke-width: 1;
+}
+.expedition-ground {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: repeating-linear-gradient(
+    90deg,
+    #c5b68a66 0 15px,
+    transparent 15px 27px
+  );
+}
+.expedition-party {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 57px;
+  position: relative;
+}
+.expedition-theatre > .expedition-party {
+  position: absolute;
+  bottom: 9px;
+  left: calc(50% - 51px);
+}
+.expedition-knight {
+  position: relative;
+  display: inline-block;
+  width: 32px;
+  height: 48px;
+  transform-origin: bottom center;
+}
+.expedition-knight > svg:not(.expedition-flag):not(.expedition-shield) {
+  width: 100%;
+  height: 100%;
+}
+.expedition-flag {
+  position: absolute;
+  top: -9px;
+  left: 22px;
+  color: #efd08e;
+  transform-origin: left bottom;
+}
+.expedition-shield {
+  position: absolute;
+  top: 20px;
+  left: 1px;
+  color: #f3d89d;
+  fill: #3b665a;
+}
+.expedition-ballot .expedition-knight {
+  animation: knight-ready 1s var(--march-delay) infinite ease-in-out;
+}
+.expedition-ballot .expedition-flag {
+  animation: flag-wave 1.2s infinite ease-in-out;
+}
+.expedition-battle .expedition-knight,
+.expedition-travel .expedition-knight,
+.marching .expedition-knight {
+  animation: knight-march 0.45s var(--march-delay) infinite ease-in-out;
+}
+.expedition-battle .knight-leg,
+.expedition-travel .knight-leg,
+.marching .knight-leg {
+  transform-box: fill-box;
+  transform-origin: top;
+  animation: knight-step 0.45s var(--march-delay) infinite alternate ease-in-out;
+}
+.knight-leg.right {
+  animation-direction: alternate-reverse !important;
+}
+.expedition-battle .expedition-party {
+  animation: quest-charge 2.3s infinite ease-in-out;
+}
+.expedition-travel .expedition-ground,
+.expedition-battle .expedition-ground {
+  animation: terrain-pass 1s linear infinite;
+}
+.expedition-clash {
+  position: absolute;
+  top: 20px;
+  right: 6%;
+  width: 32px;
+  height: 32px;
+  color: #e8c184;
+  animation: sword-clash 0.65s infinite alternate;
+}
+.expedition-sparks {
+  position: absolute;
+  top: 9px;
+  right: 3%;
+  width: 22px;
+  color: #fff0bd;
+  animation: battle-spark 0.75s infinite;
+}
+.expedition-rejected .expedition-knight {
+  animation: knight-ready 1.5s var(--march-delay) infinite;
+  opacity: 0.7;
+}
+.expedition-rejected .expedition-clash {
+  color: #e8a38b;
+  animation: none;
+}
+.expedition-countdown {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 5px;
+  min-width: 60px;
+  margin: 2px 0 6px;
+  color: #f0d69b;
+}
+.expedition-countdown strong {
+  font:
+    42px/1.1 Georgia,
+    serif;
+  font-variant-numeric: tabular-nums;
+}
+.expedition-countdown > span {
+  font-size: 12px;
+}
+.quest-route {
+  position: relative;
+  height: 40px;
+  margin-top: 13px;
+  border-bottom: 1px dashed #bfa87750;
+}
+.quest-party-marker {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  transition: left 2s linear;
+}
+.expedition-party.compact {
+  height: 38px;
+  gap: 0;
+}
+.compact .expedition-knight {
+  width: 22px;
+  height: 33px;
+}
+.compact .expedition-flag {
+  width: 13px;
+  top: -5px;
+  left: 14px;
+}
+.compact .expedition-shield {
+  width: 10px;
+  top: 12px;
+}
+.expedition-outcome {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+  padding-top: 18px;
+}
+.expedition-outcome-seal {
+  color: #bddcb0;
+  animation: ballot-unseal 0.65s both;
+}
+.expedition-outcome-seal > svg {
+  width: 34px;
+  height: 34px;
+}
+.returned-victorious .expedition-knight {
+  animation: victory-jump 0.8s var(--march-delay) 3;
+}
+.returned-defeated .expedition-knight {
+  animation: weary-return 1.3s var(--march-delay) both;
+}
+.returned-defeated .expedition-outcome-seal {
+  color: #e8a38b;
+}
+@keyframes ballot-unseal {
+  from {
+    opacity: 0;
+    transform: translateY(5px) scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes knight-ready {
+  50% {
+    transform: translateY(-3px) rotate(3deg);
+  }
+}
+@keyframes flag-wave {
+  50% {
+    transform: skewY(-10deg);
+  }
+}
+@keyframes knight-march {
+  50% {
+    transform: translateY(-3px);
+  }
+}
+@keyframes knight-step {
+  from {
+    transform: rotate(-22deg);
+  }
+  to {
+    transform: rotate(22deg);
+  }
+}
+@keyframes quest-charge {
+  0%,
+  100% {
+    transform: translateX(-16px);
+  }
+  60% {
+    transform: translateX(12px);
+  }
+}
+@keyframes terrain-pass {
+  to {
+    background-position: -27px 0;
+  }
+}
+@keyframes sword-clash {
+  to {
+    transform: rotate(-17deg) scale(1.15);
+  }
+}
+@keyframes battle-spark {
+  0%,
+  100% {
+    opacity: 0.15;
+    transform: scale(0.6);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+@keyframes victory-jump {
+  50% {
+    transform: translateY(-9px) rotate(5deg);
+  }
+}
+@keyframes weary-return {
+  to {
+    transform: rotate(10deg) translateY(4px);
+    opacity: 0.6;
+  }
+}
+@media (max-width: 680px) {
+  .seat-ballot {
+    font-size: 10px;
+    gap: 3px;
+    padding: 2px 6px;
+  }
+  .seat-ballot svg {
+    width: 11px;
+    height: 11px;
+  }
+  .expedition-theatre {
+    height: 82px;
+  }
+  .expedition-clash {
+    right: 0;
+    width: 23px;
+  }
+  .expedition-scene h3 {
+    font-size: 16px;
+  }
+  .expedition-countdown strong {
+    font-size: 32px;
+  }
+  .quest-route {
+    height: 30px;
+    margin-top: 9px;
+  }
+  .expedition-party.compact {
+    height: 28px;
+  }
+  .compact .expedition-knight {
+    width: 16px;
+    height: 25px;
+  }
+  .compact .expedition-shield {
+    width: 8px;
+    top: 8px;
+  }
+  .compact .expedition-flag {
+    width: 10px;
+    left: 10px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .avalon-game .expedition-knight,
+  .avalon-game .knight-leg,
+  .avalon-game .expedition-party,
+  .avalon-game .expedition-flag,
+  .avalon-game .expedition-clash,
+  .avalon-game .expedition-sparks,
+  .avalon-game .expedition-ground,
+  .avalon-game .seat-ballot,
+  .expedition-outcome * {
+    animation: none !important;
+  }
+  .quest-party-marker {
+    transition: none;
+  }
+}

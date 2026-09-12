@@ -89,11 +89,17 @@ test("Avalon avatars, rejection track, mission reveal and modal priority", async
   ids.filter((id) => id !== uid).forEach((id) => applyGameAction(s, id, { type: "teamVote", vote: "approve" }));
   await save();
   await expect(page.getByLabel("連續否決 0 / 5 次")).toBeAttached();
+  await expect(page.locator(".seat-ballot")).toHaveCount(ids.length);
+  await expect(page.locator(".expedition-ballot")).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "選擇任務牌", exact: true })).toHaveCount(0);
   await expect(page.locator(".quest-card-art .lucide-trophy")).toHaveCount(1);
   await page.getByRole("button", { name: "任務成功", exact: true }).click();
   applyGameAction(s, ids[1], { type: "missionVote", vote: "success" });
   await save();
   const result = page.getByRole("dialog", { name: "任務結果", exact: true });
+  await expect(page.locator(".expedition-battle")).toBeVisible();
+  await expect(result).toHaveCount(0);
+  await expect(page.locator(".quest-stop.success, .quest-stop.fail")).toHaveCount(0);
   await expect(result.getByRole("heading", { name: "任務成功", exact: true })).toBeVisible();
   await expect(page.locator(".quest-stop.success")).toHaveCount(0);
   await fits(page, 390);
@@ -163,6 +169,12 @@ for (const ending of ["good", "assassinated", "three-fails"] as const) test(`Ava
   }
   await save();
   const victory = page.getByRole("dialog", { name: "阿瓦隆終局揭曉" });
+  if (ending === "three-fails") {
+    const report = page.getByRole("dialog", { name: "任務結果", exact: true });
+    await expect(report).toBeVisible();
+    await expect(victory).toHaveCount(0);
+    await report.getByRole("button", { name: "返回圓桌", exact: true }).click();
+  }
   await expect(victory.getByRole("heading", { name: ending === "good" ? "好人陣營勝利" : "壞人陣營勝利" })).toBeVisible();
   await expect(page.locator("dialog[open]")).toHaveCount(1);
   await page.emulateMedia({ reducedMotion: "reduce" });

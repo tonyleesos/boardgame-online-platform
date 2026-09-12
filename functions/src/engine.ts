@@ -149,6 +149,7 @@ export function applyGameAction(
           Object.values(session.secret.teamVotes),
         );
         game.lastTeamVote = {
+          revision: game.revision + 1,
           votes: { ...session.secret.teamVotes },
           approved,
           team: [...game.selectedPlayerIds],
