@@ -43,6 +43,11 @@
           "$uid": {
             ".read": "auth != null && auth.uid === $uid && root.child('sessions').child($code).child('public/players').child(auth.uid).exists() && root.child('sessions').child($code).child('public/players').child(auth.uid).child('isBot').val() !== true"
           }
+        },
+        "mafiaPrivate": {
+          "$uid": {
+            ".read": "auth != null && auth.uid === $uid && root.child('sessions').child($code).child('public/players').child(auth.uid).exists() && root.child('sessions').child($code).child('public/players').child(auth.uid).child('isBot').val() !== true"
+          }
         }
       }
     }

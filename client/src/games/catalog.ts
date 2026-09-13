@@ -9,11 +9,37 @@ export interface GameDefinition {
   supportsBots?: boolean;
 }
 export const games: GameDefinition[] = [
-  { id: "splendor", name: "璀璨寶石", subtitle: "SPLENDOR · THE GEM ATELIER", description: "從一枚寶石，到一座珠寶王國。收集、打造，讓你的收藏閃耀全場。", minPlayers: 2, maxPlayers: 4, enabled: true, supportsBots: true },
   {
-    id: "decorum", name: "同房異夢", subtitle: "DÉCORUM · A HOME FOR ALL",
-    description: "一個家，幾種理想生活。用一次次佈置與小小回應，找到室友之間的默契。",
-    minPlayers: 2, maxPlayers: 4, enabled: true, supportsBots: false,
+    id: "mafia-de-cuba",
+    name: "教父風雲：危情古巴",
+    subtitle: "MAFIA DE CUBA · HAVANA 1955",
+    description:
+      "雪茄盒沿桌傳遞，鑽石悄悄入袋。誰是忠心手下，誰又藏著另一個身分？",
+    minPlayers: 6,
+    maxPlayers: 12,
+    enabled: true,
+    supportsBots: true,
+  },
+  {
+    id: "splendor",
+    name: "璀璨寶石",
+    subtitle: "SPLENDOR · THE GEM ATELIER",
+    description: "從一枚寶石，到一座珠寶王國。收集、打造，讓你的收藏閃耀全場。",
+    minPlayers: 2,
+    maxPlayers: 4,
+    enabled: true,
+    supportsBots: true,
+  },
+  {
+    id: "decorum",
+    name: "同房異夢",
+    subtitle: "DÉCORUM · A HOME FOR ALL",
+    description:
+      "一個家，幾種理想生活。用一次次佈置與小小回應，找到室友之間的默契。",
+    minPlayers: 2,
+    maxPlayers: 4,
+    enabled: true,
+    supportsBots: false,
   },
   {
     id: "avalon",

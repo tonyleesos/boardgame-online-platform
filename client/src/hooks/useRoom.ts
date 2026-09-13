@@ -1,5 +1,9 @@
-import { normalizeSplendor } from '../../../functions/src/shared/splendor';
-import type { SplendorPrivate } from '../../../functions/src/shared/splendor';
+import {
+  normalizeMafia,
+  type MafiaPrivate,
+} from "../../../functions/src/shared/mafia";
+import { normalizeSplendor } from "../../../functions/src/shared/splendor";
+import type { SplendorPrivate } from "../../../functions/src/shared/splendor";
 import { useEffect, useState } from "react";
 import {
   onValue,
@@ -25,17 +29,33 @@ export function useRoom(code: string, uid: string) {
   const [room, setRoom] = useState<Room | null>(null);
   const [role, setRole] = useState<PrivateRole | null>(null);
   const [bombRole, setBombRole] = useState<BombPrivate | null>(null);
-  const [decorumPrivate, setDecorumPrivate] = useState<DecorumPrivate | null>(null);
-  const [splendorPrivate, setSplendorPrivate] = useState<SplendorPrivate | null>(null);
+  const [decorumPrivate, setDecorumPrivate] = useState<DecorumPrivate | null>(
+    null,
+  );
+  const [mafiaPrivate, setMafiaPrivate] = useState<MafiaPrivate | null>(null);
+  const [splendorPrivate, setSplendorPrivate] =
+    useState<SplendorPrivate | null>(null);
   const [presence, setPresence] = useState<Record<string, Presence>>({});
   const [connected, setConnected] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState("");
+  const [privateError, setPrivateError] = useState("");
+  const [presenceError, setPresenceError] = useState("");
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     if (!firebase) return;
     const db = firebase.database;
     let active = true;
     let connection: ReturnType<typeof ref> | undefined;
+    let unsubscribePrivate: (() => void) | undefined;
+    let privatePath: string | undefined;
+    const clearPrivate = () => {
+      setRole(null);
+      setBombRole(null);
+      setDecorumPrivate(null);
+      setSplendorPrivate(null);
+      setMafiaPrivate(null);
+    };
     const fail = (e: unknown) => {
       if (active) {
         setError(errorMessage(e));
@@ -47,16 +67,17 @@ export function useRoom(code: string, uid: string) {
           String(e.code).toUpperCase().includes("PERMISSION")
         ) {
           setRoom(null);
-          setRole(null);
-          setBombRole(null);
-          setDecorumPrivate(null);
-          setSplendorPrivate(null);
+          clearPrivate();
+          unsubscribePrivate?.();
+          unsubscribePrivate = undefined;
+          privatePath = undefined;
         }
       }
     };
     const unsubscribeRoom = onValue(
       ref(db, `sessions/${code}/public`),
       (snap) => {
+        if (!active) return;
         const value = snap.val() as Room | null;
         if (value?.decorum) normalizeDecorum(value.decorum);
         if (value?.game) {
@@ -76,45 +97,99 @@ export function useRoom(code: string, uid: string) {
           g.history ??= [];
           for (const id of g.order) g.hands[id] ??= [];
         }
+        if (value?.mafia) normalizeMafia(value.mafia);
         if (value?.splendor) normalizeSplendor(value.splendor);
+        const member = value?.players?.[uid];
+        const branches: Record<string, string> = {
+          avalon: "private",
+          timebomb: "timebombPrivate",
+          "timebomb-classic": "timebombPrivate",
+          decorum: "decorumPrivate",
+          splendor: "splendorPrivate",
+          "mafia-de-cuba": "mafiaPrivate",
+        };
+        const branch =
+          value && value.status !== "waiting" && member && !member.isBot
+            ? branches[value.gameId]
+            : undefined;
+        if (branch !== privatePath) {
+          unsubscribePrivate?.();
+          unsubscribePrivate = undefined;
+          privatePath = branch;
+          clearPrivate();
+          setPrivateError("");
+          if (branch)
+            unsubscribePrivate = onValue(
+              ref(db, `sessions/${code}/${branch}/${uid}`),
+              (privateSnap) => {
+                if (!active || privatePath !== branch) return;
+                setPrivateError("");
+                const data = privateSnap.val();
+                switch (branch) {
+                  case "private": {
+                    const p = data as PrivateRole | null;
+                    if (p) p.knowledge ??= [];
+                    setRole(p);
+                    break;
+                  }
+                  case "timebombPrivate": {
+                    const p = data as BombPrivate | null;
+                    if (p) p.inventory ??= {};
+                    setBombRole(p);
+                    break;
+                  }
+                  case "decorumPrivate": {
+                    const p = data as DecorumPrivate | null;
+                    if (p) {
+                      p.conditions ??= [];
+                      p.sharedConditionsReceived ??= [];
+                      p.sharedConditionIds ??= [];
+                    }
+                    setDecorumPrivate(p);
+                    break;
+                  }
+                  case "splendorPrivate": {
+                    const p = data as SplendorPrivate | null;
+                    if (p) p.reserved ??= {};
+                    setSplendorPrivate(p);
+                    break;
+                  }
+                  case "mafiaPrivate": {
+                    const p = data as MafiaPrivate | null;
+                    if (p?.currentBoxView) p.currentBoxView.tokens ??= [];
+                    setMafiaPrivate(p);
+                    break;
+                  }
+                }
+              },
+              () => {
+                if (!active || privatePath !== branch) return;
+                clearPrivate();
+                setPrivateError(
+                  "私人資料暫時無法讀取。你的座位已保留，請重新載入私人資料。",
+                );
+              },
+            );
+        }
         setRoom(value);
         setLoaded(true);
         setError("");
       },
       fail,
     );
-    const unsubscribeRole = onValue(
-      ref(db, `sessions/${code}/private/${uid}`),
-      (snap) => {
-        const value = snap.val() as PrivateRole | null;
-        if (value) value.knowledge ??= [];
-        setRole(value);
-      },
-      fail,
-    );
+    const presenceFail = (e: unknown) => {
+      if (active) setPresenceError(errorMessage(e));
+    };
     const unsubscribePresence = onValue(
       ref(db, `sessions/${code}/presence`),
-      (snap) => setPresence(snap.val() ?? {}),
-      fail,
-    );
-    const unsubscribeBomb = onValue(
-      ref(db, `sessions/${code}/timebombPrivate/${uid}`),
       (snap) => {
-        const value = snap.val() as BombPrivate | null;
-        if (value) value.inventory ??= {};
-        setBombRole(value);
+        if (active) {
+          setPresence(snap.val() ?? {});
+          setPresenceError("");
+        }
       },
-      fail,
+      presenceFail,
     );
-    const unsubscribeDecorum = onValue(
-      ref(db, `sessions/${code}/decorumPrivate/${uid}`),
-      (snap) => {
-        const value = snap.val() as DecorumPrivate | null;
-        if (value) { value.conditions ??= []; value.sharedConditionsReceived ??= []; value.sharedConditionIds ??= []; }
-        setDecorumPrivate(value);
-      }, fail,
-    );
-    const unsubscribeSplendor = onValue(ref(db, `sessions/${code}/splendorPrivate/${uid}`), snap => { const value = snap.val() as SplendorPrivate | null; if (value) value.reserved ??= {}; setSplendorPrivate(value); }, fail);
     const unsubscribeConnection = onValue(
       ref(db, ".info/connected"),
       (snap) => {
@@ -136,18 +211,15 @@ export function useRoom(code: string, uid: string) {
             await onDisconnect(current).cancel();
             await remove(current);
           }
-        })().catch(fail);
+        })().catch(presenceFail);
       },
-      fail,
+      presenceFail,
     );
     return () => {
       active = false;
       unsubscribeRoom();
-      unsubscribeRole();
+      unsubscribePrivate?.();
       unsubscribePresence();
-      unsubscribeBomb();
-      unsubscribeDecorum();
-      unsubscribeSplendor();
       unsubscribeConnection();
       if (connection)
         void update(ref(db, `sessions/${code}/presence/${uid}`), {
@@ -155,6 +227,19 @@ export function useRoom(code: string, uid: string) {
           lastSeen: serverTimestamp(),
         }).catch(() => {});
     };
-  }, [code, uid]);
-  return { room, role, bombRole, decorumPrivate, splendorPrivate, presence, connected, loaded, error };
+  }, [code, uid, attempt]);
+  return {
+    room,
+    role,
+    bombRole,
+    mafiaPrivate,
+    decorumPrivate,
+    splendorPrivate,
+    presence,
+    connected,
+    loaded,
+    error: error || privateError || presenceError,
+    privateError,
+    retry: () => setAttempt((n) => n + 1),
+  };
 }

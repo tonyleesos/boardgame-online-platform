@@ -1,4 +1,17 @@
-import type { SplendorPublicState, SplendorPrivate, SplendorSecret, SplendorAction, SplendorConfig } from './splendor';
+import type {
+  MafiaPublicState,
+  MafiaPrivate,
+  MafiaSecret,
+  MafiaAction,
+  MafiaConfig,
+} from "./mafia";
+import type {
+  SplendorPublicState,
+  SplendorPrivate,
+  SplendorSecret,
+  SplendorAction,
+  SplendorConfig,
+} from "./splendor";
 export type Role =
   "merlin" | "percival" | "servant" | "assassin" | "morgana" | "minion";
 export type Side = "good" | "evil";
@@ -64,6 +77,8 @@ export interface Room {
   game?: Game;
   timebomb?: BombGame;
   decorum?: DecorumPublicState;
+  mafia?: MafiaPublicState;
+  mafiaConfig?: MafiaConfig;
   splendor?: SplendorPublicState;
   splendorConfig?: SplendorConfig;
   decorumScenarioId?: string;
@@ -82,8 +97,10 @@ export interface Session {
   private: Record<string, PrivateRole>;
   timebombPrivate?: Record<string, BombPrivate>;
   decorumPrivate?: Record<string, DecorumPrivate>;
+  mafiaPrivate?: Record<string, MafiaPrivate>;
   splendorPrivate?: Record<string, SplendorPrivate>;
   secret: {
+    mafia?: MafiaSecret;
     splendor?: SplendorSecret;
     teamVotes: Record<string, TeamVote>;
     missionVotes: Record<string, MissionVote>;
@@ -100,6 +117,7 @@ export type GameAction =
   | { type: "continue" }
   | { type: "assassinate"; target: string };
 export type RoomAction =
+  | { type: "mafiaConfig"; config: MafiaConfig }
   | { type: "splendorConfig"; config: SplendorConfig }
   | { type: "decorScenario"; scenarioId: string }
   | { type: "addBot" }
@@ -109,8 +127,10 @@ export type RoomAction =
   | { type: "start" }
   | { type: "rematch" }
   | { type: "recover" };
-export type PlatformGameAction = GameAction | BombAction | DecorumAction | SplendorAction;
+export type PlatformGameAction =
+  GameAction | BombAction | DecorumAction | SplendorAction | MafiaAction;
 export const GAME_LIMITS: Record<string, { min: number; max: number }> = {
+  "mafia-de-cuba": { min: 6, max: 12 },
   splendor: { min: 2, max: 4 },
   avalon: { min: 5, max: 10 },
   decorum: { min: 2, max: 4 },
@@ -132,4 +152,8 @@ import type {
   BombVariant,
   Wire,
 } from "./timebomb";
-import type { DecorumPublicState, DecorumPrivate, DecorumAction } from "./decorum";
+import type {
+  DecorumPublicState,
+  DecorumPrivate,
+  DecorumAction,
+} from "./decorum";

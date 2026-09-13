@@ -1,0 +1,648 @@
+.mafia-game {
+  --mafia-gold: #d7b674;
+  --mafia-ink: #f1e4c5;
+  color: var(--mafia-ink);
+  max-width: 1160px;
+  margin: auto;
+}
+.mafia-art {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: hidden;
+  pointer-events: none;
+}
+.mafia-heading,
+.mafia-status,
+.mafia-toolbar,
+.mafia-action-panel {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.mafia-heading {
+  justify-content: space-between;
+  margin: 14px 0;
+}
+.mafia-heading h2 {
+  font-family: Georgia, serif;
+  font-size: clamp(20px, 3vw, 30px);
+  margin: 6px 0;
+}
+.mafia-status {
+  padding: 10px 18px;
+  border: 1px solid #bc985541;
+  border-radius: 12px;
+  background: #203b35;
+  flex-wrap: wrap;
+}
+.mafia-status > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.mafia-status .mafia-art {
+  width: 30px;
+  height: 34px;
+  border-radius: 5px;
+}
+.mafia-status small {
+  margin-left: auto;
+  color: #d7b674;
+}
+.mafia-table {
+  height: 590px;
+  position: relative;
+  isolation: isolate;
+  margin: 20px 0;
+  background: radial-gradient(ellipse at center, #234b40, #142d29 60%, #11241f);
+  border: 1px solid #9874407a;
+  border-radius: 46%;
+  box-shadow:
+    inset 0 0 0 10px #5a361e55,
+    inset 0 0 0 13px #c7a55e30,
+    0 25px 55px #0004;
+}
+.mafia-table-grain {
+  position: absolute;
+  inset: 22px;
+  border: 1px dashed #b2945444;
+  border-radius: 50%;
+  background: repeating-radial-gradient(
+    ellipse at center,
+    transparent 0 40px,
+    #d8b87305 41px 42px
+  );
+  pointer-events: none;
+}
+.mafia-table.is-finished {
+  display: none;
+}
+.mafia-seat {
+  position: absolute;
+  z-index: 2;
+  transform: translate(-50%, -50%);
+  width: 108px;
+  min-height: 96px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 5px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: #112722d9;
+  color: #f1e4c5;
+  box-shadow: 0 5px 15px #0002;
+}
+.mafia-seat:disabled {
+  opacity: 1;
+  cursor: default;
+}
+.mafia-seat:not(:disabled):hover {
+  border-color: #e3b965;
+  box-shadow: 0 0 24px #d6b36c40;
+}
+.mafia-seat strong {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.mafia-seat > small {
+  font-size: 10px;
+  color: #b9c6b6;
+}
+.mafia-seat.has-box {
+  border-color: #d7b67488;
+}
+.mafia-seat.accused {
+  border-color: #d77355;
+  box-shadow: 0 0 24px #c8463433;
+}
+.mafia-seat.eliminated {
+  filter: grayscale(0.8);
+  opacity: 0.65;
+}
+.mafia-portrait {
+  position: relative;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #315044;
+  display: grid;
+  place-items: center;
+  border: 1px solid #c8ad6a80;
+}
+.mafia-portrait > .mafia-art {
+  border-radius: 50%;
+}
+.mafia-portrait > svg:not(.mafia-art) {
+  color: #bda66b;
+  width: 32px;
+  height: 32px;
+}
+.mafia-portrait > b {
+  position: absolute;
+  bottom: -3px;
+  left: -7px;
+  font-size: 10px;
+  background: #122820;
+  border: 1px solid #8b7a50;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+}
+.mafia-portrait > .mafia-skull {
+  position: absolute;
+  color: #fff !important;
+  filter: drop-shadow(0 2px 3px #000);
+}
+.mafia-diamond-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+}
+.mafia-table-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 45%;
+  text-align: center;
+  display: grid;
+  gap: 8px;
+  color: #e0c388;
+}
+.mafia-table-center span {
+  font-size: clamp(12px, 2vw, 19px);
+}
+.mafia-table-center small {
+  font-size: 11px;
+  color: #95aa93;
+}
+.mafia-travelling-box {
+  position: absolute;
+  z-index: 3;
+  transform: translate(-50%, -50%);
+  width: 88px;
+  pointer-events: none;
+  filter: drop-shadow(0 8px 10px #0008);
+}
+.mafia-travelling-box .mafia-art {
+  border-radius: 14px;
+}
+.mafia-action-panel {
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 18px;
+  background: #273e33;
+  border: 1px solid #d7b67466;
+  border-radius: 14px;
+}
+.mafia-action-panel > div > small {
+  display: block;
+  color: #c2ccbc;
+  font-size: 12px;
+}
+.mafia-game button,
+.mafia-private-dialog button {
+  min-height: 44px;
+}
+.mafia-game .primary,
+.mafia-private-dialog .primary {
+  background: #d7b674;
+  color: #202b24;
+}
+.mafia-counter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mafia-counter button {
+  min-width: 44px;
+  padding: 10px;
+}
+.mafia-counter span {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 54px;
+  justify-content: center;
+  font-size: 22px;
+}
+.mafia-toolbar {
+  justify-content: center;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+.mafia-settings {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 18px;
+  max-width: 600px;
+  margin: 12px auto;
+}
+.mafia-settings > .mafia-art {
+  width: 120px;
+  border-radius: 14px;
+}
+.mafia-settings label {
+  display: grid;
+  gap: 8px;
+}
+.mafia-settings small {
+  flex-basis: 100%;
+  color: #aeb8ab;
+}
+.mafia-settings .mafia-toggle {
+  display: flex;
+  align-items: center;
+}
+.mafia-toggle input {
+  width: 20px;
+  height: 20px;
+}
+.mafia-private-dialog {
+  width: min(650px, calc(100% - 24px));
+  background: linear-gradient(145deg, #23392e, #17251f);
+  border-color: #b89755;
+}
+.mafia-open-box {
+  width: 230px;
+  margin: 0 auto;
+  border-radius: 16px;
+}
+.mafia-box-caption {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin: 12px;
+}
+.mafia-discard {
+  text-align: center;
+  margin-bottom: 12px;
+}
+.mafia-discard small {
+  display: block;
+  margin: 8px;
+  color: #c4cabb;
+}
+.mafia-token-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+  gap: 9px;
+}
+.mafia-token-grid button {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  background: #102820;
+  border: 1px solid #80714b55;
+  border-radius: 12px;
+  padding: 8px 5px;
+  font-size: 11px;
+  color: #eee3c4;
+}
+.mafia-token-grid .mafia-art {
+  max-width: 80px;
+  border-radius: 50%;
+}
+.mafia-box-decision .selected {
+  border-color: #f0cd7d;
+  box-shadow: 0 0 0 2px #d2ae6944;
+  background: #75623e55;
+}
+.mafia-token-grid .discarded {
+  opacity: 0.3;
+  filter: grayscale(1);
+  text-decoration: line-through;
+}
+.mafia-diamond-choice {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  margin: 16px 0;
+  flex-wrap: wrap;
+}
+.mafia-diamond-choice > button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+}
+.mafia-diamond-choice .mafia-art {
+  width: 55px;
+  border-radius: 8px;
+}
+.mafia-confirm-take {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  box-shadow: 0 -8px 20px #17251faa;
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+.mafia-choice-help {
+  font-size: 13px;
+  text-align: center;
+  color: #d5c8a5;
+}
+.mafia-inventory {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.mafia-inventory > span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.mafia-inventory .mafia-art {
+  width: 62px;
+  border-radius: 50%;
+}
+.mafia-inventory small {
+  font-size: 11px;
+}
+.mafia-returned {
+  text-align: center;
+}
+.mafia-returned > .mafia-art {
+  width: 230px;
+  margin: auto;
+  border-radius: 12px;
+}
+.mafia-returned p {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.mafia-confirm,
+.mafia-role-card,
+.mafia-receipt {
+  text-align: center;
+  padding: 20px;
+}
+.mafia-confirm > .actions {
+  justify-content: center;
+  margin-top: 24px;
+}
+.mafia-role-card > .mafia-art {
+  width: 160px;
+  margin: auto;
+  border-radius: 50%;
+}
+.mafia-role-card p {
+  line-height: 1.7;
+}
+.mafia-receipt .mafia-art {
+  width: 130px;
+  margin: auto;
+  border-radius: 50%;
+}
+.mafia-receipt > svg {
+  color: #d7b674;
+  margin-top: -10px;
+}
+.mafia-receipt h2 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.mafia-help p {
+  line-height: 1.8;
+}
+.mafia-help p:first-child {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+.mafia-help .mafia-art {
+  display: inline-block;
+  width: 38px;
+  vertical-align: middle;
+  border-radius: 5px;
+}
+.mafia-help p:first-child .mafia-art {
+  width: 100px;
+}
+.mafia-accusation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 20px;
+  border: 1px solid #d7b67466;
+  border-radius: 14px;
+  background: #3e3126;
+  animation: mafia-suspense 1s ease-in-out infinite alternate;
+}
+.mafia-countdown {
+  display: grid;
+  place-items: center;
+  border: 1px solid #d7b67488;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  font-size: 23px;
+}
+.mafia-reveal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 18px;
+  border: 1px solid #b49755;
+  border-radius: 14px;
+  background: #2c4033;
+}
+.mafia-reveal > .mafia-art {
+  width: 65px;
+  border-radius: 50%;
+}
+.mafia-reveal p {
+  margin-bottom: 0;
+  font-size: 13px;
+}
+.mafia-results {
+  padding: 24px;
+  border: 1px solid #b49755;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #2b3d30, #152b25);
+}
+.mafia-results h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #e6c687;
+}
+.mafia-final-stash {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 14px;
+}
+.mafia-final-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(115px, 1fr));
+  gap: 12px;
+  margin: 20px 0;
+}
+.mafia-final-grid > div {
+  position: relative;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 7px;
+  border: 1px solid #73857544;
+  border-radius: 12px;
+}
+.mafia-final-grid .mafia-art {
+  width: 80px;
+  border-radius: 50%;
+}
+.mafia-final-grid strong {
+  font-size: 13px;
+}
+.mafia-final-grid span {
+  font-size: 12px;
+  color: #c6cbb5;
+}
+.mafia-final-grid small {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.mafia-final-grid > .winner {
+  border-color: #d7b674;
+  background: #b3923f1c;
+}
+.mafia-winner-icon {
+  position: absolute;
+  right: 7px;
+  top: 7px;
+  width: 18px;
+  color: #e9c56e;
+}
+.game-card.mafia-de-cuba .game-art {
+  background: radial-gradient(ellipse, #45634c, #152e28);
+}
+.game-card.mafia-de-cuba .game-art > .mafia-art {
+  width: 200px;
+  height: 200px;
+  position: relative;
+  z-index: 1;
+  border-radius: 16px;
+}
+.mafia-game button:focus-visible,
+.mafia-private-dialog button:focus-visible {
+  outline: 3px solid #f9d682;
+  outline-offset: 3px;
+}
+@keyframes mafia-suspense {
+  from {
+    box-shadow: 0 0 0 #d9a65600;
+  }
+  to {
+    box-shadow: 0 0 25px #d9a65620;
+  }
+}
+@media (max-width: 640px) {
+  .mafia-table[data-compact="true"] {
+    height: 440px;
+  }
+  .mafia-table {
+    height: 565px;
+    border-radius: 38%;
+    margin: 18px 8px;
+  }
+  .mafia-seat {
+    width: 73px;
+    min-height: 78px;
+    padding: 4px;
+  }
+  .mafia-portrait {
+    width: 39px;
+    height: 39px;
+  }
+  .mafia-seat strong {
+    font-size: 10px;
+  }
+  .mafia-seat > small {
+    font-size: 9px;
+  }
+  .mafia-travelling-box {
+    width: 59px;
+  }
+  .mafia-table-center .eyebrow {
+    font-size: 8px;
+    letter-spacing: 2px;
+  }
+  .mafia-table-center small {
+    font-size: 9px;
+  }
+  .mafia-status {
+    gap: 10px;
+    padding: 8px 10px;
+  }
+  .mafia-status small {
+    font-size: 11px;
+  }
+  .mafia-token-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .mafia-open-box {
+    width: 140px;
+  }
+  .mafia-token-grid .mafia-art {
+    max-width: 64px;
+  }
+  .mafia-heading h2 {
+    font-size: 21px;
+  }
+  .mafia-action-panel {
+    gap: 12px;
+  }
+  .mafia-final-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .mafia-results {
+    padding: 15px;
+  }
+  .mafia-final-grid .mafia-art {
+    width: 65px;
+  }
+  .mafia-results .section-heading {
+    flex-wrap: wrap;
+  }
+  .mafia-settings > .mafia-art {
+    width: 90px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mafia-game *,
+  .mafia-private-dialog * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

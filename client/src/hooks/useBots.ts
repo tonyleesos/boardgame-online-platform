@@ -10,9 +10,13 @@ export function useBots(room: Room | null, connected: boolean) {
     Object.values(room.players).some((p) => p.isBot);
   const token = room?.game
     ? `${room.game.id}:${room.game.revision}`
-    : room?.timebomb
-      ? `${room.timebomb.id}:${room.timebomb.revision}`
-      : room?.splendor ? `${room.splendor.id}:${room.splendor.revision}` : "";
+    : room?.mafia
+      ? `${room.mafia.id}:${room.mafia.revision}`
+      : room?.timebomb
+        ? `${room.timebomb.id}:${room.timebomb.revision}`
+        : room?.splendor
+          ? `${room.splendor.id}:${room.splendor.revision}`
+          : "";
   useEffect(() => {
     if (!enabled || !code) return;
     let active = true,

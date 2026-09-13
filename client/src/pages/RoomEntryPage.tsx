@@ -18,7 +18,8 @@ export function RoomEntryPage({ join = false }: { join?: boolean }) {
   const { pending, error, run } = useAction();
   const game = games.find((g) => g.id === gameId && g.enabled);
   const [params] = useSearchParams();
-  const practice = !join && game?.supportsBots !== false && params.get("mode") === "practice";
+  const practice =
+    !join && game?.supportsBots !== false && params.get("mode") === "practice";
   const [playerCount, setPlayerCount] = useState(game?.minPlayers ?? 5);
   const [botLevel, setBotLevel] = useState<"casual" | "standard">("standard");
   return (
@@ -85,10 +86,20 @@ export function RoomEntryPage({ join = false }: { join?: boolean }) {
               }
             >
               <option value="casual">輕鬆 · 更多隨機選擇</option>
-              <option value="standard">{gameId === "splendor" ? "標準 · 規劃寶石與卡牌交易" : "標準 · 參考公開紀錄推理"}</option>
+              <option value="standard">
+                {gameId === "mafia-de-cuba"
+                  ? "標準 · 拿取策略與指控練習"
+                  : gameId === "splendor"
+                    ? "標準 · 規劃寶石與卡牌交易"
+                    : "標準 · 參考公開紀錄推理"}
+              </option>
             </select>
             <p className="fine">
-              {gameId === "splendor" ? "AI 會規劃拿取、保留與購買，只使用公開市場和自己的保留卡。" : "策略型 AI 只知道自己的情報，不會偷看你的身份或牌序。發言可能是虛張聲勢。"}
+              {gameId === "mafia-de-cuba"
+                ? "AI 只使用自己的資訊，指控仍是猜測。開局前可選自己或 AI 當教父，練習不同角色。"
+                : gameId === "splendor"
+                  ? "AI 會規劃拿取、保留與購買，只使用公開市場和自己的保留卡。"
+                  : "策略型 AI 只知道自己的情報，不會偷看你的身份或牌序。發言可能是虛張聲勢。"}
             </p>
           </>
         )}

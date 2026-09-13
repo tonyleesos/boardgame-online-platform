@@ -1,6 +1,16 @@
-import { startSplendorGame, applySplendorAction, validateSplendorConfig } from './splendor/engine';
-import { splendorToken } from './shared/splendor';
-import type { SplendorAction } from './shared/splendor';
+import {
+  startMafia,
+  applyMafiaAction,
+  validateMafiaConfig,
+} from "./mafia/engine";
+import { mafiaToken, type MafiaAction } from "./shared/mafia";
+import {
+  startSplendorGame,
+  applySplendorAction,
+  validateSplendorConfig,
+} from "./splendor/engine";
+import { splendorToken } from "./shared/splendor";
+import type { SplendorAction } from "./shared/splendor";
 import { initializeApp } from "firebase-admin/app";
 import { getDatabase } from "firebase-admin/database";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
@@ -159,7 +169,10 @@ export const createRoom = callable(async (uid, data) => {
     "無效的 AI 難度",
   );
   const limits = GAME_LIMITS[data.gameId];
-  ensure(data.gameId !== "decorum" || data.mode !== "practice", "同房異夢需要 2–4 位真人合作");
+  ensure(
+    data.gameId !== "decorum" || data.mode !== "practice",
+    "此遊戲僅提供真人朋友房",
+  );
   const variant = data.gameId === "timebomb-classic" ? "classic" : "evolution";
   ensure(
     data.bombVariant === undefined || data.bombVariant === variant,
@@ -218,7 +231,10 @@ export const joinRoom = callable(async (uid, data) => {
   await mutate(roomCode, (session) => {
     const room = session.public;
     if (room.players[uid]) {
-      ensure(!room.players[uid].isBot, "此座位已由 AI 接手，請等待本局結束後再加入");
+      ensure(
+        !room.players[uid].isBot,
+        "此座位已由 AI 接手，請等待本局結束後再加入",
+      );
       return session;
     }
     ensure(room.mode !== "practice", "此房間為單人練習，請建立自己的練習桌");
@@ -249,16 +265,45 @@ export const roomAction = callable(async (uid, data) => {
     ensure(room.players[uid] && !room.players[uid].isBot, "你不在房間內");
     switch (action.type) {
       case "splendorConfig":
-        ensure(room.gameId === "splendor" && room.hostId === uid && room.status === "waiting", "只有房主能在等待時設定遊戲");
+        ensure(
+          room.gameId === "splendor" &&
+            room.hostId === uid &&
+            room.status === "waiting",
+          "只有房主能在等待時設定遊戲",
+        );
         validateSplendorConfig(action.config);
         room.splendorConfig = action.config;
-        Object.values(room.players).forEach(p => { p.ready = !!p.isBot; });
+        Object.values(room.players).forEach((p) => {
+          p.ready = !!p.isBot;
+        });
         break;
       case "decorScenario":
-        ensure(room.gameId === "decorum" && room.hostId === uid && room.status === "waiting", "只有房主能在等待時選擇劇本");
-        ensure(DECORUM_SCENARIOS.some((v) => v.id === action.scenarioId), "找不到這個劇本");
+        ensure(
+          room.gameId === "decorum" &&
+            room.hostId === uid &&
+            room.status === "waiting",
+          "只有房主能在等待時選擇劇本",
+        );
+        ensure(
+          DECORUM_SCENARIOS.some((v) => v.id === action.scenarioId),
+          "找不到這個劇本",
+        );
         room.decorumScenarioId = action.scenarioId;
-        Object.values(room.players).forEach((p) => { p.ready = false; });
+        Object.values(room.players).forEach((p) => {
+          p.ready = false;
+        });
+        break;
+      case "mafiaConfig":
+        ensure(
+          room.hostId === uid &&
+            room.status === "waiting" &&
+            room.gameId === "mafia-de-cuba",
+          "只有房主可在等待時更改設定",
+        );
+        room.mafiaConfig = validateMafiaConfig(action.config);
+        Object.values(room.players).forEach((p) => {
+          p.ready = !!p.isBot;
+        });
         break;
       case "ready":
         ensure(room.status === "waiting", "遊戲已開始");
@@ -269,9 +314,16 @@ export const roomAction = callable(async (uid, data) => {
         ensure(room.hostId === uid, "只有房主可以開始");
         room.activity = [];
         delete room.botActionAt;
-        if (room.gameId === "splendor") startSplendorGame(session, gameId, shuffled(seed));
-        else if (room.gameId === "decorum") startDecorum(session, gameId, shuffled(seed));
-        else if (room.gameId === "timebomb" || room.gameId === "timebomb-classic")
+        if (room.gameId === "mafia-de-cuba")
+          startMafia(session, gameId, shuffled(seed));
+        else if (room.gameId === "splendor")
+          startSplendorGame(session, gameId, shuffled(seed));
+        else if (room.gameId === "decorum")
+          startDecorum(session, gameId, shuffled(seed));
+        else if (
+          room.gameId === "timebomb" ||
+          room.gameId === "timebomb-classic"
+        )
           startBomb(
             session,
             gameId,
@@ -281,7 +333,7 @@ export const roomAction = callable(async (uid, data) => {
         else startGame(session, gameId, shuffled(seed));
         break;
       case "addBot": {
-        ensure(room.gameId !== "decorum", "同房異夢僅提供真人合作");
+        ensure(room.gameId !== "decorum", "此遊戲僅提供真人朋友房");
         ensure(
           room.hostId === uid && room.status === "waiting",
           "只有房主能在等待時新增 AI",
@@ -320,6 +372,8 @@ export const roomAction = callable(async (uid, data) => {
         delete room.game;
         delete room.timebomb;
         delete room.decorum;
+        delete room.mafia;
+        session.mafiaPrivate = {};
         delete room.splendor;
         session.splendorPrivate = {};
         delete room.botActionAt;
@@ -338,7 +392,11 @@ export const roomAction = callable(async (uid, data) => {
         });
         break;
       case "recover": {
-        ensure(room.gameId !== "splendor" || room.status !== "playing", "璀璨寶石保留離線玩家座位，請等待重新連線");
+        ensure(
+          !["splendor", "mafia-de-cuba"].includes(room.gameId) ||
+            room.status !== "playing",
+          "本局保留離線玩家座位，請等待重新連線",
+        );
         // Presence and membership share this transaction, so a reconnect forces
         // a retry and cannot be removed using an outdated offline snapshot.
         const stale = Object.values(room.players)
@@ -377,17 +435,29 @@ export const gameAction = callable(async (uid, data) => {
       session.public.players[uid] && !session.public.players[uid].isBot,
       "你不在房間內",
     );
+    if (session.public.gameId === "mafia-de-cuba") {
+      const game = session.public.mafia;
+      ensure(
+        game && data.phaseToken === mafiaToken(game),
+        "遊戲階段已變更，請確認畫面後再操作",
+      );
+      return applyMafiaAction(session, uid, data.action as MafiaAction);
+    }
     if (session.public.gameId === "splendor") {
       const game = session.public.splendor;
-      ensure(game && data.phaseToken === splendorToken(game), "遊戲階段已變更，請確認畫面後再操作");
+      ensure(
+        game && data.phaseToken === splendorToken(game),
+        "遊戲階段已變更，請確認畫面後再操作",
+      );
       return applySplendorAction(session, uid, data.action as SplendorAction);
     }
-    if (
-      session.public.gameId === "decorum"
-    ) {
+    if (session.public.gameId === "decorum") {
       const game = session.public.decorum;
       ensure(game, "遊戲尚未開始");
-      ensure(data.phaseToken === decorumToken(game), "遊戲階段已變更，請確認畫面後再操作");
+      ensure(
+        data.phaseToken === decorumToken(game),
+        "遊戲階段已變更，請確認畫面後再操作",
+      );
       return applyDecorumAction(session, uid, data.action as DecorumAction);
     }
     if (

@@ -1,3 +1,6 @@
+import { chooseMafiaAction } from "./mafia/bot";
+import { applyMafiaAction } from "./mafia/engine";
+import type { MafiaAction } from "./shared/mafia";
 import type {
   Game,
   GameAction,
@@ -179,16 +182,31 @@ export function chooseBombAction(
       return null;
   }
 }
-function speech(a: GameAction | BombAction | SplendorAction) {
+function speech(a: GameAction | BombAction | SplendorAction | MafiaAction) {
   switch (a.type) {
-    case "splendorTake": return `收集 ${a.colors.length} 種寶石，準備下一筆交易。`;
-    case "splendorDouble": return "拿取兩枚同色寶石。";
-    case "splendorBuy": return "完成交易，擴充我的珠寶收藏。";
-    case "splendorReserve": case "splendorBlind": return "先保留一張卡，留給下一次交易。";
-    case "splendorReturn": return "退回多餘代幣，保留下一步需要的寶石。";
-    case "splendorNoble": return "邀請貴族來訪。";
-    case "splendorStronghold": return a.cardId ? "調整市場上的要塞。" : "這次略過要塞操作。";
-    case "splendorSkip": return "這次略過額外購買。";
+    case "mafiaPrepare":
+      return "雪茄盒準備好了，請依序傳遞。";
+    case "mafiaTake":
+      return "我已完成選擇，雪茄盒交給下一位。";
+    case "mafiaAccuse":
+      return "我想請這位朋友掏出口袋，確認我的猜測。";
+    case "splendorTake":
+      return `收集 ${a.colors.length} 種寶石，準備下一筆交易。`;
+    case "splendorDouble":
+      return "拿取兩枚同色寶石。";
+    case "splendorBuy":
+      return "完成交易，擴充我的珠寶收藏。";
+    case "splendorReserve":
+    case "splendorBlind":
+      return "先保留一張卡，留給下一次交易。";
+    case "splendorReturn":
+      return "退回多餘代幣，保留下一步需要的寶石。";
+    case "splendorNoble":
+      return "邀請貴族來訪。";
+    case "splendorStronghold":
+      return a.cardId ? "調整市場上的要塞。" : "這次略過要塞操作。";
+    case "splendorSkip":
+      return "這次略過額外購買。";
     case "claim":
       return `我這輪有 ${a.successes} 張解除引線。`;
     case "select":
@@ -216,9 +234,13 @@ function speech(a: GameAction | BombAction | SplendorAction) {
 export const botToken = (r: Room) =>
   r.game
     ? `${r.game.id}:${r.game.revision}`
-    : r.timebomb
-      ? `${r.timebomb.id}:${r.timebomb.revision}`
-      : r.splendor ? `${r.splendor.id}:${r.splendor.revision}` : "";
+    : r.mafia
+      ? `${r.mafia.id}:${r.mafia.revision}`
+      : r.timebomb
+        ? `${r.timebomb.id}:${r.timebomb.revision}`
+        : r.splendor
+          ? `${r.splendor.id}:${r.splendor.revision}`
+          : "";
 export function advanceOneBot(s: Session, shuffle: Shuffle): boolean {
   if (s.public.status !== "playing") return false;
   const ids = Object.values(s.public.players)
@@ -226,8 +248,21 @@ export function advanceOneBot(s: Session, shuffle: Shuffle): boolean {
     .map((p) => p.uid);
   for (const uid of ids) {
     const casual = s.public.botLevel === "casual";
-    let action: GameAction | BombAction | SplendorAction | null = null;
-    if (s.public.game) {
+    let action: GameAction | BombAction | SplendorAction | MafiaAction | null =
+      null;
+    if (s.public.mafia) {
+      action = chooseMafiaAction(
+        uid,
+        structuredClone(s.public.mafia),
+        structuredClone(s.mafiaPrivate![uid]),
+        shuffle,
+        casual,
+      );
+      if (action) applyMafiaAction(s, uid, action);
+      // A cleaner decision is private: no public activity, timestamp, revision
+      // or moved response may reveal whether an AI cleaner was present.
+      if (action?.type === "mafiaCleaner") return false;
+    } else if (s.public.game) {
       action = chooseAvalonAction(
         uid,
         structuredClone(s.public.game),
@@ -246,7 +281,13 @@ export function advanceOneBot(s: Session, shuffle: Shuffle): boolean {
       );
       if (action) applyBombAction(s, uid, action, shuffle);
     } else if (s.public.splendor) {
-      action = chooseSplendorAction(uid, structuredClone(normalizeSplendor(s.public.splendor)), structuredClone(s.splendorPrivate![uid]), shuffle, casual);
+      action = chooseSplendorAction(
+        uid,
+        structuredClone(normalizeSplendor(s.public.splendor)),
+        structuredClone(s.splendorPrivate![uid]),
+        shuffle,
+        casual,
+      );
       if (action) Object.assign(s, applySplendorAction(s, uid, action));
     }
     if (action) {
@@ -255,7 +296,11 @@ export function advanceOneBot(s: Session, shuffle: Shuffle): boolean {
         {
           uid,
           message: speech(action),
-          sequence: s.public.game?.revision ?? s.public.timebomb?.revision ?? s.public.splendor!.revision,
+          sequence:
+            s.public.game?.revision ??
+            s.public.timebomb?.revision ??
+            s.public.mafia?.revision ??
+            s.public.splendor!.revision,
         },
       ].slice(-20);
       return true;

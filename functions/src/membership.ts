@@ -1,3 +1,4 @@
+import { finishMafia } from "./mafia/engine";
 import type { Session } from "./shared/model";
 import { ensure } from "./shared/rules";
 import { finishDecorum } from "./decorum/engine";
@@ -10,9 +11,26 @@ export function leaveSeat(session: Session, uid: string): Session | null {
   const room = session.public;
   const player = room.players[uid];
   ensure(player && !player.isBot, "你不在房間內");
-  if (room.gameId === "decorum" && room.status === "playing") finishDecorum(session, "player-left");
-  if (room.gameId === "splendor" && room.status === "playing" && room.splendor) {
-    room.splendor.aborted = true; room.splendor.phase = "GAME_OVER"; room.splendor.winners = []; room.splendor.revision++; room.status = "finished";
+  if (
+    room.gameId === "mafia-de-cuba" &&
+    room.status === "playing" &&
+    room.mafia
+  ) {
+    finishMafia(session, "ABORTED");
+    room.mafia.revision++;
+  }
+  if (room.gameId === "decorum" && room.status === "playing")
+    finishDecorum(session, "player-left");
+  if (
+    room.gameId === "splendor" &&
+    room.status === "playing" &&
+    room.splendor
+  ) {
+    room.splendor.aborted = true;
+    room.splendor.phase = "GAME_OVER";
+    room.splendor.winners = [];
+    room.splendor.revision++;
+    room.status = "finished";
   }
   if (room.status === "playing") {
     player.nickname = botNickname(room.players, `${room.code}:${uid}`);
@@ -24,15 +42,21 @@ export function leaveSeat(session: Session, uid: string): Session | null {
     ensure(game, "遊戲資料不完整");
     game.revision++;
     delete room.botActionAt;
-    room.activity = [...(room.activity ?? []), {
-      uid,
-      message: "已離席，由 AI 接手本局。",
-      sequence: game.revision,
-    }].slice(-20);
+    room.activity = [
+      ...(room.activity ?? []),
+      {
+        uid,
+        message: "已離席，由 AI 接手本局。",
+        sequence: game.revision,
+      },
+    ].slice(-20);
   } else {
     delete room.players[uid];
     if (session.private) delete session.private[uid];
     if (session.timebombPrivate) delete session.timebombPrivate[uid];
+    if (session.mafiaPrivate) delete session.mafiaPrivate[uid];
+    if (room.mafiaConfig?.godfatherId === uid)
+      delete room.mafiaConfig.godfatherId;
     if (session.splendorPrivate) delete session.splendorPrivate[uid];
     if (session.decorumPrivate) delete session.decorumPrivate[uid];
   }
