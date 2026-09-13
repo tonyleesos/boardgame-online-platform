@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { safeReturnPath } from "../firebase/account";
 import { ArrowRight, Crown } from "lucide-react";
 import { motion } from "motion/react";
 import { usePlayer } from "../app/context";
@@ -7,6 +8,7 @@ export function HomePage() {
   const player = usePlayer();
   const [name, setName] = useState(player.nickname);
   const navigate = useNavigate();
+  const location = useLocation();
   return (
     <motion.section
       className="welcome panel"
@@ -21,7 +23,7 @@ export function HomePage() {
         你相信誰？
       </h1>
       <p className="muted">
-        和朋友相聚圓桌，在一場阿瓦隆裡
+        和朋友相聚圓桌，在每一場遊戲裡
         <br />
         交換線索、試探謊言、守護你的秘密。
       </p>
@@ -30,7 +32,7 @@ export function HomePage() {
           e.preventDefault();
           if (name.trim()) {
             player.setNickname(name.trim());
-            navigate("/games");
+            navigate(safeReturnPath(location.state?.from));
           }
         }}
       >
@@ -48,7 +50,7 @@ export function HomePage() {
           <ArrowRight size={18} />
         </button>
       </form>
-      <small className="muted">免註冊 · 分享房號就能一起玩</small>
+      <small className="muted">已登入會員 · 分享房號邀朋友一起玩</small>
     </motion.section>
   );
 }

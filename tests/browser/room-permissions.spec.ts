@@ -1,4 +1,5 @@
-﻿import { test, expect } from "@playwright/test";
+import { registerPlayer } from "./auth-helpers";
+import { test, expect } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 
 test("missing game-private permissions preserve membership; retry recovers; unrelated games still work", async ({
@@ -23,9 +24,7 @@ test("missing game-private permissions preserve membership; retry recovers; unre
   };
   await updateRules(oldRules);
   try {
-    await page.goto("/");
-    await page.getByLabel("讓大家認識你").fill("Permission test");
-    await page.getByRole("button", { name: "入座，開始冒險" }).click();
+    await registerPlayer(page, "Permission test");
     await page.goto("/create/mafia-de-cuba?mode=practice");
     await page.getByRole("button", { name: "建立練習桌" }).click();
     await expect(

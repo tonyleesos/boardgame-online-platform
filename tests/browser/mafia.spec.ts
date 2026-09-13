@@ -1,3 +1,4 @@
+import { registerPlayer } from "./auth-helpers";
 import { test, expect, type Page } from "@playwright/test";
 
 test("Mafia: twelve seats, private taking, passing, reconnect, accusations and final reveal", async ({
@@ -12,9 +13,7 @@ test("Mafia: twelve seats, private taking, passing, reconnect, accusations and f
   for (const p of [father, guest])
     p.on("pageerror", (e) => errors.push(e.message));
   async function login(page: Page, name: string) {
-    await page.goto("/");
-    await page.getByLabel("讓大家認識你").fill(name);
-    await page.getByRole("button", { name: "入座，開始冒險" }).click();
+    await registerPlayer(page, name);
   }
   await login(father, "Havana Father");
   await father
@@ -51,7 +50,7 @@ test("Mafia: twelve seats, private taking, passing, reconnect, accusations and f
     const r = await fetch(signup, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ returnSecureToken: true }),
+      body: JSON.stringify({ email: `test-${crypto.randomUUID()}@example.test`, password: "Boardgame-test-72!", returnSecureToken: true }),
     });
     const p = await r.json();
     players.push(p);
@@ -191,9 +190,7 @@ for (const aiFather of [false, true]) {
     page,
   }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto("/");
-    await page.getByLabel("讓大家認識你").fill("Solo Havana");
-    await page.getByRole("button", { name: "入座，開始冒險" }).click();
+    await registerPlayer(page, "Solo Havana");
     await page
       .locator(".game-card.mafia-de-cuba")
       .getByRole("link", { name: "單人練習 · 與 AI 對局" })

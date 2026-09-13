@@ -1,3 +1,4 @@
+import { registerPlayer } from "./auth-helpers";
 import { test, expect } from "@playwright/test";
 test("five independent browsers complete Avalon, reconnect, rematch, and mobile layouts", async ({
   browser,
@@ -11,9 +12,7 @@ test("five independent browsers complete Avalon, reconnect, rematch, and mobile 
   const names = ["Tony", "Kevin", "Alice", "小明", "小華"];
   try {
     for (let i = 0; i < 5; i++) {
-      await pages[i].goto("/");
-      await pages[i].getByLabel("讓大家認識你").fill(names[i]);
-      await pages[i].getByRole("button", { name: "入座，開始冒險" }).click();
+      await registerPlayer(pages[i], names[i]);
       await expect(
         pages[i].getByRole("heading", { name: "好戲，從這一桌開始。" }),
       ).toBeVisible();
@@ -170,11 +169,7 @@ test("five independent browsers complete Avalon, reconnect, rematch, and mobile 
       const p = await context.newPage();
       pages.push(p);
       p.on("pageerror", (e) => errors.push(e.message));
-      await p.goto("/");
-      await p
-        .getByLabel("讓大家認識你")
-        .fill(i === 9 ? "LongNicknameTestUserX" : `夥伴${i + 1}`);
-      await p.getByRole("button", { name: "入座，開始冒險" }).click();
+      await registerPlayer(p, i === 9 ? "LongNicknameTestUserX" : `夥伴${i + 1}`);
       await p.locator(".avalon").getByRole("link", { name: "加入房間", exact: true }).click();
       await p.getByLabel("房間代碼").fill(code);
       await p.getByRole("button", { name: "加入房間", exact: true }).click();

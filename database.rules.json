@@ -5,27 +5,27 @@
     "sessions": {
       "$code": {
         "public": {
-          ".read": "auth != null && data.child('players').child(auth.uid).exists() && data.child('players').child(auth.uid).child('isBot').val() !== true"
+          ".read": "auth != null && auth.token.firebase.sign_in_provider === 'password' && auth.token.email != null && data.child('players').child(auth.uid).exists() && data.child('players').child(auth.uid).child('isBot').val() !== true"
         },
         "private": {
           "$uid": {
-            ".read": "auth != null && auth.uid === $uid && root.child('sessions').child($code).child('public/players').child(auth.uid).exists() && root.child('sessions').child($code).child('public/players').child(auth.uid).child('isBot').val() !== true"
+            ".read": "auth != null && auth.token.firebase.sign_in_provider === 'password' && auth.token.email != null && auth.uid === $uid && root.child('sessions').child($code).child('public/players').child(auth.uid).exists() && root.child('sessions').child($code).child('public/players').child(auth.uid).child('isBot').val() !== true"
           }
         },
         "timebombPrivate": {
           "$uid": {
-            ".read": "auth != null && auth.uid === $uid && root.child('sessions').child($code).child('public/players').child(auth.uid).exists() && root.child('sessions').child($code).child('public/players').child(auth.uid).child('isBot').val() !== true"
+            ".read": "auth != null && auth.token.firebase.sign_in_provider === 'password' && auth.token.email != null && auth.uid === $uid && root.child('sessions').child($code).child('public/players').child(auth.uid).exists() && root.child('sessions').child($code).child('public/players').child(auth.uid).child('isBot').val() !== true"
           }
         },
         "decorumPrivate": {
           "$uid": {
-            ".read": "auth != null && auth.uid === $uid && root.child('sessions').child($code).child('public/players').child(auth.uid).exists() && root.child('sessions').child($code).child('public/players').child(auth.uid).child('isBot').val() !== true"
+            ".read": "auth != null && auth.token.firebase.sign_in_provider === 'password' && auth.token.email != null && auth.uid === $uid && root.child('sessions').child($code).child('public/players').child(auth.uid).exists() && root.child('sessions').child($code).child('public/players').child(auth.uid).child('isBot').val() !== true"
           }
         },
         "presence": {
-          ".read": "auth != null && root.child('sessions').child($code).child('public/players').child(auth.uid).exists() && root.child('sessions').child($code).child('public/players').child(auth.uid).child('isBot').val() !== true",
+          ".read": "auth != null && auth.token.firebase.sign_in_provider === 'password' && auth.token.email != null && root.child('sessions').child($code).child('public/players').child(auth.uid).exists() && root.child('sessions').child($code).child('public/players').child(auth.uid).child('isBot').val() !== true",
           "$uid": {
-            ".write": "auth != null && auth.uid === $uid && root.child('sessions').child($code).child('public/players').child(auth.uid).exists() && root.child('sessions').child($code).child('public/players').child(auth.uid).child('isBot').val() !== true",
+            ".write": "auth != null && auth.token.firebase.sign_in_provider === 'password' && auth.token.email != null && auth.uid === $uid && root.child('sessions').child($code).child('public/players').child(auth.uid).exists() && root.child('sessions').child($code).child('public/players').child(auth.uid).child('isBot').val() !== true",
             "connections": {
               "$connection": {
                 ".validate": "newData.val() === true"
@@ -41,12 +41,12 @@
         },
         "splendorPrivate": {
           "$uid": {
-            ".read": "auth != null && auth.uid === $uid && root.child('sessions').child($code).child('public/players').child(auth.uid).exists() && root.child('sessions').child($code).child('public/players').child(auth.uid).child('isBot').val() !== true"
+            ".read": "auth != null && auth.token.firebase.sign_in_provider === 'password' && auth.token.email != null && auth.uid === $uid && root.child('sessions').child($code).child('public/players').child(auth.uid).exists() && root.child('sessions').child($code).child('public/players').child(auth.uid).child('isBot').val() !== true"
           }
         },
         "mafiaPrivate": {
           "$uid": {
-            ".read": "auth != null && auth.uid === $uid && root.child('sessions').child($code).child('public/players').child(auth.uid).exists() && root.child('sessions').child($code).child('public/players').child(auth.uid).child('isBot').val() !== true"
+            ".read": "auth != null && auth.token.firebase.sign_in_provider === 'password' && auth.token.email != null && auth.uid === $uid && root.child('sessions').child($code).child('public/players').child(auth.uid).exists() && root.child('sessions').child($code).child('public/players').child(auth.uid).child('isBot').val() !== true"
           }
         }
       }

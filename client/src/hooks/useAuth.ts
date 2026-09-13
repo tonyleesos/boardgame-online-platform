@@ -1,44 +1,52 @@
-import { useEffect, useState } from "react";
-import {
-  browserLocalPersistence,
-  onAuthStateChanged,
-  setPersistence,
-  signInAnonymously,
-} from "firebase/auth";
+﻿import { useEffect, useState } from "react";
+import { onIdTokenChanged, type User } from "firebase/auth";
 import { firebase, configError } from "../firebase/config";
 import { errorMessage } from "../firebase/api";
-let signingIn: Promise<unknown> | undefined;
 export function useAuth() {
-  const [uid, setUid] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(configError);
   useEffect(() => {
-    const auth = firebase?.auth;
-    if (!auth) return;
-    let active = true;
-    const unsubscribe = onAuthStateChanged(
-      auth,
-      (user) => {
-        if (active) setUid(user?.uid ?? null);
+    if (!firebase) return;
+    let active = true,
+      version = 0;
+    const unsubscribe = onIdTokenChanged(
+      firebase.auth,
+      async (current) => {
+        const revision = ++version;
+        try {
+          const token =
+            current && !current.isAnonymous
+              ? await current.getIdTokenResult()
+              : null;
+          if (!active || revision !== version) return;
+          setUser(
+            token?.signInProvider === "password" && current?.email
+              ? current
+              : null,
+          );
+          setLoaded(true);
+          setError(null);
+        } catch (e) {
+          if (active && revision === version) {
+            setUser(null);
+            setLoaded(true);
+            setError(errorMessage(e));
+          }
+        }
       },
       (e) => {
-        if (active) setError(errorMessage(e));
+        if (active) {
+          setUser(null);
+          setLoaded(true);
+          setError(errorMessage(e));
+        }
       },
     );
-    signingIn ??= setPersistence(auth, browserLocalPersistence)
-      .then(() => auth.authStateReady())
-      .then(async () => {
-        if (!auth.currentUser) await signInAnonymously(auth);
-      })
-      .finally(() => {
-        signingIn = undefined;
-      });
-    signingIn.catch((e) => {
-      if (active) setError(errorMessage(e));
-    });
     return () => {
       active = false;
       unsubscribe();
     };
   }, []);
-  return { uid, error };
+  return { user, loaded, error };
 }

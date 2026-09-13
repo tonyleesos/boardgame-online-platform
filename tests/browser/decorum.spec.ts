@@ -1,3 +1,4 @@
+import { registerPlayer } from "./auth-helpers";
 import { test, expect, type Page } from "@playwright/test";
 import type { Room } from "../../functions/src/shared/model";
 import type { DecorumPrivate, HouseAction } from "../../functions/src/shared/decorum";
@@ -41,12 +42,8 @@ for (const [count, scenarioId] of [[2, "demo-two-01"], [2, "demo-two-02"], [3, "
   try {
     for (const [i, context] of contexts.entries()) {
       const page = await context.newPage(); page.on("pageerror", (e) => errors.push(e.message));
-      const auth = page.waitForResponse((r) => r.url().includes("accounts:signUp"));
-      await page.goto("/");
-      const { localId: uid, idToken } = await (await auth).json();
-      actors.push({ page, uid, idToken });
-      await page.getByLabel("讓大家認識你").fill(["Tony", "Kevin", "Amy", "小華"][i]);
-      await page.getByRole("button", { name: "入座，開始冒險" }).click();
+      const {localId:uid,idToken} = await registerPlayer(page,["Tony","Kevin","Amy","Mary"][i]);
+      actors.push({page,uid,idToken});
     }
     const host = actors[0];
     await expect(host.page.locator(".game-card.decorum")).toContainText("同房異夢");

@@ -28,7 +28,7 @@ npx playwright test tests/browser/splendor-practice.spec.ts
 
 雙人於第 15、20、25 輪結束後談心；三／四人於第 5、10、15、20、25 輪結束後開會。選表情、心願卡、收件人後送出，只有指定室友收到該條件。雙人分享持續累積；多人新分享取代前次分享。上方愛心時程與室友完成標記提示進度。所有人同時滿意立即獲勝，30 輪耗盡則失敗，結算顯示最終房屋、所有心願與分數。
 
-沿用既有匿名登入、房間、即時同步與斷線重連；`decorumPrivate/{uid}` 只允許本人讀取，所有操作與條件判定由 Functions 驗證。詳細對照見 [Decorum 實作狀態](docs/DECORUM_IMPLEMENTATION.md)。
+沿用會員登入、房間、即時同步與斷線重連；`decorumPrivate/{uid}` 只允許本人讀取，所有操作與條件判定由 Functions 驗證。詳細對照見 [Decorum 實作狀態](docs/DECORUM_IMPLEMENTATION.md)。
 
 ## 阿瓦隆結算與圖示
 
@@ -76,12 +76,16 @@ npm run emulators
 
 ## 連接既有 Firebase 專案
 
+平台入口為 `/login`。新玩家先到 `/register` 建立電子郵件／密碼帳號，設定暱稱後即可進入大廳；既有玩家登入後可建立朋友房或 AI 練習桌。`/reset-password` 提供忘記密碼，頁首右側按鈕可登出。
+
+未登入時，直接開啟遊戲或房間網址會回到登入頁，登入完成後返回原本目的地。所有遊戲 callable 與資料庫讀寫另行驗證 Firebase 的密碼登入憑證，不能靠跳過頁面或舊匿名憑證取得存取權。
+
 正式專案 ID：`boardgame-online-platfor-c5ebd`（以 `.firebaserc` 為準），既有 Web App：`1:901989736962:web:d742face7f4ddee90b3d1b`。請沿用此專案，無須重新註冊 App。
 
 前後端必須連到相同專案，並將 Functions、資料庫規則與 Hosting 同步部署。若大廳已顯示新遊戲但建房回報「此遊戲尚未開放 [400]」，請確認正式 Functions 已更新，而非只部署前端。
 
 1. 以有專案權限的帳號進入 Firebase Console。
-2. **Authentication → Sign-in method → Anonymous**：啟用匿名登入。
+2. **Authentication → Sign-in method**：啟用 **Email/Password**、停用 **Anonymous**。`npm run deploy` 會部署 `firebase.json` 的 Auth 設定，並以 `scripts/configure-auth.cjs` 明確關閉匿名登入（目前 Firebase CLI 不會處理 provider 的 `false` 值）。
 3. **Realtime Database → Create database**：選擇適合台灣玩家的可用亞洲區域，例如 Console 若提供 Singapore (`asia-southeast1`)，並以 locked mode 建立。資料庫區域與 Functions 區域不必相同。
 4. 複製 Console 顯示的完整資料庫 URL，不要自行猜測。
 5. 將 `client/.env.example` 複製為 `client/.env.local`，填入 API key 與 `VITE_FIREBASE_DATABASE_URL`。此工作目錄已設定正式 Web config，該檔案被 Git 忽略。
@@ -135,7 +139,7 @@ E2E 會自行啟動測試前端（5174）。`playwright.config.ts` 預設 Edge�
 
 ## 部署
 
-確認 `.firebaserc`、兩端環境變數、Blaze 與登入帳號後，使用統一部署指令，同時更新 Functions、規則與前端。不要以公開 test rules 取代本專案規則。
+確認 `.firebaserc`、兩端環境變數、Blaze 與登入帳號後，使用統一部署指令，同時更新 Authentication、Functions、規則與前端。不要以公開 test rules 取代本專案規則。
 
 ```sh
 npx firebase login
@@ -189,7 +193,8 @@ Avalon／驚爆倫敦遊戲中明確離開或被清理時，由 AI 保留座位�
 
 - 開放朋友房與單人練習，未加入公開配對、自由聊天、排行榜或 Mordred／Oberon。
 - AI 由在線真人瀏覽器呼叫 `advanceBots` 推進；所有真人關閉頁面後暫停，重連後繼續。策略 AI 不提供自然語言理解或聊天模型。
-- 匿名身份依瀏覽器儲存；清除網站資料或換瀏覽器會成為新玩家。
+- 必須先註冊電子郵件／密碼帳號才能遊玩；支援登入、登出與忘記密碼。帳號由 Firebase Authentication 管理，同一帳號跨瀏覽器使用相同 UID，暱稱依帳號儲存在本機。
+- 舊匿名身份無法繼續進入遊戲，需重新註冊會員；不會自動轉移舊訪客房間。前端、所有 callable 與 RTDB 規則均檢查密碼登入身分，避免舊憑證繞過登入頁。
 - 空置但未明確離開的房間沒有排程清除；任務歷史保留在房內，不提供永久戰績。
 - App Check、每帳號建房頻率限制及配額監控尚未加入；公開大規模營運前需補上。Security Rules 已防止跨玩家讀取及非法遊戲寫入。
 - Firebase／Google SDK 部分間接依賴仍有 npm audit moderate 通報，詳見實作狀態文件；沒有為消除通報而強制降級 SDK。

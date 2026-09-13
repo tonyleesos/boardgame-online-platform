@@ -27,6 +27,7 @@ import { GAME_LIMITS } from "./shared/model";
 import { bombToken } from "./shared/timebomb";
 import type { BombAction } from "./shared/timebomb";
 import { ensure } from "./shared/rules";
+import { isRegisteredPasswordUser } from "./shared/auth";
 import type {
   GameAction,
   RoomAction,
@@ -130,7 +131,12 @@ function callable(
 ) {
   return onCall(options, async (request) => {
     if (!request.auth)
-      throw new HttpsError("unauthenticated", "請先完成匿名登入");
+      throw new HttpsError("unauthenticated", "請先登入會員帳號");
+    if (!isRegisteredPasswordUser(request.auth.token))
+      throw new HttpsError(
+        "permission-denied",
+        "請使用已註冊的電子郵件與密碼登入",
+      );
     try {
       ensure(
         request.data &&

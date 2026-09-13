@@ -1,3 +1,4 @@
+import { registerPlayer } from "./auth-helpers";
 import { test, expect, type Page } from "@playwright/test";
 import { applyGameAction, startGame } from "../../functions/src/engine";
 import { applyBombAction, startBomb } from "../../functions/src/timebomb-engine";
@@ -7,11 +8,7 @@ import { getMissionTeamSize } from "../../functions/src/shared/rules";
 // Deterministic UI scenarios use real Auth/Database emulators and the game engines.
 // Intercept callable actions so other players and AI cannot race the screenshots.
 async function fixture(page: Page, gameId: string, count: number) {
-  const auth = page.waitForResponse((r) => r.url().includes("accounts:signUp"));
-  await page.goto("/");
-  const { localId: uid } = await (await auth).json();
-  await page.getByLabel("讓大家認識你").fill("測試玩家");
-  await page.getByRole("button", { name: "入座，開始冒險" }).click();
+  const {localId:uid} = await registerPlayer(page,"UI player");
   const code = gameId === "avalon" ? "AVA234" : gameId === "timebomb" ? "BMB234" : "BMC234";
   const ids = [uid, ...Array.from({ length: count - 1 }, (_, i) => `guest-${i}`)];
   const names = ["測試玩家", "露西", "艾達", "華生", "小明", "小華", "亞瑟", "梅莉"];

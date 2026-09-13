@@ -1,3 +1,4 @@
+import { registerPlayer } from "./auth-helpers";
 import { test, expect } from "@playwright/test";
 import {
   CARD_BY_ID,
@@ -29,16 +30,11 @@ for (const count of [2, 3, 4])
     );
     const actors = await Promise.all(
       contexts.map(async (context, i) => {
-        const page = await context.newPage(),
-          auth = page.waitForResponse((r) =>
-            r.url().includes("accounts:signUp"),
-          );
-        await page.goto("/");
-        const credentials = await (await auth).json();
-        await page
-          .getByLabel("讓大家認識你")
-          .fill(["星河", "小嵐", "海月", "晨光"][i]);
-        await page.getByRole("button", { name: "入座，開始冒險" }).click();
+        const page = await context.newPage();
+        const credentials = await registerPlayer(
+          page,
+          ["星河", "小嵐", "海月", "晨光"][i],
+        );
         return {
           page,
           uid: credentials.localId as string,

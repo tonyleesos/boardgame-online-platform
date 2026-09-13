@@ -8,7 +8,7 @@ async function player() {
   const r = await fetch(authUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ returnSecureToken: true }),
+    body: JSON.stringify({ email: `test-${crypto.randomUUID()}@example.test`, password: "Boardgame-test-72!", returnSecureToken: true }),
   });
   assert.equal(r.status, 200);
   return r.json();
@@ -265,5 +265,5 @@ await call(
   true,
 );
 console.log(
-  "PASS: anonymous auth, concurrent join/ready/votes, 5-player full game, 10-player start, capacity, reconnect, host transfer, rematch, stale-action rejection, private-role and write protection.",
+  "PASS: registered email/password auth, concurrent join/ready/votes, 5-player full game, 10-player start, capacity, reconnect, host transfer, rematch, stale-action rejection, private-role and write protection.",
 );

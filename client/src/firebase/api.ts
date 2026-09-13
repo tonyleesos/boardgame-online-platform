@@ -11,8 +11,19 @@ export function errorMessage(error: unknown): string {
       ? String(error.code)
       : "";
   const messages: Record<string, string> = {
-    "auth/admin-restricted-operation": "請在 Firebase Console 啟用匿名登入。",
-    "auth/operation-not-allowed": "請在 Firebase Console 啟用匿名登入。",
+    "auth/admin-restricted-operation": "目前無法建立帳號，請稍後再試。",
+    "auth/operation-not-allowed": "帳號登入服務尚未開放，請聯絡管理員。",
+    "auth/invalid-email": "請輸入有效的電子郵件地址。",
+    "auth/invalid-credential": "電子郵件或密碼不正確，請重新輸入。",
+    "auth/invalid-login-credentials": "電子郵件或密碼不正確，請重新輸入。",
+    "auth/user-not-found": "電子郵件或密碼不正確，請重新輸入。",
+    "auth/wrong-password": "電子郵件或密碼不正確，請重新輸入。",
+    "auth/email-already-in-use": "此電子郵件已註冊，請登入或重設密碼。",
+    "auth/weak-password": "密碼強度不足，請使用至少 8 個字元。",
+    "auth/password-does-not-meet-requirements":
+      "密碼不符合安全要求，請使用更強的密碼。",
+    "auth/user-disabled": "此帳號已停用，請聯絡管理員。",
+    "auth/too-many-requests": "嘗試次數過多，請稍後再試。",
     "auth/network-request-failed":
       "無法連線，請檢查網路或 Emulator 是否已啟動。",
     "auth/invalid-api-key": "Firebase API key 無效，請檢查本機設定。",

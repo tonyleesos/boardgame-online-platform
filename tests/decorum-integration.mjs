@@ -4,7 +4,7 @@ const base = `http://127.0.0.1:5001/${project}/asia-east1`;
 const database = `http://127.0.0.1:9000`;
 const authUrl = "http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/accounts:signUp?key=demo-key";
 async function player() {
-  const response = await fetch(authUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ returnSecureToken: true }) });
+  const response = await fetch(authUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: `test-${crypto.randomUUID()}@example.test`, password: "Boardgame-test-72!", returnSecureToken: true }) });
   assert.equal(response.status, 200); return response.json();
 }
 async function call(p, name, data, denied = false) {

@@ -1,3 +1,4 @@
+import { registerPlayer } from "./auth-helpers";
 import { test, expect } from "@playwright/test";
 import { chooseSplendorAction } from "../../functions/src/splendor/bot";
 import {
@@ -18,13 +19,7 @@ for (const count of [2, 3, 4])
     test.setTimeout(300000);
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(e.message));
-    const auth = page.waitForResponse((r) =>
-      r.url().includes("accounts:signUp"),
-    );
-    await page.goto("/");
-    const { localId: uid, idToken } = await (await auth).json();
-    await page.getByLabel("讓大家認識你").fill("練習商人");
-    await page.getByRole("button", { name: "入座，開始冒險" }).click();
+    const {localId:uid,idToken} = await registerPlayer(page,"Practice player");
     await page
       .locator(".game-card.splendor")
       .getByRole("link", { name: "單人練習 · 與 AI 對局" })

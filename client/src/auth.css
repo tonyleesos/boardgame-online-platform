@@ -1,0 +1,233 @@
+.auth-shell {
+  max-width: 1160px;
+  margin: auto;
+  padding: 30px 32px;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}
+.auth-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #d8ba80;
+  font-weight: 700;
+  font-size: 21px;
+}
+.auth-brand small {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 3px;
+}
+.auth-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+  flex: 1;
+  padding: 55px 0;
+}
+.auth-story h1 {
+  font-size: clamp(32px, 4vw, 48px);
+  line-height: 1.35;
+  margin: 20px 0;
+}
+.auth-story > p:not(.eyebrow) {
+  color: #adbbac;
+}
+.auth-table-art {
+  width: 220px;
+  height: 160px;
+  border: 1px solid #be9d6055;
+  border-radius: 50%;
+  position: relative;
+  display: grid;
+  place-items: center;
+  color: #cfb17b;
+  background: radial-gradient(ellipse, #2b4a37, #1a2f23);
+  box-shadow:
+    inset 0 0 0 9px #d2ac7010,
+    0 20px 60px #0004;
+  margin: 25px 0 45px;
+}
+.auth-table-art span {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #d3b47988;
+  background: #293e30;
+  box-shadow: 0 5px 15px #0004;
+}
+.auth-table-art span:nth-child(1) {
+  top: -14px;
+  left: 93px;
+}
+.auth-table-art span:nth-child(2) {
+  top: 30px;
+  right: -10px;
+}
+.auth-table-art span:nth-child(3) {
+  bottom: 10px;
+  right: 4px;
+}
+.auth-table-art span:nth-child(4) {
+  bottom: -14px;
+  left: 93px;
+}
+.auth-table-art span:nth-child(5) {
+  bottom: 10px;
+  left: 4px;
+}
+.auth-table-art span:nth-child(6) {
+  top: 30px;
+  left: -10px;
+}
+.auth-assurance {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 28px;
+  font-size: 13px;
+  color: #c3cdb7;
+}
+.auth-card {
+  padding: 36px !important;
+  background: linear-gradient(140deg, #24372b, #17251d) !important;
+  border-color: #c7a86b42 !important;
+}
+.auth-card h2 {
+  font-size: 28px;
+  margin: 8px 0;
+}
+.auth-card > .muted {
+  font-size: 14px;
+  margin-bottom: 28px;
+}
+.auth-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.auth-card label {
+  font-size: 13px;
+  color: #dce0d0;
+  margin-top: 9px;
+}
+.auth-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  border: 1px solid #c1cbba35;
+  border-radius: 9px;
+  background: #101d16;
+  color: #a5b69f;
+}
+.auth-input:focus-within {
+  border-color: #d7b779;
+  box-shadow: 0 0 0 2px #d7b77922;
+}
+.auth-input input {
+  border: 0 !important;
+  background: transparent !important;
+  min-width: 0;
+  width: 100%;
+  padding: 13px 0 !important;
+  margin: 0 !important;
+  color: #efece5;
+  outline: none;
+  font-size: 16px;
+}
+.auth-input > svg {
+  flex-shrink: 0;
+}
+.auth-input button {
+  min-width: 44px;
+  min-height: 44px;
+}
+.auth-forgot {
+  align-self: flex-end;
+  font-size: 13px;
+  color: #dbc391;
+  padding: 5px 0;
+}
+.auth-submit {
+  width: 100%;
+  margin-top: 15px;
+}
+.auth-switch {
+  text-align: center;
+  font-size: 13px;
+  color: #b6c2ad;
+  margin: 26px 0 0;
+}
+.auth-switch a {
+  color: #e0c58e;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+.auth-footer {
+  text-align: center;
+  color: #879b85;
+  font-size: 11px;
+  padding: 20px 0;
+}
+.auth-sent {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 12px;
+  padding: 20px 0;
+  color: #d4c09a;
+}
+.auth-sent p {
+  font-size: 14px;
+  color: #bfcab6;
+}
+.profile {
+  min-width: 0;
+}
+.account-logout {
+  min-width: 44px;
+  flex-shrink: 0;
+}
+@media (max-width: 700px) {
+  .auth-shell {
+    padding: 22px 20px;
+  }
+  .auth-layout {
+    display: block;
+    padding: 30px 0;
+  }
+  .auth-story {
+    display: none;
+  }
+  .auth-card {
+    padding: 25px !important;
+    max-width: 450px;
+    margin: auto;
+  }
+  .auth-card h2 {
+    font-size: 25px;
+  }
+  .auth-brand {
+    justify-content: center;
+  }
+  .auth-footer {
+    margin-top: auto;
+  }
+  .site-header .profile {
+    font-size: 12px;
+  }
+  .account-logout {
+    padding: 8px;
+  }
+  .site-header .profile > span {
+    max-width: 105px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}

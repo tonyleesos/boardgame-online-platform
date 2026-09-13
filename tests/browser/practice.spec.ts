@@ -1,10 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { registerPlayer } from "./auth-helpers";
 import type { Page } from "@playwright/test";
 
 async function createPractice(page: Page, gameId: string, count?: number) {
-  await page.goto("/");
-  await page.getByLabel("讓大家認識你").fill("練習玩家");
-  await page.getByRole("button", { name: "入座，開始冒險" }).click();
+  await registerPlayer(page, "練習玩家");
   await page
     .locator(`.game-card.${gameId}`)
     .getByRole("link", { name: "單人練習 · 與 AI 對局" })
