@@ -66,8 +66,8 @@ for (const [count, scenarioId] of [[2, "demo-two-01"], [2, "demo-two-02"], [3, "
     for (const actor of actors) {
       await actor.page.getByRole("button", { name: /我的秘密心願/ }).click();
       const dialog = actor.page.getByRole("dialog", { name: "我的秘密心願", exact: true });
-      await expect(dialog.locator(".condition-list:not(.shared) li")).toHaveCount(3);
-      await expect(dialog.locator(".condition-list:not(.shared) .condition-visual")).toHaveCount(3);
+      await expect(dialog.locator(".condition-list:not(.shared) li")).toHaveCount(scenarioId === "demo-two-01" ? 4 : 5);
+      await expect(dialog.locator(".condition-list:not(.shared) .condition-visual")).toHaveCount(scenarioId === "demo-two-01" ? 4 : 5);
       if (actor === host) {
         await actor.page.setViewportSize({ width: 390, height: 844 });
         await actor.page.screenshot({ path: `.tools/screenshots/decorum-${count}-private-mobile.png`, animations: "disabled" });
@@ -95,7 +95,7 @@ for (const [count, scenarioId] of [[2, "demo-two-01"], [2, "demo-two-02"], [3, "
     for (const [i, actor] of actors.entries()) {
       const dialog = actor.page.getByRole("dialog", { name: count === 2 ? "室友談心" : "房屋會議", exact: true });
       await expect(dialog).toBeVisible();
-      await expect(dialog.locator(".meeting-wishes button")).toHaveCount(3);
+      await expect(dialog.locator(".meeting-wishes button")).toHaveCount(scenarioId === "demo-two-01" ? 4 : 5);
       await dialog.getByRole("button", { name: "喜歡", exact: true }).click();
       await dialog.getByRole("button", { name: `分享心願 2：${wishesAtMeeting[i].conditions[1].description}`, exact: true }).click();
       const recipient = actors[(i + 1) % count];
@@ -131,21 +131,27 @@ for (const [count, scenarioId] of [[2, "demo-two-01"], [2, "demo-two-02"], [3, "
         room = await read<Room>(host, code, "public");
         return room.decorum!.phase;
       }).not.toBe("REACTION");
-    };
-    // Four players first settle into bedrooms according to their private assignment.
-    // Read-only per-player credentials; every mutation still uses the real UI/callable.
-    if (count === 4) {
-      const wishes = await Promise.all(actors.map((a) => read<DecorumPrivate>(a, code, `decorumPrivate/${a.uid}`)));
-      const desired = Object.fromEntries(actors.map((a, i) => [a.uid, wishes[i].conditions.some((c) => c.id === "my-yellow-bedroom") ? "bath" : "bed"]));
-      for (let guard = 0; guard < 8 && actors.some((a) => room.decorum!.house.roommates[a.uid] !== desired[a.uid]); guard++) {
-        const g = room.decorum!; const active = actors.find((a) => a.uid === g.playerOrder[g.currentPlayerIndex])!;
-        if (g.house.roommates[active.uid] !== desired[active.uid]) {
-          const other = actors.find((a) => g.house.roommates[a.uid] === desired[active.uid] && desired[a.uid] !== desired[active.uid])!;
-          await move(active.page, room, { type: "decorRoommate", roomId: desired[active.uid], swapWith: other.uid });
-        } else await move(active.page, room, { type: "decorPaint", roomId: "living", color: g.house.rooms[2].wallColor === "red" ? "yellow" : "red" });
-        await afterMove();
+      // Longer scenarios can reach another meeting while finishing the house.
+      // The first meeting is exercised through the UI above; resolve subsequent
+      // ones through authenticated actions, still respecting private ownership.
+      if (["HEART_TO_HEART", "HOUSE_MEETING"].includes(room.decorum!.phase)) {
+        for (const [i, actor] of actors.entries()) {
+          const own = await read<DecorumPrivate>(actor, code, `decorumPrivate/${actor.uid}`);
+          const condition = own.conditions.find((c) => !(own.sharedConditionIds ?? []).includes(c.id)) ?? own.conditions[0];
+          await call(actor, { type: "decorShare", conditionId: condition.id, recipientId: actors[(i + 1) % count].uid, status: "neutral" });
+        }
+        room = await read<Room>(host, code, "public");
       }
-      expect(actors.every((a) => room.decorum!.house.roommates[a.uid] === desired[a.uid])).toBe(true);
+    };
+    // Changing roommates remains a legal choice; the complete house can satisfy
+    // every shuffled assignment without forcing roommates into color factions.
+    if (count === 4) {
+      const g = room.decorum!;
+      const active = actors.find((a) => a.uid === g.playerOrder[g.currentPlayerIndex])!;
+      const destination = g.house.roommates[active.uid] === "bed" ? "bath" : "bed";
+      const partner = actors.find((a) => g.house.roommates[a.uid] === destination)!;
+      await move(active.page, room, { type: "decorRoommate", roomId: destination, swapWith: partner.uid });
+      await afterMove();
     }
     for (const width of [360, 390, 768, 1280]) {
       await host.page.setViewportSize({ width, height: 950 });
@@ -165,7 +171,7 @@ for (const [count, scenarioId] of [[2, "demo-two-01"], [2, "demo-two-02"], [3, "
     for (const actor of actors) {
       const result = actor.page.getByRole("dialog", { name: "合租成果", exact: true });
       await expect(result.getByRole("heading", { name: "我們，都喜歡這個家。" })).toBeVisible();
-      await expect(result.locator(".condition-list li")).toHaveCount(count * 3);
+      await expect(result.locator(".condition-list li")).toHaveCount(count * (scenarioId === "demo-two-01" ? 4 : 5));
       await expect(result.getByLabel("最終房屋").locator(".room-scene")).toHaveCount(4);
     }
     await host.page.screenshot({ path: `.tools/screenshots/decorum-${count}-victory.png`, animations: "disabled" });

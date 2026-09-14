@@ -57,7 +57,6 @@ export interface CityTile {
   differentBonuses: number;
 }
 export type TradingPostEffect =
-  | { type: "extraGem" }
   | { type: "goldValue"; value: number }
   | { type: "prestige"; color: GemColor }
   | { type: "tokenLimit"; value: number }
@@ -106,6 +105,23 @@ export interface StrongholdPlacement {
   ownerUid: string;
   count: number;
 }
+/** Canonical public outcomes. Never include private reserved IDs or raw client input. */
+export interface SplendorActivity {
+  revision: number;
+  uid: string;
+  type: SplendorAction["type"];
+  text: string;
+  tokens: Partial<TokenInventory>;
+  cards: Array<{
+    cardId?: string;
+    tier: DevelopmentTier;
+    source: "base" | "orient";
+    from: "market" | "deck" | "reserved" | "purchased";
+    to: "reserved" | "purchased" | "returned";
+  }>;
+  nobleNames: string[];
+  strongholdChange?: { cardId: string; ownerUid: string; count: number; removed: boolean };
+}
 export interface SplendorPublicState {
   id: string;
   revision: number;
@@ -128,6 +144,7 @@ export interface SplendorPublicState {
   winners?: string[];
   aborted?: boolean;
   log: Array<{ revision: number; uid: string; text: string }>;
+  activities?: SplendorActivity[];
 }
 export interface SplendorSecret {
   decks: Record<string, string[]>;
@@ -297,8 +314,8 @@ export const DEMO_TRADING_POSTS: TradingPost[] = [
     id: "post-gem",
     name: "商隊",
     requirements: { red: 3, white: 1 },
-    effect: { type: "extraGem" },
-    description: "拿不同色時，可拿最多 4 種。",
+    effect: { type: "flatPrestige", value: 1 },
+    description: "獲得 1 聲望；拿取仍以最多 3 種異色為限。",
   },
   {
     id: "post-gold",
@@ -339,6 +356,12 @@ export function normalizeSplendor(g: SplendorPublicState): SplendorPublicState {
   g.nobles ??= [];
   g.cities ??= [];
   g.log ??= [];
+  g.activities ??= [];
+  for (const activity of g.activities) {
+    activity.tokens ??= {};
+    activity.cards ??= [];
+    activity.nobleNames ??= [];
+  }
   g.strongholds ??= {};
   g.market ??= {};
   g.deckCounts ??= {};
@@ -371,15 +394,14 @@ export function calculateBonuses(p: SplendorPlayerState): GemCost {
 export const meets = (bonuses: GemCost, requirements: Partial<GemCost>) =>
   GEM_COLORS.every((c) => bonuses[c] >= (requirements[c] ?? 0));
 export function applyTradingPostModifiers(p: SplendorPlayerState) {
-  let maxDifferent = 3,
-    goldValue = 1,
+  const maxDifferent = 3;
+  let goldValue = 1,
     tokenLimit = 10,
     prestige = 0;
   for (const post of DEMO_TRADING_POSTS.filter((v) =>
     p.tradingPosts?.includes(v.id),
   )) {
     const e = post.effect;
-    if (e.type === "extraGem") maxDifferent = 4;
     if (e.type === "goldValue") goldValue = e.value;
     if (e.type === "tokenLimit") tokenLimit = e.value;
     if (e.type === "prestige")

@@ -102,12 +102,24 @@ for (const count of [2, 3, 4])
         return normalizeSplendor((await res.json()) as SplendorPublicState);
       };
       let g = await read();
-      for (const width of [360, 390, 768, 1280]) {
+      for (const width of [320, 360, 390, 768, 1280]) {
         await host.page.setViewportSize({
           width,
           height: width === 768 ? 1024 : 900,
         });
         await host.page.locator(".sp-game").scrollIntoViewIfNeeded();
+        // Every noble/city and its requirements must fit without horizontal dragging.
+        expect(await host.page.locator(".sp-patron-row").evaluate((row) => {
+          const bounds = row.getBoundingClientRect();
+          return row.scrollWidth <= row.clientWidth + 1 && Array.from(row.children).every((card) => {
+            const box = card.getBoundingClientRect();
+            return box.left >= bounds.left - 1 && box.right <= bounds.right + 1 &&
+              Array.from(card.querySelectorAll("strong, .sp-amount, small")).every((detail) => {
+                const rect = detail.getBoundingClientRect();
+                return rect.left >= box.left && rect.right <= box.right + 1 && rect.bottom <= box.bottom;
+              });
+          });
+        }), `All patron details fit at ${width}px`).toBe(true);
         await host.page.screenshot({
           path: `.tools/screenshots/splendor-${count}-${width}.png`,
           fullPage: true,
@@ -135,6 +147,20 @@ for (const count of [2, 3, 4])
         );
       }
       await host.page.setViewportSize({ width: 390, height: 844 });
+      await expect(host.page.getByRole("button", { name: "同色 ×2", exact: true })).toHaveCount(0);
+      const bank = host.page.getByRole("region", { name: "寶石庫", exact: true });
+      const white = bank.getByRole("button", { name: `${GEM_NAMES.white}，庫存 ${g.bank.white}`, exact: true });
+      const blue = bank.getByRole("button", { name: `${GEM_NAMES.blue}，庫存 ${g.bank.blue}`, exact: true });
+      await white.click();
+      await white.click();
+      await expect(bank).toContainText("已選同色 2 枚");
+      await expect(blue).toBeDisabled();
+      await white.click();
+      for (const color of ["white", "blue", "green"] as const) await bank.getByRole("button", { name: `${GEM_NAMES[color]}，庫存 ${g.bank[color]}`, exact: true }).click();
+      await expect(bank.getByRole("button", { name: `${GEM_NAMES.red}，庫存 ${g.bank.red}`, exact: true })).toBeDisabled();
+      await blue.click();
+      await expect(bank).toContainText("已選 2 / 3 色");
+      await bank.getByRole("button", { name: "清除選取", exact: true }).click();
       await host.page.getByRole("button", { name: "遊戲圖示說明" }).click();
       await expect(
         host.page.getByRole("dialog", { name: "一眼學會交易" }),
@@ -150,6 +176,14 @@ for (const count of [2, 3, 4])
         1,
       );
       await expect(actors[1].page.locator(".sp-turn")).toContainText("輪到你");
+      await Promise.all(actors.map(async (actor) => {
+        await expect(actor.page.locator(".sp-player-resources")).toHaveCount(count);
+        await expect(actor.page.locator(".sp-player-turn-dot")).toHaveCount(1);
+        await expect(actor.page.locator(".sp-transfer-receipt")).toContainText("星河");
+        await expect(actor.page.locator(".sp-transfer-receipt")).toContainText("暗牌");
+        await expect(actor.page.locator(".sp-transfer-item .sp-scene")).toHaveCount(0);
+        await expect(actor.page.locator(`.sp-player[data-player-id="${host.uid}"]`).getByLabel("黃金持有 1 枚", { exact: true })).toHaveText("1");
+      }));
       await actors[1].page
         .getByRole("button", { name: "查看 星河 的收藏", exact: true })
         .click();
@@ -157,6 +191,14 @@ for (const count of [2, 3, 4])
         "暗牌",
       );
       await actors[1].page.getByRole("button", { name: "關閉視窗" }).click();
+      const red = actors[1].page.getByRole("button", { name: `${GEM_NAMES.red}，庫存 ${g.bank.red}`, exact: true });
+      await red.click();
+      await red.click();
+      await actors[1].page.getByRole("button", { name: "拿取 2", exact: true }).click();
+      await Promise.all(actors.map(async (actor) => {
+        await expect(actor.page.locator(".sp-transfer-receipt")).toContainText(`${GEM_NAMES.red} +2`);
+        await expect(actor.page.locator(`.sp-player[data-player-id="${actors[1].uid}"]`).getByLabel(`${GEM_NAMES.red}持有 2 枚`, { exact: true })).toHaveText("2");
+      }));
       await host.page.reload();
       await expect(host.page.locator(".sp-reserve-row .sp-card")).toHaveCount(
         1,

@@ -1,4 +1,5 @@
 import type { ConditionDefinition, ConditionExpression, HouseState, EvaluationContext, ObjectFilter, DecorObject, RoomScope, Comparison } from "./decorum";
+import { OBJECT_TYPES } from "./decorum";
 
 const matches = (object: DecorObject, filter: ObjectFilter) =>
   (!filter.type || object.type === filter.type) && (!filter.color || object.color === filter.color) && (!filter.style || object.style === filter.style);
@@ -21,6 +22,12 @@ export function evaluateCondition(condition: ConditionDefinition | ConditionExpr
     }
     case "objectCount": return compare(objects(e.scope).filter((o) => matches(o, e.match ?? {})).length, e.comparison, e.value);
     case "styleCount": return compare(objects(e.scope).filter((o) => o.style === e.style).length, e.comparison, e.value);
+    case "emptySlotCount": return compare(rooms(e.scope).reduce((sum, r) => sum + OBJECT_TYPES.filter((type) => !r.objects?.[type]).length, 0), e.comparison, e.value);
+    case "distinctCount": {
+      const traits = new Set<string>(e.target !== "walls" ? objects(e.scope).map((o) => o[e.trait]) : []);
+      if (e.trait === "color" && e.target !== "objects") rooms(e.scope).forEach((r) => traits.add(r.wallColor));
+      return compare(traits.size, e.comparison, e.value);
+    }
     case "colorCount": return compare(
       (e.target !== "objects" ? rooms(e.scope).filter((r) => r.wallColor === e.color).length : 0) +
       (e.target !== "walls" ? objects(e.scope).filter((o) => o.color === e.color).length : 0), e.comparison, e.value);

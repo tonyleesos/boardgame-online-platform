@@ -93,7 +93,6 @@ for (const count of [2, 3, 4])
       expect(selected).not.toBeNull();
       const action = selected!;
       if (action.type === "splendorTake") {
-        await page.getByRole("button", { name: /異色 ×/ }).click();
         for (const c of action.colors)
           await page
             .getByRole("button", {
@@ -109,14 +108,12 @@ for (const count of [2, 3, 4])
           .click();
       } else if (action.type === "splendorDouble") {
         await page
-          .getByRole("button", { name: "同色 ×2", exact: true })
-          .click();
-        await page
           .getByRole("button", {
             name: `${GEM_NAMES[action.color]}，庫存 ${g.bank[action.color]}`,
             exact: true,
           })
           .click();
+        await page.getByRole("button", { name: `${GEM_NAMES[action.color]}，庫存 ${g.bank[action.color]}`, exact: true }).click();
         await page.getByRole("button", { name: "拿取 2", exact: true }).click();
       } else if (
         action.type === "splendorBuy" ||

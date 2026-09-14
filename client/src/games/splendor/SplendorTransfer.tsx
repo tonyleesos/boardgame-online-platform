@@ -1,6 +1,6 @@
 import { useEffect, useRef, type RefObject } from "react";
 import { createPortal } from "react-dom";
-import { Check, Gem } from "lucide-react";
+import { Castle, Check, Crown, Gem } from "lucide-react";
 import { CARD_BY_ID } from "../../../../functions/src/shared/splendor";
 import { CardScene, GemIcon } from "./SplendorArt";
 
@@ -49,9 +49,12 @@ export function SplendorTransfer({
           board,
           "data-sp-destination",
           item.destination,
-        );
+        ) ?? findTransferTarget(board, "data-sp-source", item.destination);
         const to = visibleTransferPoint(transferCenter(target ?? dock));
-        const from = visibleTransferPoint(item.origin, item.color ? 30 : 52);
+        const source = findTransferTarget(board, "data-sp-source", item.source) ??
+          findTransferTarget(board, "data-sp-destination", item.source) ??
+          board.querySelector(".sp-market");
+        const from = visibleTransferPoint(transferCenter(source), item.color ? 30 : 52);
         const delay = reduce ? 0 : index * 110;
         if (target) arrivals.set(target, delay);
         if (reduce) {
@@ -162,6 +165,8 @@ export function SplendorTransfer({
                   </span>
                 </span>
               </span>
+            ) : item.symbol ? (
+              <span className="sp-transfer-symbol">{item.symbol === "noble" ? <Crown size={40} /> : <Castle size={40} />}</span>
             ) : item.cardId ? (
               <>
                 <CardScene card={CARD_BY_ID[item.cardId]} />

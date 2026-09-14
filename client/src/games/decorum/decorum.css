@@ -120,7 +120,7 @@
 .wish-count { font-size: 20px; color: #4d6b50; font-variant-numeric: tabular-nums; padding: 0 4px; }
 .wish-operator { font-size: 11px; color: #94664e; padding: 0 3px; }
 .wish-group { padding: 5px; border: 1px dashed #c9bba2; border-radius: 9px; background: #e4dac91a; }
-.wish-description { font-size: 11px; margin-top: 8px; color: #786b57; }.wish-description summary { cursor: pointer; min-height: 28px; display: list-item; }
+.wish-description { font-size: 13px; line-height: 1.65; margin: 8px 0; color: #665a48; }
 .room-scene { position: relative; min-width: 0; overflow: hidden; padding: 8px 5px 3px; border: 3px solid #fffbef; border-radius: 10px; background: linear-gradient(var(--wall-color) 0 57%, #e3cbaa 57% 60%, #eddcc1 60%); box-shadow: 0 3px 0 #c5ad8d; }
 .scene-label { display: inline-flex; align-items: center; gap: 4px; padding: 2px 5px; border-radius: 5px; background: #fffaf0e3; color: #4e5949; font-size: 10px; }
 .scene-furniture { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: end; }.scene-furniture > span { display: grid; place-items: center; aspect-ratio: 1; }
@@ -162,5 +162,4 @@
   .decor-turn-steps li { flex-direction: column; font-size: 10px; }
   .meeting-wishes > button { padding: 9px; gap: 7px; }.meeting-field { margin: 15px 0; }
   .room-comparison { gap: 5px; }.room-scene { padding: 5px 3px 2px; border-width: 2px; }.scene-label { font-size: 9px; }
-  .wish-description summary { min-height: 36px; }
 }

@@ -418,7 +418,7 @@ describe("Expansions", () => {
     s = act(s, { type: "splendorTake", colors: ["green"] });
     expect(s.public.splendor!.winners).toEqual(["p0"]);
   });
-  it("posts unlock once with persistent gold, token, score and extra-gem modifiers", () => {
+  it("posts unlock once with persistent gold, token and score modifiers", () => {
     const s = setup(2, "tradingPosts");
     giveBonuses(s, "p0", { white: 4, blue: 4, green: 4, red: 4, black: 4 });
     const p = s.public.splendor!.players.p0;
@@ -427,10 +427,10 @@ describe("Expansions", () => {
     expect(p.tradingPosts).toHaveLength(5);
     expect(new Set(p.tradingPosts).size).toBe(5);
     expect(applyTradingPostModifiers(p)).toEqual({
-      maxDifferent: 4,
+      maxDifferent: 3,
       goldValue: 2,
       tokenLimit: 12,
-      prestige: 5,
+      prestige: 6,
     });
     p.tokens.gold = 2;
     const card = {
@@ -438,19 +438,20 @@ describe("Expansions", () => {
       cost: { white: 5, blue: 5, green: 5, red: 5, black: 4 },
     };
     expect(calculatePurchasePayment(card, p).goldPayment).toBe(2);
-    expect(calculatePrestige(p)).toBe(5);
+    expect(calculatePrestige(p)).toBe(6);
     expect(DEMO_TRADING_POSTS).toHaveLength(5);
   });
-  it("extra-gem post allows four distinct; token limit modifier applies", () => {
+  it("all posts keep the three-color limit; the token limit modifier still applies", () => {
     let s = setup(2, "tradingPosts");
     s.public.splendor!.players.p0.tradingPosts = ["post-gem", "post-limit"];
     s.public.splendor!.players.p0.tokens.gold = 8;
-    s = act(s, {
+    expect(() => act(s, {
       type: "splendorTake",
       colors: ["white", "blue", "green", "red"],
-    });
+    })).toThrow();
+    s = act(s, { type: "splendorTake", colors: ["white", "blue", "green"] });
     expect(s.public.splendor!.currentPlayerIndex).toBe(1);
-    expect(tokenTotal(s.public.splendor!.players.p0.tokens)).toBe(12);
+    expect(tokenTotal(s.public.splendor!.players.p0.tokens)).toBe(11);
   });
   it.each(["double", "copy", "return", "reserve", "noble"] as const)(
     "Orient %s effect validates and resolves atomically",

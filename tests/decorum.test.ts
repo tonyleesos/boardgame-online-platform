@@ -8,12 +8,12 @@ import type { Session } from "../functions/src/shared/model";
 import { leaveSeat } from "../functions/src/membership";
 import { solutionMoves } from "./decorum-solutions";
 
-function setup(count = 2, scenarioId?: string, ready = true) {
+function setup(count = 2, scenarioId?: string, ready = true, assignment?: number[]) {
   const s: Session = { public: { code: "DCR234", gameId: "decorum", hostId: "p0", status: "waiting", createdAt: 1,
     ...(scenarioId ? { decorumScenarioId: scenarioId } : {}),
     players: Object.fromEntries(Array.from({ length: count }, (_, i) => [`p${i}`, { uid: `p${i}`, nickname: `Player ${i}`, joinedAt: i, ready: true }])) },
     private: {}, secret: { teamVotes: {}, missionVotes: {} } };
-  startDecorum(s, "decor-test", (a) => a);
+  startDecorum(s, "decor-test", (a) => assignment ? assignment.map((i) => a[i]) : a);
   if (ready) s.public.decorum!.playerOrder.forEach((uid) => applyDecorumAction(s, uid, { type: "decorReady" }));
   return s;
 }
@@ -72,6 +72,15 @@ describe("Decorum condition expressions", () => {
     [{ kind: "colorCount", color: "red", target: "both", comparison: "eq", value: 6 }, true],
     [{ kind: "colorCount", color: "yellow", target: "objects", comparison: "lte", value: 1 }, true],
     [{ kind: "styleCount", style: "antique", comparison: "eq", value: 2 }, true],
+    [{ kind: "emptySlotCount", comparison: "eq", value: 8 }, true],
+    [{ kind: "emptySlotCount", scope: { ids: ["bath", "bed"] }, comparison: "eq", value: 4 }, true],
+    [{ kind: "distinctCount", trait: "color", target: "walls", comparison: "eq", value: 1 }, true],
+    [{ kind: "distinctCount", trait: "color", target: "objects", comparison: "eq", value: 3 }, true],
+    [{ kind: "distinctCount", trait: "color", target: "both", comparison: "eq", value: 3 }, true],
+    [{ kind: "distinctCount", trait: "style", target: "objects", comparison: "eq", value: 3 }, true],
+    [{ kind: "distinctCount", trait: "style", target: "objects", comparison: "eq", value: 4 }, false],
+    [{ kind: "everyRoom", condition: { kind: "emptySlotCount", comparison: "eq", value: 2 } }, true],
+    [{ kind: "leftSide", condition: { kind: "distinctCount", trait: "style", target: "objects", comparison: "eq", value: 2 } }, true],
     [{ kind: "roomColor", room: "bed", color: "yellow" }, false],
     [{ kind: "everyRoom", condition: { kind: "objectCount", comparison: "gte", value: 1 } }, true],
     [{ kind: "someRoom", condition: { kind: "roomHasObject", room: "$room", match: { type: "curio" } } }, true],
@@ -89,6 +98,13 @@ describe("Decorum condition expressions", () => {
     h.rooms[0].wallColor = "blue";
     expect(evaluateCondition({ kind: "roomColor", room: "$bedroom", color: "blue" }, h, { ownerId: "p0" })).toBe(true);
     expect(evaluateCondition({ kind: "roomColor", room: "$bedroom", color: "blue" }, h, { ownerId: "p2" })).toBe(false);
+  });
+  it("counts elided object slots as empty and does not count walls as objects", () => {
+    const h = house();
+    delete (h.rooms[0] as Partial<typeof h.rooms[0]>).objects;
+    expect(evaluateCondition({ kind: "emptySlotCount", scope: { ids: ["bath"] }, comparison: "eq", value: 3 }, h)).toBe(true);
+    expect(evaluateCondition({ kind: "distinctCount", scope: { ids: ["bath"] }, trait: "color", target: "objects", comparison: "eq", value: 0 }, h)).toBe(true);
+    expect(evaluateCondition({ kind: "distinctCount", scope: { ids: ["bath"] }, trait: "color", target: "both", comparison: "eq", value: 1 }, h)).toBe(true);
   });
 });
 describe("Decorum state machine", () => {
@@ -181,6 +197,34 @@ describe("Decorum state machine", () => {
   });
 });
 describe("original scenarios", () => {
+  function permutations(items: number[]): number[][] {
+    return items.length ? items.flatMap((item, i) => permutations(items.filter((_, j) => j !== i)).map((rest) => [item, ...rest])) : [[]];
+  }
+  it.each(decorumScenarios)("$id can be won through legal turns under every condition assignment", (scenario) => {
+    for (const assignment of permutations(Array.from({ length: scenario.playerCount }, (_, i) => i))) {
+      const s = setup(scenario.playerCount, scenario.id, true, assignment);
+      const g = s.public.decorum!;
+      for (const uid of g.playerOrder) {
+        const conditions = s.decorumPrivate![uid].conditions;
+        expect(conditions.length).toBe(scenario.difficulty === 2 ? 4 : 5);
+        expect(new Set(conditions.map((c) => c.id)).size).toBe(conditions.length);
+        expect(evaluatePlayerConditions(conditions, g.house, { ownerId: uid }).results.filter((r) => !r.fulfilled).length).toBeGreaterThanOrEqual(2);
+        expect(JSON.stringify(g)).not.toContain(conditions[0].description);
+      }
+      for (const action of solutionMoves[scenario.id]) turn(s, action);
+      expect(g.winner, assignment.join(",")).toBe("players");
+      expect(g.round).toBeLessThan(g.maxRounds);
+      expect(g.fulfilledConditionCount).toBe(g.totalConditionCount);
+      if (scenario.enableRoommateTokens) {
+        // Even moving to share with a different condition owner cannot make the
+        // bedroom wishes mutually exclusive in this complete house.
+        for (const swapWith of ["p2", "p3"]) {
+          const moved = applyHouseAction(g.house, { type: "decorRoommate", roomId: "bed", swapWith }, "p0", true, true);
+          for (const uid of g.playerOrder) expect(evaluatePlayerConditions(s.decorumPrivate![uid].conditions, moved, { ownerId: uid }).fulfilled).toBe(true);
+        }
+      }
+    }
+  });
   it.each(decorumScenarios)("$id has a verified solution and correct immediate victory", (scenario) => {
     const s = setup(scenario.playerCount, scenario.id); const g = s.public.decorum!;
     let h: HouseState = g.house;

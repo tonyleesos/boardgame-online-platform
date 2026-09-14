@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
   ArrowDownToLine,
   ArrowRight,
@@ -33,8 +33,6 @@ import {
   canPurchaseCard,
   canReserveCard,
   canInteractWithStrongholdCard,
-  canTakeDifferentGems,
-  canTakeDoubleGem,
   mustReturnTokens,
   getEligibleNobles,
   applyTradingPostModifiers,
@@ -57,12 +55,8 @@ import { useAction } from "../../hooks/useAction";
 import type { Presence } from "../../hooks/useRoom";
 import { GameDialog } from "../../components/GameDialog";
 import { Artwork, CardScene, GemIcon, GemAmount } from "./SplendorArt";
-import { SplendorTransfer } from "./SplendorTransfer";
-import {
-  captureTransfer,
-  type TransferPlayback,
-} from "./splendorTransferGeometry";
-import { describeTransfer } from "./splendorTransfers";
+import { SplendorActivityPlayback } from "./SplendorActivityPlayback";
+import { gemSelectionAction, nextGemSelection } from "./splendorGemSelection";
 import "./splendor.css";
 
 const EFFECT_NAMES = {
@@ -226,11 +220,7 @@ function Board({
 }) {
   const { pending, error, run } = useAction();
   const boardRef = useRef<HTMLDivElement>(null);
-  const transferId = useRef(0);
-  const [transfer, setTransfer] = useState<TransferPlayback | null>(null);
-  const clearTransfer = useCallback(() => setTransfer(null), []);
-  const [selection, setSelection] = useState<GemColor[]>([]),
-    [double, setDouble] = useState(false);
+  const [selection, setSelection] = useState<GemColor[]>([]);
   const [selected, setSelected] = useState<{
       id: string;
       slot?: string;
@@ -250,39 +240,24 @@ function Board({
   const active = mine && connected && !pending,
     primary = active && g.phase === "PLAYER_ACTION";
   const chosen = selectionRevision === g.revision ? selection : [];
+  const double = chosen.length === 2 && chosen[0] === chosen[1];
+  const takeAction = gemSelectionAction(g, p, chosen);
   const openCard = (id: string, slot?: string) => {
     setSelected({ id, slot });
     setChoice({});
   };
   const act = (a: SplendorAction) =>
     void run(async () => {
-      setTransfer(null);
-      const playback = captureTransfer(
-        describeTransfer(a, g, p, selected?.id),
-        boardRef.current,
-        ++transferId.current,
-      );
       await splendorAction(room.code, g, a);
       setSelected(null);
       setBlind(null);
       setSelection([]);
       setReturns(emptyTokens());
       setChoice({});
-      setTransfer(playback);
     });
   const selectGem = (c: GemColor) => {
     setSelectionRevision(g.revision);
-    setSelection(
-      double
-        ? chosen[0] === c
-          ? []
-          : [c]
-        : chosen.includes(c)
-          ? chosen.filter((v) => v !== c)
-          : chosen.length < applyTradingPostModifiers(p).maxDifferent
-            ? [...chosen, c]
-            : chosen,
-    );
+    setSelection(nextGemSelection(g, chosen, c));
   };
   const card = selected ? CARD_BY_ID[selected.id] : undefined;
   const cardExists =
@@ -316,7 +291,7 @@ function Board({
             RESOLVE_EXPANSION: "放置或移除一座要塞",
             STRONGHOLD_BONUS_PURCHASE: "要塞集結！可額外購買",
           }[g.phase]
-        : `等待 ${current.nickname}`;
+        : `輪到 ${current.nickname} 執行動作`;
   return (
     <div className="sp-game" ref={boardRef}>
       <header className="sp-heading">
@@ -341,12 +316,12 @@ function Board({
         </div>
       </header>
       <div
-        className={`sp-turn ${mine ? "is-mine" : ""}`}
+        className={`sp-turn ${mine && g.phase !== "GAME_OVER" ? "is-mine" : ""}`}
         role="status"
         aria-live="polite"
       >
-        <span className="sp-turn-dot" />
-        {phaseText}
+        {g.phase !== "GAME_OVER" && <span className="sp-turn-dot" />}
+        <strong key={`${g.round}:${current.uid}:${g.phase}`} className="sp-turn-message">{phaseText}</strong>
         <small>
           {g.finalRoundNumber ? "最後一輪" : EXPANSION_NAMES[g.config.module]}
         </small>
@@ -363,9 +338,12 @@ function Board({
             <button
               key={id}
               onClick={() => setProfile(id)}
-              className={`sp-player ${current.uid === id ? "current" : ""}`}
+              className={`sp-player ${current.uid === id && g.phase !== "GAME_OVER" ? "current" : ""}`}
+              data-player-id={id}
               aria-label={`查看 ${player.nickname} 的收藏`}
             >
+              <span className="sp-player-overview">
+              {current.uid === id && g.phase !== "GAME_OVER" && <span className="sp-player-turn-dot" role="img" aria-label="目前行動玩家" />}
               <span className={`sp-avatar avatar-${i}`}>
                 {player.nickname.slice(0, 1)}
                 {!room.players[id]?.isBot &&
@@ -378,15 +356,21 @@ function Board({
                 {id === uid && <small>你</small>}
                 <span>
                   <Layers size={12} />
+                  <span data-sp-source={`player:${id}:cards`} data-sp-destination={`player:${id}:cards`}>
                   {player.purchasedCardIds.length}
+                  </span>
                   <Bookmark size={12} />
+                  <span data-sp-source={`player:${id}:reserves`} data-sp-destination={`player:${id}:reserves`}>
                   {player.reservedCards.length}
+                  </span>
                 </span>
               </span>
               <b className="sp-score">
                 <Star size={14} fill="currentColor" />
                 {calculatePrestige(player)}
               </b>
+              </span>
+              <PlayerResources player={player} />
             </button>
           );
         })}
@@ -421,6 +405,7 @@ function Board({
       )}
       <section
         className="sp-patrons"
+        data-sp-source="nobles"
         aria-label={g.config.module === "cities" ? "城市" : "貴族"}
       >
         <div className="sp-section-label">
@@ -461,7 +446,7 @@ function Board({
         </div>
       </section>
       <div className="sp-table-layout">
-        <section className="sp-market" aria-label="發展卡市場">
+        <section className="sp-market" aria-label="發展卡市場" data-sp-source="market" data-sp-destination="market">
           <div className="sp-section-label">
             <Layers size={16} />
             珠寶市場<small>點卡牌查看 · 購買 / 保留</small>
@@ -531,26 +516,7 @@ function Board({
             <Gem size={16} />
             寶石庫
           </div>
-          <div className="sp-gem-modes">
-            <button
-              aria-pressed={!double}
-              onClick={() => {
-                setDouble(false);
-                setSelection([]);
-              }}
-            >
-              異色 ×{applyTradingPostModifiers(p).maxDifferent}
-            </button>
-            <button
-              aria-pressed={double}
-              onClick={() => {
-                setDouble(true);
-                setSelection([]);
-              }}
-            >
-              同色 ×2
-            </button>
-          </div>
+          <p className="sp-bank-help" id="sp-bank-help">直接點寶石：同色連點兩下拿 2 枚，或不同色各點一下，最多 {applyTradingPostModifiers(p).maxDifferent} 色。同色須庫存至少 4 枚。</p>
           <div className="sp-bank-tokens">
             {TOKEN_COLORS.map((c) => (
               <button
@@ -558,45 +524,37 @@ function Board({
                 className={`sp-token sp-token-${c} ${chosen.includes(c as GemColor) ? "selected" : ""}`}
                 aria-label={`${GEM_NAMES[c]}，庫存 ${g.bank[c]}`}
                 aria-pressed={chosen.includes(c as GemColor)}
+                aria-describedby="sp-bank-help"
                 disabled={
                   !primary ||
                   c === "gold" ||
-                  (double ? !canTakeDoubleGem(g, c) : g.bank[c] === 0)
+                  g.bank[c] === 0 ||
+                  (!chosen.includes(c as GemColor) && (double || chosen.length >= applyTradingPostModifiers(p).maxDifferent))
                 }
                 onClick={() => selectGem(c as GemColor)}
               >
-                <span className="sp-chip" data-sp-source={`token:${c}`}>
+                <span className="sp-chip" data-sp-source={`bank:${c}`} data-sp-destination={`bank:${c}`}>
                   <span className="sp-chip-face">
                     <GemIcon color={c} size={38} />
                   </span>
                 </span>
                 <b>{g.bank[c]}</b>
                 <small>{c === "gold" ? "保留獲得" : GEM_NAMES[c]}</small>
-                {double && c !== "gold" && g.bank[c] >= 4 && <em>×2</em>}
+                {chosen.includes(c as GemColor) && <em>×{chosen.filter((color) => color === c).length}</em>}
               </button>
             ))}
           </div>
           <div className="sp-bank-action">
             <span>
-              {double
-                ? "庫存 ≥4 才能拿兩枚"
-                : `已選 ${chosen.length} / ${applyTradingPostModifiers(p).maxDifferent}`}
+              {double ? "已選同色 2 枚" : `已選 ${chosen.length} / ${applyTradingPostModifiers(p).maxDifferent} 色`}
+              <button className="sp-clear-selection" disabled={!primary || !chosen.length} onClick={() => setSelection([])}>清除選取</button>
             </span>
             <button
               className="sp-confirm"
               disabled={
-                !primary ||
-                (double
-                  ? chosen.length !== 1 || !canTakeDoubleGem(g, chosen[0])
-                  : !canTakeDifferentGems(g, p, chosen))
+                !primary || !takeAction
               }
-              onClick={() =>
-                act(
-                  double
-                    ? { type: "splendorDouble", color: chosen[0] }
-                    : { type: "splendorTake", colors: chosen },
-                )
-              }
+              onClick={() => takeAction && act(takeAction)}
             >
               <ArrowDownToLine size={17} />
               拿取{chosen.length > 0 && ` ${double ? 2 : chosen.length}`}
@@ -1185,16 +1143,21 @@ function Board({
           </button>
         </GameDialog>
       )}
-      {transfer && (
-        <SplendorTransfer
-          key={transfer.id}
-          playback={transfer}
-          boardRef={boardRef}
-          onComplete={clearTransfer}
-        />
-      )}
+      <SplendorActivityPlayback game={g} boardRef={boardRef} />
     </div>
   );
+}
+function PlayerResources({ player }: { player: SplendorPlayerState }) {
+  const bonuses = calculateBonuses(player);
+  const cards = Object.fromEntries(GEM_COLORS.map((color) => [color,
+    player.purchasedCardIds.filter((id) => CARD_BY_ID[id].bonusColor === color).length]));
+  const differentBonuses = GEM_COLORS.some((color) => cards[color] !== bonuses[color]);
+  return <span className="sp-player-resources" aria-label={`${player.nickname} 的公開資源`}>
+    <span />{TOKEN_COLORS.map((color) => <span className="sp-resource-heading" key={color}><GemIcon color={color} size={15} /></span>)}
+    <span className="sp-resource-label">購卡</span>{TOKEN_COLORS.map((color) => <span key={`cards:${color}`} className="sp-resource-count" aria-label={color === "gold" ? "黃金沒有發展卡" : `${GEM_NAMES[color]}已購 ${cards[color]} 張`}>{color === "gold" ? "—" : cards[color]}</span>)}
+    {differentBonuses && <><span className="sp-resource-label">加成</span>{TOKEN_COLORS.map((color) => <span key={`bonus:${color}`} className="sp-resource-count" aria-label={color === "gold" ? "黃金沒有永久加成" : `${GEM_NAMES[color]}永久加成 ${bonuses[color]}`}>{color === "gold" ? "—" : bonuses[color]}</span>)}</>}
+    <span className="sp-resource-label">寶石</span>{TOKEN_COLORS.map((color) => <span key={`tokens:${color}`} className="sp-resource-count" data-sp-source={`player:${player.uid}:token:${color}`} data-sp-destination={`player:${player.uid}:token:${color}`} aria-label={`${GEM_NAMES[color]}持有 ${player.tokens[color]} 枚`}>{player.tokens[color]}</span>)}
+  </span>;
 }
 function PlayerCollection({
   player: p,

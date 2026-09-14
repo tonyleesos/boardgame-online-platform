@@ -38,6 +38,7 @@ import type {
   OrientChoice,
   TokenInventory,
 } from "../shared/splendor";
+import { recordSplendorActivity } from "./activity";
 
 export function validateSplendorConfig(config: SplendorConfig) {
   ensure(
@@ -402,6 +403,7 @@ export function applySplendorAction(
   );
   s.splendorPrivate[uid].reserved ??= {};
   s.secret.splendor.decks ??= {};
+  const before = structuredClone(g);
   g.revision++;
   syncPlayer(p);
   if (g.phase === "RETURN_EXCESS_TOKENS") {
@@ -539,6 +541,7 @@ export function applySplendorAction(
         applyPurchase(s, uid, action);
         if (g.config.module === "strongholds") {
           g.phase = "RESOLVE_EXPANSION";
+          recordSplendorActivity(before, g, uid, action.type);
           return s;
         }
         break;
@@ -548,5 +551,6 @@ export function applySplendorAction(
     afterPrimary(g, p);
   }
   if ((g.phase as string) === "GAME_OVER") s.public.status = "finished";
+  recordSplendorActivity(before, g, uid, action.type);
   return s;
 }

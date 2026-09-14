@@ -27,6 +27,9 @@ export type ConditionExpression =
   | { kind: "objectCount"; scope?: RoomScope; match?: ObjectFilter; comparison: Comparison; value: number }
   | { kind: "colorCount"; scope?: RoomScope; color: DecorColor; target: "walls" | "objects" | "both"; comparison: Comparison; value: number }
   | { kind: "styleCount"; scope?: RoomScope; style: DecorStyle; comparison: Comparison; value: number }
+  | { kind: "emptySlotCount"; scope?: RoomScope; comparison: Comparison; value: number }
+  | ({ kind: "distinctCount"; scope?: RoomScope; comparison: Comparison; value: number } & (
+      { trait: "color"; target: "walls" | "objects" | "both" } | { trait: "style"; target: "objects" }))
   | { kind: "roomColor"; room: RoomRef; color: DecorColor }
   | { kind: "wallColors"; first: RoomRef; second: RoomRef; same: boolean }
   | { kind: "everyRoom" | "someRoom"; scope?: RoomScope; condition: ConditionExpression }
@@ -76,13 +79,15 @@ export interface DecorumScenario extends DecorumScenarioInfo {
 
 // Metadata only: never import server scenarios or solutions into the client.
 export const DECORUM_SCENARIOS: DecorumScenarioInfo[] = [
-  { id: "demo-two-01", name: "第一次合租", playerCount: 2, difficulty: 1, maxRounds: 30, description: "一盞燈、一面牆，慢慢找到兩個人都喜歡的日常。" },
-  { id: "demo-two-02", name: "週末收藏室", playerCount: 2, difficulty: 2, maxRounds: 30, description: "把旅行帶回家的小物，放在恰到好處的位置。" },
-  { id: "demo-three-01", name: "三人的午後", playerCount: 3, difficulty: 3, maxRounds: 30, description: "三種生活節奏，試著在同一個屋簷下找到平衡。" },
-  { id: "demo-four-01", name: "四季合租公寓", playerCount: 4, difficulty: 3, maxRounds: 30, enableRoommateTokens: true, description: "兩間臥室、四位室友。換個位置，也許就能換個心情。" },
+  { id: "demo-two-01", name: "第一次合租", playerCount: 2, difficulty: 2, maxRounds: 30, description: "每人 4 項心願，從牆色、收藏數量與留白，找到兩人都喜歡的日常。" },
+  { id: "demo-two-02", name: "週末收藏室", playerCount: 2, difficulty: 3, maxRounds: 30, description: "每人 5 項心願，在有限的格子裡兼顧收藏數量、風格與樓上配色。" },
+  { id: "demo-three-01", name: "三人的午後", playerCount: 3, difficulty: 4, maxRounds: 30, description: "每人 5 項心願，透過跨房間的顏色、風格與空格數量，拼出共同的家。" },
+  { id: "demo-four-01", name: "四季合租公寓", playerCount: 4, difficulty: 4, maxRounds: 30, enableRoommateTokens: true, description: "每人 5 項心願，兩間臥室容納不同喜好，一起安排全屋的收藏與留白。" },
 ];
 
-// An explicit, limited catalog: no Cartesian product or client-created objects.
+// Original platform palette. The physical game also has 12 combinations (4 copies
+// each), but uses different color/style pairings. Do not expand to a Cartesian product.
+// Four rooms with one slot per type already limit each catalog entry to 4 copies.
 export const DECOR_OBJECTS: DecorObject[] = [
   { id: "lamp-blue-modern", type: "lamp", color: "blue", style: "modern" },
   { id: "lamp-yellow-retro", type: "lamp", color: "yellow", style: "retro" },

@@ -47,7 +47,7 @@ for (const count of [2, 3, 4]) {
   await read(players[0], `${path}/decorumPrivate/${players[1].localId}`, true);
   await read(outsiders, `${path}/decorumPrivate/${players[0].localId}`, true);
   const privateData = await Promise.all(players.map((p) => read(p, `${path}/decorumPrivate/${p.localId}`)));
-  assert.equal(privateData[0].conditions.length, 3);
+  assert.equal(privateData[0].conditions.length, count === 2 ? 4 : 5);
   assert.ok(!g.revealedConditions);
   for (const condition of privateData.flatMap((p) => p.conditions)) assert.ok(!JSON.stringify(g).includes(condition.description));
   await write(players[0], `${path}/public/decorum/winner`, "players");
