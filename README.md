@@ -2,6 +2,10 @@
 
 React / TypeScript / Vite 桌遊平台，使用 Firebase Anonymous Auth、Realtime Database 與 callable Cloud Functions。大廳提供 Avalon（5–10 人）、驚爆倫敦原版（4–8 人）、驚爆倫敦：危機進化（4–6 人）、同房異夢（2–4 人）與璀璨寶石（2–4 人）。除了同房異夢，其他遊戲皆支援 AI 練習與補位。
 
+## 勝場排行榜
+
+大廳按「勝場排行榜」查看會員的六款遊戲勝場與總勝場，可切換總榜／各遊戲榜，依勝場降冪顯示前 5 位。同勝場並列，並保留自己的累積紀錄。遊戲同步保留 Realtime Database；排行榜使用 Cloud Firestore 與會員 UID，僅在結算時寫入並防止重複加分。前後端各有 60 秒快取，查榜不讀歷史對局；單人練習、AI 座位及中止對局不計入。完整計分規則、資料結構與驗證方式見 [排行榜實作說明](docs/LEADERBOARD_IMPLEMENTATION.md)。
+
 ## 璀璨寶石 · 珠寶收藏與交易
 
 在大廳建立璀璨寶石房間，邀請 2–4 位朋友。房主可選基礎遊戲、城市、貿易站、東方之路或要塞；每次只啟用一種擴充。所有人準備後開始。以圖示選寶石，再確認拿取；點卡牌查看價格、永久折扣、黃金用量並購買或保留。手機與平板保留完整市場，底部固定顯示自己的寶石與折扣。
@@ -55,7 +59,7 @@ npm install
 開啟兩個終端機：
 
 ```sh
-# 終端機 A：Auth、Realtime Database、Functions Emulator
+# 終端機 A：Auth、Realtime Database、Firestore、Functions Emulator
 npm run emulators
 
 # 終端機 B：本機前端，使用 demo-boardgame，不會連線正式專案
@@ -76,7 +80,7 @@ npm run emulators
 
 ## 連接既有 Firebase 專案
 
-平台入口為 `/login`。新玩家先到 `/register` 建立電子郵件／密碼帳號，設定暱稱後即可進入大廳；既有玩家登入後可建立朋友房或 AI 練習桌。`/reset-password` 提供忘記密碼，頁首右側按鈕可登出。
+平台入口為 `/login`。新玩家先到 `/register` 建立電子郵件／密碼帳號，首次設定暱稱後即可進入大廳。暱稱儲存在 Firebase Authentication 的 `displayName`，重新登入、清除瀏覽器資料或換裝置都會自動帶入；舊版依 UID 存在瀏覽器的暱稱會於登入後自動補存（帳號已有暱稱時以帳號為準）。儲存失敗會顯示重試提示，成功後才進入大廳。頁首暱稱旁的鉛筆按鈕可修改自己的暱稱，儲存成功後保留原有勝場，排行榜讀取時顯示新暱稱。`/reset-password` 提供忘記密碼，頁首右側按鈕可登出。
 
 未登入時，直接開啟遊戲或房間網址會回到登入頁，登入完成後返回原本目的地。所有遊戲 callable 與資料庫讀寫另行驗證 Firebase 的密碼登入憑證，不能靠跳過頁面或舊匿名憑證取得存取權。
 
@@ -139,7 +143,7 @@ E2E 會自行啟動測試前端（5174）。`playwright.config.ts` 預設 Edge�
 
 ## 部署
 
-確認 `.firebaserc`、兩端環境變數、Blaze 與登入帳號後，使用統一部署指令，同時更新 Authentication、Functions、規則與前端。不要以公開 test rules 取代本專案規則。
+確認 `.firebaserc`、兩端環境變數、Blaze 與登入帳號後，使用統一部署指令，更新 Authentication、Functions、規則與前端。指令會先完成後端部署，成功後才發布 Hosting，避免前端先更新、後端仍使用舊版。不要以公開 test rules 取代本專案規則。
 
 ```sh
 npx firebase login
@@ -193,7 +197,7 @@ Avalon／驚爆倫敦遊戲中明確離開或被清理時，由 AI 保留座位�
 
 - 開放朋友房與單人練習，未加入公開配對、自由聊天、排行榜或 Mordred／Oberon。
 - AI 由在線真人瀏覽器呼叫 `advanceBots` 推進；所有真人關閉頁面後暫停，重連後繼續。策略 AI 不提供自然語言理解或聊天模型。
-- 必須先註冊電子郵件／密碼帳號才能遊玩；支援登入、登出與忘記密碼。帳號由 Firebase Authentication 管理，同一帳號跨瀏覽器使用相同 UID，暱稱依帳號儲存在本機。
+- 必須先註冊電子郵件／密碼帳號才能遊玩；支援登入、登出與忘記密碼。帳號由 Firebase Authentication 管理，同一帳號跨瀏覽器使用相同 UID，暱稱永久儲存在帳號的 `displayName`。
 - 舊匿名身份無法繼續進入遊戲，需重新註冊會員；不會自動轉移舊訪客房間。前端、所有 callable 與 RTDB 規則均檢查密碼登入身分，避免舊憑證繞過登入頁。
 - 空置但未明確離開的房間沒有排程清除；任務歷史保留在房內，不提供永久戰績。
 - App Check、每帳號建房頻率限制及配額監控尚未加入；公開大規模營運前需補上。Security Rules 已防止跨玩家讀取及非法遊戲寫入。

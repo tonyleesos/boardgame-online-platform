@@ -14,6 +14,17 @@ import type { SplendorAction } from "./shared/splendor";
 import { initializeApp } from "firebase-admin/app";
 import { getDatabase } from "firebase-admin/database";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { onValueCreated } from "firebase-functions/v2/database";
+import { getFirestore } from "firebase-admin/firestore";
+import { getAuth } from "firebase-admin/auth";
+import { queueSettlement } from "./leaderboard";
+import { createLeaderboardStore } from "./leaderboard-store";
+import {
+  RANKED_GAMES,
+  type RankedGame,
+  type GameSettlement,
+  type LeaderboardSort,
+} from "./shared/leaderboard";
 import { randomInt, randomUUID, createHash } from "node:crypto";
 import { applyGameAction, startGame } from "./engine";
 import { startBomb, applyBombAction } from "./timebomb-engine";
@@ -45,6 +56,7 @@ initializeApp(
       : undefined,
 );
 const db = getDatabase();
+const leaderboard = createLeaderboardStore(getFirestore());
 const options = { region: "asia-east1", maxInstances: 10 };
 const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const codePattern = /^[A-HJ-NP-Z2-9]{6}$/;
@@ -59,6 +71,7 @@ type RequestData = {
   bombVariant?: "standard" | "evolution" | "classic";
   botLevel?: "casual" | "standard";
   token?: string;
+  sort?: string;
 };
 function nickname(value: unknown): string {
   ensure(
@@ -101,13 +114,18 @@ async function mutate(
   // RTDB may first invoke the callback with an empty local cache. Returning null
   // allows the server's compare-and-swap to retry with the actual current value.
   let found = false;
+  const completedAt = Date.now();
   let validationError: unknown;
   const result = await reference.transaction((value: Session | null) => {
     found = !!value;
     validationError = undefined;
     if (!value) return null;
     try {
-      return change(structuredClone(value));
+      return queueSettlement(
+        value,
+        change(structuredClone(value)),
+        completedAt,
+      );
     } catch (error) {
       // A retry callback runs on an SDK event loop. Abort instead of throwing
       // there, then translate the validation error in the callable handler.
@@ -154,6 +172,53 @@ function callable(
     }
   });
 }
+// Database triggers must be colocated with the existing Singapore RTDB instance.
+export const recordGameWins = onValueCreated(
+  {
+    ref: "/sessions/{code}/settlements/{matchId}",
+    region: process.env.FIREBASE_DATABASE_EMULATOR_HOST
+      ? "us-central1"
+      : "asia-southeast1",
+    maxInstances: 10,
+    retry: true,
+  },
+  async (event) => {
+    const result = event.data.val() as GameSettlement;
+    ensure(result.matchId === event.params.matchId, "結算編號不一致");
+    await leaderboard.settle(result);
+    // Cleanup after a committed receipt only; retry after cleanup failure is safe.
+    await db
+      .ref(`sessions/${event.params.code}/settlements/${event.params.matchId}`)
+      .remove();
+  },
+);
+
+export const getLeaderboard = callable(async (uid, data) => {
+  const sort = data.sort ?? "total";
+  ensure(
+    sort === "total" || RANKED_GAMES.includes(sort as RankedGame),
+    "無效的排行榜類型",
+  );
+  const result = await leaderboard.read(uid, sort as LeaderboardSort);
+  // Resolve current account names after reading cached scores. Old room names
+  // and delayed settlements cannot overwrite a member's new display name.
+  const ids = [...new Set([...result.entries.map((entry) => entry.uid), uid])];
+  const accounts = await getAuth().getUsers(ids.map((id) => ({ uid: id })));
+  const names = new Map(
+    accounts.users.map((user) => [user.uid, user.displayName?.trim()]),
+  );
+  return {
+    ...result,
+    entries: result.entries.map((entry) => ({
+      ...entry,
+      nickname: names.get(entry.uid) || entry.nickname,
+    })),
+    self: result.self
+      ? { ...result.self, nickname: names.get(uid) || result.self.nickname }
+      : null,
+  };
+});
+
 export const createRoom = callable(async (uid, data) => {
   const name = nickname(data.nickname);
   ensure(

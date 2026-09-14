@@ -15,7 +15,13 @@ import { HomePage } from "../pages/HomePage";
 import { AuthPage } from "../pages/AuthPage";
 import { GameSelectPage } from "../pages/GameSelectPage";
 import { RoomEntryPage } from "../pages/RoomEntryPage";
-import { safeReturnPath } from "../firebase/account";
+import { useEffect } from "react";
+import {
+  safeReturnPath,
+  saveAccountNickname,
+  signOutAccount,
+} from "../firebase/account";
+import { clearLeaderboardCache, errorMessage } from "../firebase/api";
 const RoomPage = lazy(() =>
   import("../pages/RoomPage").then((module) => ({ default: module.RoomPage })),
 );
@@ -48,23 +54,71 @@ function GuestRoutes() {
   );
 }
 function MemberRoutes({ user }: { user: User }) {
-  const [nickname, setName] = useState(
-    () => localStorage.getItem(`nickname:${user.uid}`) ?? "",
+  const [nickname, setName] = useState(() => user.displayName?.trim() ?? "");
+  const [legacyName] = useState(() =>
+    user.displayName?.trim()
+      ? ""
+      : (localStorage.getItem(`nickname:${user.uid}`)?.trim() ?? ""),
   );
+  const [migrating, setMigrating] = useState(Boolean(legacyName));
+  const [profileError, setProfileError] = useState("");
+  useEffect(() => {
+    if (!legacyName) return;
+    let active = true;
+    saveAccountNickname(user, legacyName)
+      .then((name) => {
+        if (active) setName(name);
+      })
+      .catch((error: unknown) => {
+        if (active) setProfileError(errorMessage(error));
+      })
+      .finally(() => {
+        if (active) setMigrating(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [user, legacyName]);
   const location = useLocation();
   const destination = safeReturnPath(
     location.state?.from ?? location.pathname + location.search,
   );
+  if (migrating)
+    return (
+      <main className="setup panel" role="status">
+        正在將暱稱儲存到會員帳號…
+      </main>
+    );
+  if (profileError)
+    return (
+      <main className="setup panel">
+        <h1>暱稱尚未儲存</h1>
+        <p role="alert" className="error">
+          {profileError}
+        </p>
+        <button onClick={() => window.location.reload()}>重新儲存</button>
+        <button
+          onClick={() => {
+            void signOutAccount();
+          }}
+        >
+          登出
+        </button>
+      </main>
+    );
   if (!nickname && location.pathname !== "/")
     return <Navigate to="/" replace state={{ from: destination }} />;
+  if (nickname && location.pathname === "/")
+    return <Navigate to={destination} replace />;
   return (
     <PlayerContext.Provider
       value={{
         uid: user.uid,
         nickname,
-        setNickname: (value) => {
-          localStorage.setItem(`nickname:${user.uid}`, value);
-          setName(value);
+        setNickname: async (value) => {
+          const name = await saveAccountNickname(user, value);
+          clearLeaderboardCache();
+          setName(name);
         },
       }}
     >

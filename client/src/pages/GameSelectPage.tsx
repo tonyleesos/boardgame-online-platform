@@ -1,4 +1,6 @@
 import { MafiaArt } from "../games/mafia/MafiaArt";
+import { useState } from "react";
+import { LeaderboardDialog } from "../components/LeaderboardDialog";
 import "../games/mafia/mafia.css";
 import { Link } from "react-router-dom";
 import {
@@ -9,10 +11,12 @@ import {
   Sparkles,
   House,
   Gem,
+  Trophy,
 } from "lucide-react";
 import { motion } from "motion/react";
 import { games } from "../games/catalog";
 export function GameSelectPage() {
+  const [leaderboardOpen, setLeaderboardOpen] = useState(false);
   const lastRoom = localStorage.getItem("lastRoom");
   return (
     <>
@@ -22,7 +26,16 @@ export function GameSelectPage() {
         <p className="muted">
           選一款遊戲，邀朋友入座。剩下的，交給你們的默契。
         </p>
+        <button
+          className="leaderboard-launch"
+          onClick={() => setLeaderboardOpen(true)}
+        >
+          <Trophy size={19} /> 勝場排行榜 <ArrowRight size={16} />
+        </button>
       </section>
+      {leaderboardOpen && (
+        <LeaderboardDialog onClose={() => setLeaderboardOpen(false)} />
+      )}
       {lastRoom && (
         <p>
           <Link className="button" to={`/room/${lastRoom}`}>

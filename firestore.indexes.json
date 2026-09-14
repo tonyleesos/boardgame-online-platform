@@ -1,0 +1,17 @@
+{
+  "indexes": [],
+  "fieldOverrides": [
+    { "collectionGroup": "gameResults", "fieldPath": "*", "indexes": [] },
+    {
+      "collectionGroup": "playerStats",
+      "fieldPath": "updatedAt",
+      "indexes": []
+    },
+    {
+      "collectionGroup": "playerStats",
+      "fieldPath": "nickname",
+      "indexes": []
+    },
+    { "collectionGroup": "playerStats", "fieldPath": "uid", "indexes": [] }
+  ]
+}

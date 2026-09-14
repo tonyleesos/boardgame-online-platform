@@ -8,15 +8,15 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspace client",
-    "deploy": "npm run build && firebase deploy --only auth && node scripts/configure-auth.cjs && firebase deploy --only functions,database,hosting",
+    "deploy": "npm run build && firebase deploy --only auth && node scripts/configure-auth.cjs && firebase deploy --only firestore,functions,database && firebase deploy --only hosting",
     "dev:emulator": "npm run dev --workspace client -- --mode emulator",
     "build": "npm run build --workspace functions && npm run build --workspace client",
     "lint": "npm run lint --workspace client && npm run lint --workspace functions",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "emulators": "npm run build --workspace functions && firebase emulators:start --project demo-boardgame --only auth,database,functions",
-    "test:services": "node tests/auth-integration.mjs && node tests/integration.mjs && node tests/timebomb-integration.mjs && node tests/decorum-integration.mjs && node tests/splendor-integration.mjs && node tests/mafia-integration.mjs",
-    "test:integration": "npm run build --workspace functions && firebase emulators:exec --project demo-boardgame --only auth,database,functions \"npm run test:services\""
+    "emulators": "npm run build --workspace functions && firebase emulators:start --project demo-boardgame --only auth,database,firestore,functions",
+    "test:services": "node tests/auth-integration.mjs && node tests/integration.mjs && node tests/timebomb-integration.mjs && node tests/decorum-integration.mjs && node tests/splendor-integration.mjs && node tests/mafia-integration.mjs && node tests/leaderboard-integration.mjs",
+    "test:integration": "npm run build --workspace functions && firebase emulators:exec --project demo-boardgame --only auth,database,firestore,functions \"npm run test:services\""
   },
   "repository": {
     "type": "git",

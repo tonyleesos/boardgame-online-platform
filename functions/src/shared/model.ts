@@ -89,6 +89,8 @@ export interface Room {
   activity?: Array<{ uid: string; message: string; sequence: number }>;
 }
 export interface Session {
+  /** Server-only outbox, committed atomically with the final game action. */
+  settlements?: Record<string, import("./leaderboard").GameSettlement>;
   public: Room;
   presence?: Record<
     string,

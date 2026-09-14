@@ -4,11 +4,13 @@ import { safeReturnPath } from "../firebase/account";
 import { ArrowRight, Crown } from "lucide-react";
 import { motion } from "motion/react";
 import { usePlayer } from "../app/context";
+import { useAction } from "../hooks/useAction";
 export function HomePage() {
   const player = usePlayer();
   const [name, setName] = useState(player.nickname);
   const navigate = useNavigate();
   const location = useLocation();
+  const { run, pending, error } = useAction();
   return (
     <motion.section
       className="welcome panel"
@@ -31,8 +33,10 @@ export function HomePage() {
         onSubmit={(e) => {
           e.preventDefault();
           if (name.trim()) {
-            player.setNickname(name.trim());
-            navigate(safeReturnPath(location.state?.from));
+            void run(async () => {
+              await player.setNickname(name.trim());
+              navigate(safeReturnPath(location.state?.from));
+            });
           }
         }}
       >
@@ -44,9 +48,18 @@ export function HomePage() {
           maxLength={20}
           placeholder="輸入你的暱稱"
           required
+          disabled={pending}
         />
-        <button className="primary" disabled={!name.trim()}>
-          入座，開始冒險
+        <small className="muted">
+          暱稱會儲存在會員帳號，下次登入自動帶入。
+        </small>
+        {error && (
+          <p role="alert" className="error">
+            暱稱儲存失敗：{error}
+          </p>
+        )}
+        <button className="primary" disabled={pending || !name.trim()}>
+          {pending ? "正在儲存暱稱…" : "入座，開始冒險"}
           <ArrowRight size={18} />
         </button>
       </form>

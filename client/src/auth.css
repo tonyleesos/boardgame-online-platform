@@ -193,6 +193,31 @@
   min-width: 44px;
   flex-shrink: 0;
 }
+@media (max-width: 480px) {
+  .site-header .profile {
+    display: grid;
+    grid-template-columns: repeat(2, 44px);
+    gap: 0 4px;
+    justify-items: center;
+  }
+  .site-header .profile > span {
+    grid-column: 1 / -1;
+    max-width: 92px;
+    min-width: 0;
+  }
+  .site-header .profile > svg,
+  .site-header .profile > small {
+    display: none;
+  }
+  .site:has(.room-active) .site-header {
+    min-height: 48px;
+  }
+  .site:has(.room-active) .site-header .profile {
+    display: flex;
+    gap: 4px;
+    max-height: none;
+  }
+}
 @media (max-width: 700px) {
   .auth-shell {
     padding: 22px 20px;

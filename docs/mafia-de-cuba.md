@@ -36,7 +36,7 @@
 
 ```sh
 npx vitest run tests/mafia.test.ts
-# Auth、RTDB、Functions 模擬器執行中
+# Auth、RTDB、Firestore、Functions 模擬器執行中
 node tests/mafia-integration.mjs
 npx playwright test tests/browser/mafia.spec.ts
 npm run lint

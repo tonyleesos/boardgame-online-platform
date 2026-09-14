@@ -1,6 +1,30 @@
 import { httpsCallable } from "firebase/functions";
 import { firebase } from "./config";
 import type {
+  LeaderboardResponse,
+  LeaderboardSort,
+} from "../../../functions/src/shared/leaderboard";
+import { createAsyncCache } from "../../../functions/src/shared/async-cache";
+const leaderboardCache = createAsyncCache<LeaderboardResponse>();
+let leaderboardUid: string | undefined;
+export function getLeaderboard(sort: LeaderboardSort) {
+  const uid = firebase?.auth.currentUser?.uid;
+  if (!uid) return Promise.reject(new Error("請先登入會員帳號"));
+  if (leaderboardUid !== uid) {
+    leaderboardCache.clear();
+    leaderboardUid = uid;
+  }
+  return leaderboardCache.get(`${uid}:${sort}`, () =>
+    call<LeaderboardResponse>("getLeaderboard", { sort }),
+  );
+}
+export function refreshLeaderboard(sort: LeaderboardSort) {
+  leaderboardCache.delete(`${firebase?.auth.currentUser?.uid}:${sort}`);
+}
+export function clearLeaderboardCache() {
+  leaderboardCache.clear();
+}
+import type {
   Game,
   GameAction,
   RoomAction,

@@ -1,4 +1,10 @@
 {
+  "firestore": {
+    "database": "(default)",
+    "location": "asia-east1",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
   "database": {
     "rules": "database.rules.json"
   },
@@ -6,18 +12,12 @@
     {
       "source": "functions",
       "codebase": "default",
-      "predeploy": [
-        "npm --prefix functions run build"
-      ]
+      "predeploy": ["npm --prefix functions run build"]
     }
   ],
   "hosting": {
     "public": "client/dist",
-    "ignore": [
-      "firebase.json",
-      "**/.*",
-      "**/node_modules/**"
-    ],
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       {
         "source": "**",
@@ -26,6 +26,7 @@
     ]
   },
   "emulators": {
+    "firestore": { "port": 8080 },
     "auth": {
       "port": 9099
     },

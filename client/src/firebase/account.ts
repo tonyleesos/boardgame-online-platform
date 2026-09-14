@@ -5,11 +5,20 @@ import {
   setPersistence,
   signInWithEmailAndPassword,
   signOut,
+  updateProfile,
+  type User,
 } from "firebase/auth";
 import { firebase } from "./config";
 function auth() {
   if (!firebase) throw new Error("登入服務尚未設定");
   return firebase.auth;
+}
+export async function saveAccountNickname(user: User, value: string) {
+  const nickname = value.trim();
+  if (!nickname || nickname.length > 20)
+    throw new Error("暱稱請輸入 1 至 20 個字");
+  await updateProfile(user, { displayName: nickname });
+  return nickname;
 }
 export async function signInAccount(email: string, password: string) {
   const service = auth();

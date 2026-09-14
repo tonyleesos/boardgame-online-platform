@@ -1,0 +1,183 @@
+.leaderboard-launch {
+  margin-top: 20px;
+  color: #e2bf7f;
+  border-color: #d1ae7260;
+  background: #d1ae720c;
+}
+.game-dialog.leaderboard-dialog {
+  width: min(1100px, calc(100% - 24px));
+  padding: 28px;
+}
+.leaderboard-intro {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin: 16px 0 24px;
+  color: #dfbf84;
+}
+.leaderboard-intro .eyebrow {
+  margin: 0 0 4px;
+  font-size: 10px;
+}
+.leaderboard-intro h2 {
+  color: #efece5;
+  margin: 0;
+}
+.leaderboard-toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.leaderboard-toolbar label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  color: #b7c3b7;
+  min-width: 0;
+}
+.leaderboard-toolbar select {
+  max-width: 100%;
+  min-height: 46px;
+  border: 1px solid #ffffff30;
+  border-radius: 8px;
+  background: #17261f;
+  padding: 10px 30px 10px 12px;
+  color: #efece5;
+  font: inherit;
+  font-size: 14px;
+}
+.leaderboard-toolbar button {
+  flex-shrink: 0;
+}
+.leaderboard-self {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
+  border: 1px solid #d1ae7240;
+  border-radius: 12px;
+  background: #d1ae720a;
+  font-size: 13px;
+}
+.leaderboard-self strong {
+  color: #edc887;
+  font-size: 28px;
+  white-space: nowrap;
+}
+.leaderboard-self small {
+  font-size: 12px;
+  font-weight: 400;
+}
+.leaderboard-self > span:last-child {
+  margin-left: auto;
+  color: #acb9ad;
+}
+.leaderboard-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid #ffffff18;
+  border-radius: 12px;
+}
+.leaderboard-table {
+  width: 100%;
+  min-width: 860px;
+  border-collapse: collapse;
+  text-align: center;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.leaderboard-table th,
+.leaderboard-table td {
+  padding: 16px 12px;
+  border-bottom: 1px solid #ffffff10;
+}
+.leaderboard-table thead {
+  background: #0e1b16;
+  color: #b7c3b7;
+  font-size: 11px;
+}
+.leaderboard-table th[scope="row"] {
+  text-align: left;
+  min-width: 125px;
+  max-width: 180px;
+  overflow-wrap: anywhere;
+}
+.leaderboard-table th[aria-sort],
+.leaderboard-total {
+  color: #edc887;
+}
+.leaderboard-table .is-self {
+  background: #d1ae7212;
+}
+.leaderboard-table small {
+  color: #e3c48c;
+  white-space: nowrap;
+}
+.leaderboard-table tr:last-child > * {
+  border-bottom: none;
+}
+.leaderboard-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  color: #aab9ad;
+}
+.leaderboard-rank.rank-1 {
+  color: #edc887;
+}
+.leaderboard-rank.rank-2 {
+  color: #c3d3dd;
+}
+.leaderboard-rank.rank-3 {
+  color: #d7a17c;
+}
+.leaderboard-empty {
+  text-align: center;
+  padding: 38px 12px;
+  color: #b5c2b5;
+}
+.leaderboard-empty svg {
+  margin: auto;
+  color: #d1ae72;
+}
+.leaderboard-empty h3 {
+  color: #efece5;
+}
+.leaderboard-rules {
+  margin: 20px 0 0;
+  color: #a1afa3;
+  font-size: 12px;
+  line-height: 1.8;
+}
+@media (max-width: 600px) {
+  .game-dialog.leaderboard-dialog {
+    padding: 16px;
+  }
+  .leaderboard-intro {
+    gap: 12px;
+  }
+  .leaderboard-intro > svg {
+    flex-shrink: 0;
+    width: 26px;
+  }
+  .leaderboard-intro h2 {
+    font-size: 19px;
+  }
+  .leaderboard-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .leaderboard-self {
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    padding: 12px;
+  }
+  .leaderboard-self > span:last-child {
+    width: 100%;
+    margin-left: 0;
+  }
+}
