@@ -93,7 +93,7 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
     players.every((p) => p.ready) &&
     (!isDecorum || decorScenario?.playerCount === players.length);
   return (
-    <div className={room.status === "waiting" ? "room-waiting" : "room-active"}>
+    <div className={`${room.status === "waiting" ? "room-waiting" : "room-active"}${isSplendor ? " room-splendor" : ""}`}>
       <div className="room-top">
         <div>
           <p className="eyebrow">

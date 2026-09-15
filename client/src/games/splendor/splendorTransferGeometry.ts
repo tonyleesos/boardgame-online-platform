@@ -11,7 +11,9 @@ export const findTransferTarget = (
   root: ParentNode,
   attribute: string,
   value: string,
-) => root.querySelector<HTMLElement>(`[${attribute}="${CSS.escape(value)}"]`);
+) => root.querySelector<HTMLElement>(`[${attribute}="${CSS.escape(value)}"]`) ??
+  // Compact player panels aggregate tokens into one visible destination.
+  (value.includes(":token:") ? root.querySelector<HTMLElement>(`[${attribute}="${CSS.escape(value.replace(/:token:[^:]+$/, ":tokens"))}"]`) : null);
 export function transferCenter(element: Element | null): Point {
   const rect = element?.getBoundingClientRect();
   return rect && rect.width && rect.height

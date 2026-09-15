@@ -244,19 +244,32 @@
 }
 .sp-player-resources {
   display: grid;
-  grid-template-columns: 26px repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   align-items: center;
   gap: 5px 2px;
   padding-top: 8px;
   border-top: 1px solid #ffffff16;
   font-size: 12px;
 }
-.sp-resource-heading, .sp-resource-count { text-align: center; min-width: 0; }
-.sp-resource-count { font-variant-numeric: tabular-nums; font-weight: 700; color: #f4f1df; border-radius: 4px; }
-.sp-resource-label { font-size: 10px; color: #adbfcd; }
+.sp-owned-stack {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 0;
+  padding: 4px 1px;
+  border: 1px solid #ead7a955;
+  border-radius: 3px;
+  background: linear-gradient(135deg, var(--cost-color), #12202c);
+  box-shadow: 1px -2px 0 #b8b8a733;
+  color: #fff;
+}
+.sp-owned-stack.empty { opacity: .45; box-shadow: none; }
+.sp-owned-stack.sp-white { color: #18242c; background: #e4e4dd; }
+.sp-patron { text-align: left; }
+.sp-phase-skip { display: none; }
 .sp-turn { position: sticky; top: 8px; z-index: 4; background: #263d4e; }
 .sp-turn-message { animation: sp-turn-arrive .35s ease-out; }
-.sp-bank-help { font-size: 12px; line-height: 1.65; color: #b7cbd4; margin: 0 0 12px; }
 .sp-clear-selection { display: block; padding: 4px 0; color: #e6c891 !important; background: transparent; border: 0; font-size: 11px !important; text-decoration: underline; }
 .sp-transfer-symbol { display: grid; place-items: center; width: 100%; height: 100%; color: #f3d58f; background: #263d4e; border: 2px solid #e6c891; border-radius: 14px; }
 @keyframes sp-active-player { 50% { box-shadow: 0 0 0 6px #ff4d583d; } }
@@ -750,17 +763,8 @@
   font-size: 10px;
 }
 .sp-log {
-  border-top: 1px solid var(--sp-line);
-  padding: 13px 0;
   color: #aebfc6;
   font-size: 11px;
-}
-.sp-log summary {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  min-height: 30px;
 }
 .sp-log p {
   display: flex;
@@ -874,17 +878,9 @@
   margin: 15px auto 0;
 }
 .sp-posts {
-  border: 1px solid #d3bf8833;
-  padding: 12px;
-  border-radius: 10px;
   font-size: 12px;
-  margin: 15px 0;
 }
-.sp-posts summary {
-  cursor: pointer;
-  min-height: 30px;
-}
-.sp-posts > div {
+.sp-posts > div:not(.dialog-heading) {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
   gap: 8px;
@@ -1227,10 +1223,6 @@
     grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 8px;
   }
-  .sp-gem-modes {
-    max-width: 220px;
-    margin-bottom: 15px;
-  }
   .sp-bank .sp-section-label {
     margin-bottom: 10px;
   }
@@ -1471,10 +1463,6 @@
   .sp-token > em {
     bottom: 20px;
     font-size: 8px;
-  }
-  .sp-gem-modes button {
-    min-height: 36px;
-    font-size: 11px;
   }
   .sp-bank-action .sp-confirm {
     min-width: 125px;
@@ -1929,4 +1917,222 @@
   .sp-transfer-item {
     display: none;
   }
+}
+
+/* Mobile table: the market takes the remaining viewport height; no fixed dock
+   covers it. Detailed collections and history open in native dialogs. */
+@media (max-width: 600px) {
+  body:has(.room-active.room-splendor) { min-height: 0; }
+  .site:has(.room-active.room-splendor) {
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    max-width: none;
+  }
+  .site:has(.room-active.room-splendor) > .site-header,
+  .site:has(.room-active.room-splendor) > footer,
+  .room-active.room-splendor .players-panel,
+  .room-active.room-splendor .ai-conversation {
+    display: none;
+  }
+  .site:has(.room-active.room-splendor) > main { min-height: 0; }
+  .room-active.room-splendor {
+    height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    display: flex;
+    flex-direction: column;
+  }
+  .room-active.room-splendor .room-top {
+    flex: 0 0 30px;
+    min-height: 30px;
+    margin: 0;
+    padding: 0 8px;
+    gap: 4px;
+  }
+  .room-active.room-splendor .room-top h1 { font-size: 12px; margin: 0; }
+  .room-active.room-splendor .room-top button {
+    min-height: 28px;
+    height: 28px;
+    padding: 2px 6px;
+    font-size: 12px;
+  }
+  .room-active.room-splendor .room-top svg { width: 15px; height: 15px; }
+  .room-active.room-splendor .room-top .eyebrow,
+  .room-active.room-splendor .room-code > small { display: none; }
+  .room-active.room-splendor .room-grid {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    gap: 0;
+    margin: 0;
+  }
+  .room-active.room-splendor .room-grid > section {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+  }
+  .room-active.room-splendor .connection.offline,
+  .room-active.room-splendor > .error { margin: 0; padding: 3px 8px; font-size: 11px; }
+  .room-active.room-splendor .sp-game {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+    gap: 3px;
+    margin: 0;
+    padding: 5px 7px;
+    border-radius: 10px 10px 0 0;
+  }
+  .sp-game > * { flex-shrink: 0; }
+  .sp-game .sp-heading { height: 24px; margin: 0; }
+  .sp-game .sp-heading h2 { font-size: 15px; letter-spacing: 1px; gap: 5px; }
+  .sp-game .sp-heading h2 svg { width: 18px; height: 18px; }
+  .sp-game .sp-eyebrow { display: none; }
+  .sp-game .sp-heading-right { gap: 5px; font-size: 10px; }
+  .sp-game .sp-heading-right b { font-size: 13px; }
+  .sp-game .sp-icon-button { min-width: 28px; min-height: 28px; padding: 4px !important; }
+  .sp-game .sp-icon-button svg { width: 18px; height: 18px; }
+  .sp-game .sp-turn {
+    position: static;
+    min-height: 25px;
+    padding: 3px 7px;
+    font-size: 11px;
+    gap: 6px;
+    border-radius: 6px;
+  }
+  .sp-game .sp-turn small { font-size: 9px; }
+  .sp-game .sp-phase-skip { display: inline-flex; margin-left: auto; min-height: 24px; padding: 1px 6px; font-size: 11px; }
+  .sp-game .sp-turn:has(.sp-phase-skip) > small { display: none; }
+  .sp-game .sp-players { gap: 4px; margin: 2px 0 0; }
+  .sp-game .sp-player { padding: 5px 3px !important; gap: 4px; border-radius: 6px !important; }
+  .sp-game .sp-player-overview { position: relative; gap: 2px; align-items: start; }
+  .sp-game .sp-avatar { display: none; }
+  .sp-game .sp-player-name { font-size: 11px; line-height: 14px; padding-top: 1px; }
+  .sp-game .sp-player-name > small { margin-left: 2px; font-size: 8px; }
+  .sp-game .sp-player-name > span { gap: 2px; font-size: 11px; margin-top: 3px; }
+  .sp-game .sp-player-name > span > svg { width: 10px; height: 10px; }
+  .sp-game .sp-player-name > span > svg:nth-of-type(2) { margin-left: 3px; }
+  .sp-game .sp-score { position: absolute; right: 0; bottom: 0; font-size: 11px; gap: 1px; }
+  .sp-game .sp-score svg { width: 9px; height: 9px; }
+  .sp-game .sp-player-turn-dot { top: -8px; left: -6px; width: 9px; height: 9px; }
+  .sp-game .sp-player-resources { padding-top: 3px; gap: 2px; font-size: 10px; }
+  .sp-game .sp-owned-stack { flex-direction: column; gap: 0; padding: 2px 0; line-height: 12px; }
+  .sp-game .sp-owned-stack .sp-gem { display: none; }
+  .sp-game .sp-section-label { margin: 0 0 3px; font-size: 10px; gap: 4px; line-height: 13px; letter-spacing: 0; }
+  .sp-game .sp-section-label > svg { width: 12px; height: 12px; }
+  .sp-game .sp-section-label > small { font-size: 9px; }
+  .sp-game .sp-patrons { margin: 0; }
+  .sp-game .sp-patron-row { display: flex; gap: 4px; }
+  .sp-game .sp-patron {
+    display: block;
+    flex: 1;
+    padding: 17px 3px 3px;
+    border-radius: 5px;
+    min-width: 0;
+    min-height: 45px;
+  }
+  .sp-game .sp-patron-seal, .sp-game .sp-patron strong { display: none; }
+  .sp-game .sp-patron > div { width: auto; }
+  .sp-game .sp-patron > b { top: 2px; right: 4px; font-size: 11px; gap: 1px; }
+  .sp-game .sp-patron .sp-cost { gap: 2px; justify-content: center; flex-wrap: nowrap; }
+  .sp-game .sp-patron .sp-amount { flex-direction: column; gap: 1px; font-size: 12px; }
+  .sp-game .sp-patron .sp-gem { width: 12px; height: 12px; }
+  .sp-game .sp-patron > div > small { margin: 1px 0 0; font-size: 9px; line-height: 12px; text-align: center; }
+  .sp-game .sp-patron > div > .sp-pledged-label { position: absolute; top: 1px; left: 2px; font-size: 8px; }
+  .sp-game.sp-module-cities .sp-patron .sp-amount { flex-direction: row; }
+  .sp-game .sp-table-layout { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 5px; }
+  .sp-game .sp-market {
+    display: grid;
+    grid-template-rows: 13px repeat(3, minmax(0, 1fr));
+    flex: 1;
+    min-height: 0;
+    gap: 4px;
+  }
+  .sp-game .sp-market .sp-section-label { margin: 0; }
+  .sp-game .sp-tier { margin: 0; gap: 3px; min-height: 0; }
+  .sp-game .sp-tier-label { width: 12px; gap: 0; }
+  .sp-game .sp-tier-label > span { font-size: 11px; letter-spacing: 0; }
+  .sp-game .sp-tier-label > small { display: none; }
+  .sp-game .sp-tier-scroll { overflow: visible; display: flex; padding: 0; gap: 3px; }
+  .sp-game .sp-market-row {
+    min-width: 0;
+    width: 100%;
+    grid-template-columns: 24px repeat(4, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .sp-game .sp-market .sp-card,
+  .sp-game .sp-market .sp-empty-card,
+  .sp-game .sp-deck {
+    height: 100%;
+    min-height: 0;
+    max-height: none;
+    aspect-ratio: auto;
+    border-radius: 5px !important;
+  }
+  .sp-game .sp-market .sp-card { box-shadow: 0 2px 3px #0005; }
+  .sp-game .sp-market .sp-card-head { padding: 1px 3px; height: 20px; align-items: center; }
+  .sp-game .sp-market .sp-prestige { font-size: 19px; line-height: 20px; }
+  .sp-game .sp-market .sp-card-bonus .sp-gem { width: 19px; height: 19px; }
+  .sp-game .sp-market .sp-card-bonus b { font-size: 10px; }
+  .sp-game .sp-market .sp-card-cost { left: 3px; bottom: 3px; }
+  .sp-game .sp-market .sp-card-cost .sp-cost { display: grid; grid-template-columns: repeat(2, auto); gap: 2px 4px; }
+  .sp-game .sp-market .sp-card-cost .sp-amount {
+    width: 15px; height: 15px; font-size: 12px; box-shadow: 0 1px 2px #0008;
+  }
+  .sp-game .sp-market .sp-card-cost .sp-gem { width: 8px; height: 8px; right: -4px; }
+  .sp-game .sp-market .sp-card-foot { display: none; }
+  .sp-game .sp-affordable { right: 3px; bottom: 3px; top: auto; width: 14px; height: 14px; }
+  .sp-game .sp-protected { top: 3px; right: 23px; padding: 1px; gap: 1px; font-size: 9px; max-width: none; z-index: 2; }
+  .sp-game .sp-protected svg { width: 10px; height: 10px; }
+  .sp-game .sp-protected small { display: none; }
+  .sp-game .sp-deck { padding: 2px !important; gap: 2px; border-width: 1px !important; box-shadow: 1px 1px 0 #b4bfad55; }
+  .sp-game .sp-deck > svg { width: 15px; height: 15px; }
+  .sp-game .sp-deck > span { font-size: 9px; }
+  .sp-game .sp-deck > small { font-size: 9px; gap: 0; }
+  .sp-game .sp-deck > small svg { display: none; }
+  .sp-game.sp-module-orient .sp-market-row { flex: 4; grid-template-columns: 15px repeat(4, minmax(0, 1fr)); gap: 2px; }
+  .sp-game.sp-module-orient .sp-orient-row { flex: 2; grid-template-columns: 15px repeat(2, minmax(0, 1fr)); max-width: none; margin: 0; }
+  .sp-game.sp-module-orient .sp-market .sp-card-cost .sp-cost { gap: 2px; }
+  .sp-game.sp-module-orient .sp-market .sp-card-cost .sp-amount { width: 14px; height: 14px; font-size: 11px; }
+  .sp-game.sp-module-orient .sp-market .sp-card-cost .sp-gem { display: none; }
+  .sp-game.sp-module-orient .sp-market .sp-card-head { padding: 2px 1px; }
+  .sp-game.sp-module-orient .sp-market .sp-card-bonus .sp-gem { width: 14px; height: 14px; }
+  .sp-game.sp-module-orient .sp-market .sp-card-bonus { position: relative; padding: 0; }
+  .sp-game.sp-module-orient .sp-market .sp-card-bonus b { position: absolute; right: 0; bottom: -2px; font-size: 8px; line-height: 9px; padding: 0 1px; background: #f7ecd8; border-radius: 2px; }
+  .sp-game.sp-module-orient .sp-affordable { display: none; }
+  .sp-game.sp-module-orient .sp-market .sp-prestige { font-size: 16px; }
+  .sp-game .sp-bank { align-self: stretch; padding: 3px 6px; border-radius: 7px; }
+  .sp-game .sp-bank > .sp-section-label { display: none; }
+  .sp-game .sp-bank-tokens { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; }
+  .sp-game .sp-token { min-height: 34px; height: 34px; gap: 0; justify-content: center; }
+  .sp-game .sp-chip { width: 27px; height: 25px; box-shadow: inset 0 0 0 1px #fff7, 0 2px 0 var(--chip-dark), 0 4px 0 var(--chip-edge); }
+  .sp-game .sp-token > b { min-width: 16px; height: 16px; right: 1px; top: 0; font-size: 11px; }
+  .sp-game .sp-token > small { display: none; }
+  .sp-game .sp-token > em { right: 0; bottom: 0; font-size: 11px; background: #10202f; border-radius: 3px; }
+  .sp-game .sp-token.selected .sp-chip { transform: translateY(-1px); outline-width: 2px; outline-offset: 1px; }
+  .sp-game .sp-bank-action { display: flex; gap: 6px; margin: 2px 0 0; padding: 2px 0 0; justify-content: space-between; align-items: center; }
+  .sp-game .sp-bank-action > span { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 10px; }
+  .sp-game .sp-clear-selection { padding: 2px; min-height: 26px; font-size: 10px !important; }
+  .sp-game .sp-bank-action .sp-confirm { width: 90px; min-height: 28px; padding: 3px 8px !important; font-size: 12px; }
+  .sp-game .sp-bank-action .sp-confirm svg { width: 14px; height: 14px; }
+  .sp-game .sp-reserves { display: flex; align-items: center; gap: 5px; margin: 0; height: 42px; }
+  .sp-game .sp-reserves > .sp-section-label { width: 43px; flex-shrink: 0; flex-wrap: wrap; gap: 1px; font-size: 9px; }
+  .sp-game .sp-reserves > .sp-section-label svg { display: none; }
+  .sp-game .sp-reserves > .sp-section-label small { margin-left: 0; }
+  .sp-game .sp-reserve-row { display: grid; flex: 1; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; min-width: 0; }
+  .sp-game .sp-reserve-row .sp-card,
+  .sp-game .sp-reserve-empty { min-height: 0; height: 40px; width: 100%; aspect-ratio: auto; gap: 0; border-radius: 5px !important; }
+  .sp-game .sp-reserve-empty small { display: none; }
+  .sp-game .sp-reserve-empty svg { width: 14px; height: 14px; }
+  .sp-game .sp-reserve-row .sp-card-head { height: 19px; padding: 1px 3px; }
+  .sp-game .sp-reserve-row .sp-prestige { font-size: 16px; line-height: 18px; }
+  .sp-game .sp-reserve-row .sp-card-bonus .sp-gem { width: 16px; height: 16px; }
+  .sp-game .sp-reserve-row .sp-card-cost { left: 3px; bottom: 2px; }
+  .sp-game .sp-reserve-row .sp-card-cost .sp-cost { flex-direction: row; gap: 3px; }
+  .sp-game .sp-reserve-row .sp-card-cost .sp-amount { width: 13px; height: 13px; font-size: 10px; }
+  .sp-game .sp-reserve-row .sp-card-cost .sp-gem { display: none; }
+  .sp-game .sp-reserve-row .sp-card-foot { display: none; }
+  .sp-game .sp-dock { display: none; }
+  .sp-game .sp-special-banner { display: none; }
+  .sp-game > .error { margin: 0; font-size: 11px; }
+  .sp-dialog .sp-sheet-actions { position: sticky; bottom: 0; background: #182f3b; padding: 8px 0 0; z-index: 2; }
 }

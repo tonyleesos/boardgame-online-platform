@@ -5,7 +5,7 @@ import {
   Bookmark,
   Castle,
   Check,
-  ChevronRight,
+  History,
   CircleHelp,
   Crown,
   Gem,
@@ -230,6 +230,10 @@ function Board({
       source: "base" | "orient";
     } | null>(null);
   const [help, setHelp] = useState(false),
+    [showResult, setShowResult] = useState(true),
+    [history, setHistory] = useState(false),
+    [posts, setPosts] = useState(false),
+    [patron, setPatron] = useState<string | null>(null),
     [profile, setProfile] = useState<string | null>(null),
     [returns, setReturns] = useState(emptyTokens),
     [choice, setChoice] = useState<OrientChoice>({});
@@ -293,7 +297,7 @@ function Board({
           }[g.phase]
         : `輪到 ${current.nickname} 執行動作`;
   return (
-    <div className="sp-game" ref={boardRef}>
+    <div className={`sp-game sp-module-${g.config.module}`} ref={boardRef}>
       <header className="sp-heading">
         <div>
           <span className="sp-eyebrow">THE GEM ATELIER</span>
@@ -303,6 +307,9 @@ function Board({
           </h2>
         </div>
         <div className="sp-heading-right">
+          {g.phase === "GAME_OVER" && <button className="sp-icon-button" aria-label="查看對局結果" onClick={() => setShowResult(true)}><Trophy size={18} /></button>}
+          {g.config.module === "tradingPosts" && <button className="sp-icon-button" aria-label="查看貿易站" onClick={() => setPosts(true)}><Castle size={18} /></button>}
+          <button className="sp-icon-button" aria-label="查看交易紀錄" onClick={() => setHistory(true)}><History size={18} /></button>
           <span>
             第 <b>{g.round}</b> 輪
           </span>
@@ -322,6 +329,8 @@ function Board({
       >
         {g.phase !== "GAME_OVER" && <span className="sp-turn-dot" />}
         <strong key={`${g.round}:${current.uid}:${g.phase}`} className="sp-turn-message">{phaseText}</strong>
+        {mine && (g.phase === "RESOLVE_EXPANSION" || g.phase === "STRONGHOLD_BONUS_PURCHASE") &&
+          <button className="sp-phase-skip" disabled={!active} onClick={() => act({ type: g.phase === "RESOLVE_EXPANSION" ? "splendorStronghold" : "splendorSkip" })}>略過</button>}
         <small>
           {g.finalRoundNumber ? "最後一輪" : EXPANSION_NAMES[g.config.module]}
         </small>
@@ -331,7 +340,7 @@ function Board({
           {error}
         </p>
       )}
-      <div className="sp-players">
+      <div className="sp-players" style={{ gridTemplateColumns: `repeat(${g.playerOrder.length}, minmax(0, 1fr))` }}>
         {g.playerOrder.map((id, i) => {
           const player = g.players[id];
           return (
@@ -355,12 +364,12 @@ function Board({
                 {player.nickname}
                 {id === uid && <small>你</small>}
                 <span>
-                  <Layers size={12} />
-                  <span data-sp-source={`player:${id}:cards`} data-sp-destination={`player:${id}:cards`}>
-                  {player.purchasedCardIds.length}
+                  <Gem size={12} />
+                  <span data-sp-source={`player:${id}:tokens`} data-sp-destination={`player:${id}:tokens`} aria-label={`寶石總數 ${tokenTotal(player.tokens)} 枚`}>
+                  {tokenTotal(player.tokens)}
                   </span>
                   <Bookmark size={12} />
-                  <span data-sp-source={`player:${id}:reserves`} data-sp-destination={`player:${id}:reserves`}>
+                  <span data-sp-source={`player:${id}:reserves`} data-sp-destination={`player:${id}:reserves`} aria-label={`已保留 ${player.reservedCards.length} 張`}>
                   {player.reservedCards.length}
                   </span>
                 </span>
@@ -375,7 +384,8 @@ function Board({
           );
         })}
       </div>
-      {g.phase === "GAME_OVER" && (
+      {g.phase === "GAME_OVER" && showResult && (
+        <GameDialog title="對局結果" className="sp-dialog" onClose={() => setShowResult(false)}>
         <section className="sp-result">
           <Trophy size={44} />
           <h3>
@@ -402,6 +412,7 @@ function Board({
             <small>等待房主再開一局</small>
           )}
         </section>
+        </GameDialog>
       )}
       <section
         className="sp-patrons"
@@ -417,7 +428,7 @@ function Board({
         </div>
         <div className="sp-patron-row">
           {(g.config.module === "cities" ? g.cities : g.nobles).map((n, i) => (
-            <div key={n.id} className={`sp-patron patron-${i}`}>
+            <button key={n.id} className={`sp-patron patron-${i}`} aria-label={`查看${n.name}條件`} onClick={() => setPatron(n.id)}>
               <span
                 className={`sp-patron-seal ${g.config.module === "cities" ? "" : "sp-patron-portrait"}`}
               >
@@ -435,13 +446,13 @@ function Board({
                 )}
                 {Object.values(g.players).some((v) =>
                   v.pledgedNobleIds.includes(n.id),
-                ) && <small>已邀約</small>}
+                ) && <small className="sp-pledged-label">已邀約</small>}
               </div>
               <b>
                 <Star size={11} fill="currentColor" />
                 {"prestige" in n ? n.prestige : n.minimumPrestige}
               </b>
-            </div>
+            </button>
           ))}
         </div>
       </section>
@@ -516,7 +527,6 @@ function Board({
             <Gem size={16} />
             寶石庫
           </div>
-          <p className="sp-bank-help" id="sp-bank-help">直接點寶石：同色連點兩下拿 2 枚，或不同色各點一下，最多 {applyTradingPostModifiers(p).maxDifferent} 色。同色須庫存至少 4 枚。</p>
           <div className="sp-bank-tokens">
             {TOKEN_COLORS.map((c) => (
               <button
@@ -524,7 +534,6 @@ function Board({
                 className={`sp-token sp-token-${c} ${chosen.includes(c as GemColor) ? "selected" : ""}`}
                 aria-label={`${GEM_NAMES[c]}，庫存 ${g.bank[c]}`}
                 aria-pressed={chosen.includes(c as GemColor)}
-                aria-describedby="sp-bank-help"
                 disabled={
                   !primary ||
                   c === "gold" ||
@@ -586,9 +595,9 @@ function Board({
           </button>
         </div>
       )}
-      {g.config.module === "tradingPosts" && (
-        <details className="sp-posts">
-          <summary>⚑ 貿易站 · {p.tradingPosts.length} / 5 已啟用</summary>
+      {posts && (
+        <GameDialog title="貿易站" className="sp-dialog sp-posts" onClose={() => setPosts(false)}>
+          <p>已啟用 {p.tradingPosts.length} / 5</p>
           <div>
             {DEMO_TRADING_POSTS.map((post) => (
               <article
@@ -603,7 +612,7 @@ function Board({
               </article>
             ))}
           </div>
-        </details>
+        </GameDialog>
       )}
       <section className="sp-reserves">
         <div className="sp-section-label">
@@ -637,10 +646,7 @@ function Board({
           ))}
         </div>
       </section>
-      <details className="sp-log">
-        <summary>
-          交易紀錄 <ChevronRight size={14} />
-        </summary>
+      {history && <GameDialog title="交易紀錄" className="sp-dialog sp-log" onClose={() => setHistory(false)}>
         {[...g.log].reverse().map((entry, i) => (
           <p key={`${entry.revision}-${i}`}>
             <b>{g.players[entry.uid].nickname}</b>
@@ -648,7 +654,7 @@ function Board({
           </p>
         ))}
         {!g.log.length && <p>第一筆交易，從你開始。</p>}
-      </details>
+      </GameDialog>}
       <footer className="sp-dock">
         <div className="sp-dock-title">
           <span>我的收藏</span>
@@ -1053,6 +1059,15 @@ function Board({
           )}
         </GameDialog>
       )}
+      {patron && (() => {
+        const target = [...g.nobles, ...g.cities].find((n) => n.id === patron);
+        return target && <GameDialog title={target.name} className="sp-dialog" onClose={() => setPatron(null)}>
+          <p>需要的永久加成</p><Cost values={target.requirements} />
+          <p><Star size={16} /> {"prestige" in target ? `獲得 ${target.prestige} 聲望` : `至少 ${target.minimumPrestige} 聲望`}</p>
+          {"differentBonuses" in target && <p>至少 {target.differentBonuses} 種不同色加成</p>}
+          <p>{g.config.module === "cities" ? "達成所有條件即可取得城市資格。" : "每回合最多一位貴族來訪，不消耗寶石或卡牌。"}</p>
+        </GameDialog>;
+      })()}
       {profile && (
         <GameDialog
           title={`${g.players[profile].nickname} 的收藏`}
@@ -1148,15 +1163,16 @@ function Board({
   );
 }
 function PlayerResources({ player }: { player: SplendorPlayerState }) {
-  const bonuses = calculateBonuses(player);
-  const cards = Object.fromEntries(GEM_COLORS.map((color) => [color,
-    player.purchasedCardIds.filter((id) => CARD_BY_ID[id].bonusColor === color).length]));
-  const differentBonuses = GEM_COLORS.some((color) => cards[color] !== bonuses[color]);
-  return <span className="sp-player-resources" aria-label={`${player.nickname} 的公開資源`}>
-    <span />{TOKEN_COLORS.map((color) => <span className="sp-resource-heading" key={color}><GemIcon color={color} size={15} /></span>)}
-    <span className="sp-resource-label">購卡</span>{TOKEN_COLORS.map((color) => <span key={`cards:${color}`} className="sp-resource-count" aria-label={color === "gold" ? "黃金沒有發展卡" : `${GEM_NAMES[color]}已購 ${cards[color]} 張`}>{color === "gold" ? "—" : cards[color]}</span>)}
-    {differentBonuses && <><span className="sp-resource-label">加成</span>{TOKEN_COLORS.map((color) => <span key={`bonus:${color}`} className="sp-resource-count" aria-label={color === "gold" ? "黃金沒有永久加成" : `${GEM_NAMES[color]}永久加成 ${bonuses[color]}`}>{color === "gold" ? "—" : bonuses[color]}</span>)}</>}
-    <span className="sp-resource-label">寶石</span>{TOKEN_COLORS.map((color) => <span key={`tokens:${color}`} className="sp-resource-count" data-sp-source={`player:${player.uid}:token:${color}`} data-sp-destination={`player:${player.uid}:token:${color}`} aria-label={`${GEM_NAMES[color]}持有 ${player.tokens[color]} 枚`}>{player.tokens[color]}</span>)}
+  return <span className="sp-player-resources" aria-label={`${player.nickname} 的已購卡，點擊查看完整收藏`}
+    data-sp-source={`player:${player.uid}:cards`} data-sp-destination={`player:${player.uid}:cards`}>
+    {GEM_COLORS.map((color) => {
+      const cards = player.purchasedCardIds.filter((id) => CARD_BY_ID[id].bonusColor === color);
+      return <span key={color} className={`sp-owned-stack sp-${color} ${cards.length ? "" : "empty"}`}
+        aria-label={`${GEM_NAMES[color]}已購 ${cards.length} 張`}
+        title={cards.map((id) => CARD_BY_ID[id].name).join("、") || "尚未購入"}>
+        <GemIcon color={color} size={13} /><b>{cards.length}</b>
+      </span>;
+    })}
   </span>;
 }
 function PlayerCollection({

@@ -29,7 +29,8 @@ export function SplendorTransfer({
       "(prefers-reduced-motion: reduce)",
     ).matches;
     const animations: Animation[] = [];
-    const dock = board.querySelector(".sp-dock");
+    const inventory = board.querySelector(".sp-dock");
+    const dock = inventory?.getBoundingClientRect().height ? inventory : board.querySelector(".sp-bank");
     const receipt = layer.querySelector<HTMLElement>(".sp-transfer-receipt")!;
     // A manual popover keeps the visual above any follow-up game dialog without
     // taking focus or blocking its controls. Older browsers use the fixed layer.

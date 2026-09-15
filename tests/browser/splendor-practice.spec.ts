@@ -57,8 +57,9 @@ for (const count of [2, 3, 4])
     }
     if (count === 4) {
       await expect(page.locator(".sp-card.affordable")).toHaveCount(0);
-      await page.locator(".sp-posts summary").click();
+      await page.getByRole("button", { name: "查看貿易站" }).click();
       await expect(page.locator(".sp-posts article")).toHaveCount(5);
+      await page.getByRole("button", { name: "關閉視窗" }).click();
     }
     const read = async <T>(path: string): Promise<T> => {
       const res = await fetch(
