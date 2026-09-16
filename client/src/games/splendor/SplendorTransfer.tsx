@@ -29,6 +29,9 @@ export function SplendorTransfer({
       "(prefers-reduced-motion: reduce)",
     ).matches;
     const animations: Animation[] = [];
+    const flightDuration = 1600;
+    const stagger = 180;
+    const arrivalDuration = 800;
     const inventory = board.querySelector(".sp-dock");
     const dock = inventory?.getBoundingClientRect().height ? inventory : board.querySelector(".sp-bank");
     const receipt = layer.querySelector<HTMLElement>(".sp-transfer-receipt")!;
@@ -56,7 +59,7 @@ export function SplendorTransfer({
           findTransferTarget(board, "data-sp-destination", item.source) ??
           board.querySelector(".sp-market");
         const from = visibleTransferPoint(transferCenter(source), item.color ? 30 : 52);
-        const delay = reduce ? 0 : index * 110;
+        const delay = reduce ? 0 : index * stagger;
         if (target) arrivals.set(target, delay);
         if (reduce) {
           node.hidden = true;
@@ -91,7 +94,7 @@ export function SplendorTransfer({
               { transform: at(to.x, to.y, 0.12, 0), opacity: 0, offset: 1 },
             ],
             {
-              duration: 850,
+              duration: flightDuration,
               delay,
               easing: "cubic-bezier(.22,.7,.25,1)",
               fill: "both",
@@ -113,7 +116,7 @@ export function SplendorTransfer({
                 },
                 { transform: "scale(1)", boxShadow: "0 0 0 12px #efd58c00" },
               ],
-          { duration: reduce ? 180 : 550, delay: reduce ? 0 : 740 + delay },
+          { duration: reduce ? 180 : arrivalDuration, delay: reduce ? 0 : flightDuration * 0.9 + delay },
         ),
       ),
     );
@@ -125,7 +128,7 @@ export function SplendorTransfer({
     );
     const timer = window.setTimeout(
       onComplete,
-      2600 + playback.items.length * 110,
+      reduce ? 2600 : flightDuration + Math.max(0, playback.items.length - 1) * stagger + arrivalDuration + 700,
     );
     // Scrolling or resizing must not leave flying items pointing at stale positions.
     const settle = () => {

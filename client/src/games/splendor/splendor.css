@@ -117,7 +117,7 @@
 }
 .sp-players {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
   gap: 8px;
   margin: 15px 0 22px;
 }
@@ -229,6 +229,13 @@
   align-items: center;
   gap: 8px;
   min-width: 0;
+  width: 100%;
+  min-height: 34px;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: inherit;
+  text-align: left;
 }
 .sp-player-turn-dot {
   position: absolute;
@@ -244,28 +251,35 @@
 }
 .sp-player-resources {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  align-items: center;
-  gap: 5px 2px;
-  padding-top: 8px;
+  gap: 5px;
+  padding-top: 6px;
   border-top: 1px solid #ffffff16;
   font-size: 12px;
+  line-height: 1.2;
 }
-.sp-owned-stack {
+.sp-resource-row {
+  display: grid;
+  grid-template-columns: 4em repeat(6, minmax(0, 1fr));
+  align-items: center;
+  gap: 3px;
+}
+.sp-resource-label { color: #c3d0d8; font-size: 10px; white-space: nowrap; }
+.sp-resource-value {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 3px;
   min-width: 0;
-  padding: 4px 1px;
-  border: 1px solid #ead7a955;
-  border-radius: 3px;
-  background: linear-gradient(135deg, var(--cost-color), #12202c);
-  box-shadow: 1px -2px 0 #b8b8a733;
+  padding: 3px 1px;
+  border: 1px solid #ffffff25;
+  border-radius: 12px;
+  background: #ffffff0a;
   color: #fff;
 }
-.sp-owned-stack.empty { opacity: .45; box-shadow: none; }
-.sp-owned-stack.sp-white { color: #18242c; background: #e4e4dd; }
+.sp-resource-value .sp-gem { flex-shrink: 0; }
+.sp-resource-value.empty { color: #8b9ba8; }
+.sp-resource-discount { border-radius: 3px; border-bottom: 2px solid var(--cost-color); }
+.sp-resource-no-gold { color: #8b9ba8; text-align: center; }
 .sp-patron { text-align: left; }
 .sp-phase-skip { display: none; }
 .sp-turn { position: sticky; top: 8px; z-index: 4; background: #263d4e; }
@@ -1919,8 +1933,37 @@
   }
 }
 
-/* Mobile table: the market takes the remaining viewport height; no fixed dock
-   covers it. Detailed collections and history open in native dialogs. */
+/* Compact market leaves room for every player's public resources. */
+@media (min-width: 601px) {
+  .sp-game { padding: 16px; }
+  .sp-players { margin: 10px 0 14px; }
+  .sp-patrons { margin-bottom: 14px; }
+  .sp-table-layout { gap: 14px; }
+  .sp-bank { padding: 12px; }
+  .sp-bank-tokens { gap: 12px 8px; }
+  .sp-bank .sp-chip { width: 48px; height: 46px; }
+  .sp-bank-action { margin-top: 14px; }
+  .sp-market { width: 100%; max-width: 760px; }
+  .sp-market .sp-section-label { margin-bottom: 6px; }
+  .sp-tier { gap: 6px; margin-bottom: 6px; }
+  .sp-tier-scroll { padding: 2px 3px 4px; }
+  .sp-market-row { grid-template-columns: 32px repeat(4, minmax(64px, 1fr)); gap: 7px; min-width: 0; }
+  .sp-orient-row { grid-template-columns: 32px repeat(2, minmax(64px, 1fr)); min-width: 0; margin-top: 6px; }
+  .sp-market .sp-card, .sp-market .sp-empty-card { height: 128px; min-height: 128px; max-height: 128px; aspect-ratio: auto; }
+  .sp-market .sp-deck { height: 128px; min-height: 0; gap: 6px; }
+  .sp-market .sp-deck > svg { width: 22px; height: 22px; }
+  .sp-market .sp-deck > span { font-size: 12px; letter-spacing: 0; white-space: nowrap; }
+  .sp-market .sp-card-head { padding: 4px 6px; height: 34px; }
+  .sp-market .sp-prestige { font-size: 27px; }
+  .sp-market .sp-card-bonus .sp-gem { width: 24px; height: 24px; }
+  .sp-market .sp-card-cost { bottom: 21px; }
+  .sp-market .sp-card-cost .sp-cost { display: grid; grid-template-columns: repeat(2, auto); gap: 4px 9px; }
+  .sp-market .sp-card-cost .sp-amount { width: 21px; height: 21px; font-size: 15px; }
+  .sp-market .sp-card-cost .sp-gem { width: 11px; height: 11px; right: -6px; }
+  .sp-market .sp-card-foot > small { font-size: 10px; }
+}
+
+/* Small screens keep all player resources visible with no nested scrolling. */
 @media (max-width: 600px) {
   body:has(.room-active.room-splendor) { min-height: 0; }
   .site:has(.room-active.room-splendor) {
@@ -1935,7 +1978,7 @@
   }
   .site:has(.room-active.room-splendor) > main { min-height: 0; }
   .room-active.room-splendor {
-    height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    min-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     display: flex;
     flex-direction: column;
   }
@@ -2002,9 +2045,9 @@
   .sp-game .sp-turn small { font-size: 9px; }
   .sp-game .sp-phase-skip { display: inline-flex; margin-left: auto; min-height: 24px; padding: 1px 6px; font-size: 11px; }
   .sp-game .sp-turn:has(.sp-phase-skip) > small { display: none; }
-  .sp-game .sp-players { gap: 4px; margin: 2px 0 0; }
-  .sp-game .sp-player { padding: 5px 3px !important; gap: 4px; border-radius: 6px !important; }
-  .sp-game .sp-player-overview { position: relative; gap: 2px; align-items: start; }
+  .sp-game .sp-players { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; margin: 2px 0 0; }
+  .sp-game .sp-player { padding: 5px !important; gap: 4px; border-radius: 6px !important; }
+  .sp-game .sp-player-overview { position: relative; gap: 2px; align-items: start; min-height: 30px; }
   .sp-game .sp-avatar { display: none; }
   .sp-game .sp-player-name { font-size: 11px; line-height: 14px; padding-top: 1px; }
   .sp-game .sp-player-name > small { margin-left: 2px; font-size: 8px; }
@@ -2014,9 +2057,11 @@
   .sp-game .sp-score { position: absolute; right: 0; bottom: 0; font-size: 11px; gap: 1px; }
   .sp-game .sp-score svg { width: 9px; height: 9px; }
   .sp-game .sp-player-turn-dot { top: -8px; left: -6px; width: 9px; height: 9px; }
-  .sp-game .sp-player-resources { padding-top: 3px; gap: 2px; font-size: 10px; }
-  .sp-game .sp-owned-stack { flex-direction: column; gap: 0; padding: 2px 0; line-height: 12px; }
-  .sp-game .sp-owned-stack .sp-gem { display: none; }
+  .sp-game .sp-player-resources { padding-top: 3px; gap: 3px; font-size: 11px; }
+  .sp-game .sp-resource-row { grid-template-columns: 36px repeat(6, minmax(0, 1fr)); gap: 2px; }
+  .sp-game .sp-resource-label { font-size: 9px; }
+  .sp-game .sp-resource-value { flex-direction: column; gap: 0; padding: 1px 0; line-height: 12px; }
+  .sp-game .sp-resource-value .sp-gem { width: 10px; height: 10px; }
   .sp-game .sp-section-label { margin: 0 0 3px; font-size: 10px; gap: 4px; line-height: 13px; letter-spacing: 0; }
   .sp-game .sp-section-label > svg { width: 12px; height: 12px; }
   .sp-game .sp-section-label > small { font-size: 9px; }
@@ -2039,11 +2084,10 @@
   .sp-game .sp-patron > div > small { margin: 1px 0 0; font-size: 9px; line-height: 12px; text-align: center; }
   .sp-game .sp-patron > div > .sp-pledged-label { position: absolute; top: 1px; left: 2px; font-size: 8px; }
   .sp-game.sp-module-cities .sp-patron .sp-amount { flex-direction: row; }
-  .sp-game .sp-table-layout { display: flex; flex-direction: column; flex: 1; min-height: 0; gap: 5px; }
+  .sp-game .sp-table-layout { display: flex; flex-direction: column; gap: 5px; }
   .sp-game .sp-market {
     display: grid;
-    grid-template-rows: 13px repeat(3, minmax(0, 1fr));
-    flex: 1;
+    grid-template-rows: 13px repeat(3, 66px);
     min-height: 0;
     gap: 4px;
   }
@@ -2135,4 +2179,7 @@
   .sp-game .sp-special-banner { display: none; }
   .sp-game > .error { margin: 0; font-size: 11px; }
   .sp-dialog .sp-sheet-actions { position: sticky; bottom: 0; background: #182f3b; padding: 8px 0 0; z-index: 2; }
+}
+@media (min-width: 360px) and (max-width: 600px) {
+  .sp-game .sp-resource-value { flex-direction: row; gap: 1px; min-height: 20px; }
 }

@@ -340,18 +340,17 @@ function Board({
           {error}
         </p>
       )}
-      <div className="sp-players" style={{ gridTemplateColumns: `repeat(${g.playerOrder.length}, minmax(0, 1fr))` }}>
+      <div className="sp-players">
         {g.playerOrder.map((id, i) => {
           const player = g.players[id];
           return (
-            <button
+            <article
               key={id}
-              onClick={() => setProfile(id)}
               className={`sp-player ${current.uid === id && g.phase !== "GAME_OVER" ? "current" : ""}`}
               data-player-id={id}
-              aria-label={`查看 ${player.nickname} 的收藏`}
+              aria-label={`${player.nickname} 的玩家資訊`}
             >
-              <span className="sp-player-overview">
+              <button className="sp-player-overview" onClick={() => setProfile(id)} aria-label={`查看 ${player.nickname} 的收藏`}>
               {current.uid === id && g.phase !== "GAME_OVER" && <span className="sp-player-turn-dot" role="img" aria-label="目前行動玩家" />}
               <span className={`sp-avatar avatar-${i}`}>
                 {player.nickname.slice(0, 1)}
@@ -364,13 +363,9 @@ function Board({
                 {player.nickname}
                 {id === uid && <small>你</small>}
                 <span>
-                  <Gem size={12} />
-                  <span data-sp-source={`player:${id}:tokens`} data-sp-destination={`player:${id}:tokens`} aria-label={`寶石總數 ${tokenTotal(player.tokens)} 枚`}>
-                  {tokenTotal(player.tokens)}
-                  </span>
                   <Bookmark size={12} />
                   <span data-sp-source={`player:${id}:reserves`} data-sp-destination={`player:${id}:reserves`} aria-label={`已保留 ${player.reservedCards.length} 張`}>
-                  {player.reservedCards.length}
+                  保留卡 {player.reservedCards.length} / 3
                   </span>
                 </span>
               </span>
@@ -378,9 +373,9 @@ function Board({
                 <Star size={14} fill="currentColor" />
                 {calculatePrestige(player)}
               </b>
-              </span>
+              </button>
               <PlayerResources player={player} />
-            </button>
+            </article>
           );
         })}
       </div>
@@ -655,62 +650,6 @@ function Board({
         ))}
         {!g.log.length && <p>第一筆交易，從你開始。</p>}
       </GameDialog>}
-      <footer className="sp-dock">
-        <div className="sp-dock-title">
-          <span>我的收藏</span>
-          <b>
-            <Star size={13} fill="currentColor" />
-            {calculatePrestige(p)}
-            <small> / {g.config.module === "cities" ? "城市" : 15}</small>
-          </b>
-          <span
-            className="sp-dock-cards"
-            data-sp-destination="cards"
-            aria-label={`已購入 ${p.purchasedCardIds.length} 張發展卡`}
-          >
-            <Layers size={13} />
-            {p.purchasedCardIds.length}
-            <small>張</small>
-          </span>
-          <span
-            className="sp-dock-cards"
-            data-sp-destination="reserves"
-            aria-label={`已保留 ${p.reservedCards.length} 張卡牌`}
-          >
-            <Bookmark size={13} />
-            {p.reservedCards.length}
-            <small>/ 3</small>
-          </span>
-          <span>
-            <Gem size={13} />
-            {tokenTotal(p.tokens)} / {applyTradingPostModifiers(p).tokenLimit}
-          </span>
-        </div>
-        <div className="sp-inventory">
-          <span className="sp-inventory-label">
-            <Gem size={13} />
-            持有
-          </span>
-          {TOKEN_COLORS.map((c) => (
-            <GemAmount
-              key={c}
-              color={c}
-              count={p.tokens[c]}
-              destination={`token:${c}`}
-            />
-          ))}
-        </div>
-        <div className="sp-inventory">
-          <span className="sp-inventory-label">
-            <Layers size={13} />
-            折扣
-          </span>
-          {GEM_COLORS.map((c) => (
-            <GemAmount key={c} color={c} count={calculateBonuses(p)[c]} />
-          ))}
-          <span className="sp-permanent">∞</span>
-        </div>
-      </footer>
       {blind && (
         <GameDialog
           title="保留暗牌"
@@ -1163,17 +1102,33 @@ function Board({
   );
 }
 function PlayerResources({ player }: { player: SplendorPlayerState }) {
-  return <span className="sp-player-resources" aria-label={`${player.nickname} 的已購卡，點擊查看完整收藏`}
-    data-sp-source={`player:${player.uid}:cards`} data-sp-destination={`player:${player.uid}:cards`}>
-    {GEM_COLORS.map((color) => {
-      const cards = player.purchasedCardIds.filter((id) => CARD_BY_ID[id].bonusColor === color);
-      return <span key={color} className={`sp-owned-stack sp-${color} ${cards.length ? "" : "empty"}`}
-        aria-label={`${GEM_NAMES[color]}已購 ${cards.length} 張`}
-        title={cards.map((id) => CARD_BY_ID[id].name).join("、") || "尚未購入"}>
-        <GemIcon color={color} size={13} /><b>{cards.length}</b>
-      </span>;
-    })}
-  </span>;
+  const bonuses = calculateBonuses(player);
+  return (
+    <div className="sp-player-resources">
+      <div className="sp-resource-row" aria-label={`${player.nickname} 的持有寶石`}
+        data-sp-source={`player:${player.uid}:tokens`} data-sp-destination={`player:${player.uid}:tokens`}>
+        <span className="sp-resource-label">持有寶石</span>
+        {TOKEN_COLORS.map((color) => (
+          <span key={color} className={`sp-resource-value sp-${color} ${player.tokens[color] ? "" : "empty"}`}
+            aria-label={`${GEM_NAMES[color]}持有 ${player.tokens[color]} 枚`}
+            data-sp-source={`player:${player.uid}:token:${color}`} data-sp-destination={`player:${player.uid}:token:${color}`}>
+            <GemIcon color={color} size={14} /><b>{player.tokens[color]}</b>
+          </span>
+        ))}
+      </div>
+      <div className="sp-resource-row" aria-label={`${player.nickname} 的永久折扣`}
+        data-sp-source={`player:${player.uid}:cards`} data-sp-destination={`player:${player.uid}:cards`}>
+        <span className="sp-resource-label">永久折扣</span>
+        {GEM_COLORS.map((color) => (
+          <span key={color} className={`sp-resource-value sp-resource-discount sp-${color} ${bonuses[color] ? "" : "empty"}`}
+            aria-label={`${GEM_NAMES[color]}永久折扣 ${bonuses[color]}`}>
+            <GemIcon color={color} size={14} /><b>{bonuses[color]}</b>
+          </span>
+        ))}
+        <span className="sp-resource-no-gold" aria-label="黃金沒有永久折扣">—</span>
+      </div>
+    </div>
+  );
 }
 function PlayerCollection({
   player: p,

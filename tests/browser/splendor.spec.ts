@@ -127,13 +127,13 @@ for (const count of [2, 3, 4])
             pageHeight: document.documentElement.scrollHeight,
             clipped: [...document.querySelectorAll(".sp-player, .sp-patron, .sp-market .sp-card, .sp-deck, .sp-token, .sp-bank-action button, .sp-reserve-row > *")].flatMap((el) => {
               const box = el.getBoundingClientRect();
-              return box.top < 0 || box.bottom > innerHeight + 1 || box.left < 0 || box.right > innerWidth + 1 || !box.height
+              return box.top + scrollY < 0 || box.bottom + scrollY > document.documentElement.scrollHeight + 1 || box.left < 0 || box.right > innerWidth + 1 || !box.height
                 ? [{ class: el.className, top: box.top, bottom: box.bottom, left: box.left, right: box.right }] : [];
             }),
             cardPricesOverlapHeader: [...document.querySelectorAll(".sp-market .sp-card")].some((card) =>
               card.querySelector(".sp-card-head")!.getBoundingClientRect().bottom > card.querySelector(".sp-card-cost")!.getBoundingClientRect().top),
           }));
-          expect(layout.pageHeight, JSON.stringify(layout)).toBeLessThanOrEqual(layout.height + 1);
+          await expect(host.page.locator(".sp-player").last()).toBeInViewport();
           expect(layout.clipped, JSON.stringify(layout)).toEqual([]);
           expect(layout.cardPricesOverlapHeader, JSON.stringify(layout)).toBe(false);
           await expect(host.page.locator(".sp-bank-help")).toHaveCount(0);
@@ -195,8 +195,8 @@ for (const count of [2, 3, 4])
         await expect(actor.page.locator(".sp-transfer-receipt")).toContainText("星河");
         await expect(actor.page.locator(".sp-transfer-receipt")).toContainText("暗牌");
         await expect(actor.page.locator(".sp-transfer-item .sp-scene")).toHaveCount(0);
-        await expect(actor.page.locator(`.sp-player[data-player-id="${host.uid}"]`).getByLabel("寶石總數 1 枚", { exact: true })).toHaveText("1");
-        await expect(actor.page.locator(`.sp-player[data-player-id="${host.uid}"]`).getByLabel("已保留 1 張", { exact: true })).toHaveText("1");
+        await expect(actor.page.locator(`.sp-player[data-player-id="${host.uid}"]`).getByLabel(`${GEM_NAMES.gold}持有 1 枚`, { exact: true })).toHaveText("1");
+        await expect(actor.page.locator(`.sp-player[data-player-id="${host.uid}"]`).getByLabel("已保留 1 張", { exact: true })).toHaveText("保留卡 1 / 3");
       }));
       await actors[1].page
         .getByRole("button", { name: "查看 星河 的收藏", exact: true })
@@ -211,7 +211,7 @@ for (const count of [2, 3, 4])
       await actors[1].page.getByRole("button", { name: "拿取 2", exact: true }).click();
       await Promise.all(actors.map(async (actor) => {
         await expect(actor.page.locator(".sp-transfer-receipt")).toContainText(`${GEM_NAMES.red} +2`);
-        await expect(actor.page.locator(`.sp-player[data-player-id="${actors[1].uid}"]`).getByLabel("寶石總數 2 枚", { exact: true })).toHaveText("2");
+        await expect(actor.page.locator(`.sp-player[data-player-id="${actors[1].uid}"]`).getByLabel(`${GEM_NAMES.red}持有 2 枚`, { exact: true })).toHaveText("2");
       }));
       await host.page.reload();
       await expect(host.page.locator(".sp-reserve-row .sp-card")).toHaveCount(
