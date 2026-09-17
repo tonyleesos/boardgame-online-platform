@@ -1,239 +1,49 @@
-# 教父風雲：危情古巴（Mafia de Cuba）Web Game — Codex Implementation Spec
+# 《教父風雲：危情古巴》標準規則與開發參考規格
 
-> Target repository: `tonyleesos/boardgame-online-platform`
->
-> Target platform: the existing React + TypeScript + Vite + Firebase multiplayer boardgame platform.
->
-> This file is an implementation instruction for Codex / coding agents working directly in VS Code.
->
-> **Directive:** extend the existing platform. Do not create a second application, do not duplicate Firebase initialization, and do not break existing Avalon / Time Bomb / 同房異夢 / 璀璨寶石 functionality.
+> 遊戲英文名稱：Mafia de Cuba  
+> 文件用途：提供 Codex 或其他開發工具實作多人線上桌遊版本  
+> 規則範圍：原版基礎遊戲；另附 Cleaner（殺手）進階規則  
+> 不包含：紅色革命擴充、娛樂節目自訂積分制、房規
 
 ---
 
-# 0. Scope
+## 1. 遊戲概述
 
-Implement the **base game of《教父風雲：危情古巴》 / Mafia de Cuba** as a realtime multiplayer game.
+《教父風雲：危情古巴》是一款 6～12 人的隱藏身分、欺騙與推理遊戲。
 
-Primary supported player count:
-
-```text
-6–12 players
-```
-
-Typical game flow:
-
-```text
-Choose Godfather
-    ↓
-Godfather secretly prepares the cigar box
-    ↓
-Pass cigar box player-by-player
-    ↓
-Each player secretly takes diamonds OR a role
-    ↓
-Godfather receives the box back
-    ↓
-Open discussion / interrogation
-    ↓
-Godfather accuses players
-    ↓
-Roles / stolen diamonds are revealed as required
-    ↓
-Resolve winner
-```
-
-The core digital experience must preserve:
-
-```text
-hidden box information
-+ human memory
-+ bluffing
-+ free-form interrogation
-+ asymmetric role goals
-+ dramatic accusations
-```
-
-The base game is the priority. The **Cleaner** may be implemented as an optional advanced base-game role. `Revolución` is only an extension hook in this specification and is **not** required for the first playable release.
+- 其中 1 人固定擔任「教父」。
+- 其他玩家不會在開局隨機取得身分，而是在雪茄盒傳遞階段，透過拿取鑽石或角色籌碼決定自己的身分。
+- 教父必須透過詢問、證詞與玩家之間的矛盾，找出所有竊賊並追回全部失竊鑽石。
+- 玩家可以說真話、說謊、誤導，或保持沉默。
 
 ---
 
-# 1. Copyright / asset boundary
+## 2. 遊戲人數與配件
 
-Implement game mechanics and state flow, but do not copy commercial artwork, official box graphics, token illustrations, logo treatments, or large portions of rulebook wording.
+### 2.1 遊戲人數
 
-Use original project-owned visual assets.
+- 總人數：6～12 人。
+- 總人數包含教父。
+- 每局固定只有 1 名教父。
 
-Recommended visual direction:
+### 2.2 基礎配件
 
-```text
-1950s Havana noir
-dark mahogany
-cigar-box texture
-gold / amber accents
-diamond highlights
-art-deco typography feeling
-```
+- 鑽石 ×15
+- 心腹籌碼 ×5
+- 探員籌碼 ×2（FBI、CIA）
+- 司機籌碼 ×2
+- Cleaner／殺手籌碼 ×1
+- 美酒指示物 ×2
+- 黑色布袋 ×1
+- 雪茄盒 ×1
 
-Do not use official scanned cards/tokens/images.
+Cleaner 是進階角色，初次遊戲建議不使用。
 
-Rules should be encoded as engine logic and concise original help text.
+### 2.3 依總人數配置
 
----
+「總人數」包含教父。
 
-# 2. Game metadata
-
-```ts
-export const mafiaDeCubaGame = {
-  id: 'mafia-de-cuba',
-  name: '教父風雲：危情古巴',
-  minPlayers: 6,
-  maxPlayers: 12,
-  type: 'social-deduction',
-};
-```
-
-Recommended catalog card:
-
-```text
-┌──────────────────────────────┐
-│      教父風雲：危情古巴       │
-│        MAFIA DE CUBA         │
-│                              │
-│  6–12 人 · 說謊 · 推理        │
-│                              │
-│       [ 建立房間 ]            │
-└──────────────────────────────┘
-```
-
-Reuse existing:
-
-- Firebase Anonymous Auth;
-- nickname;
-- create / join room;
-- room code;
-- host;
-- ready state;
-- presence and reconnect;
-- common game router;
-- common loading/error/toast UI;
-- platform player seating/order utilities where possible.
-
----
-
-# 3. Source structure
-
-Recommended:
-
-```text
-client/src/games/mafia-de-cuba/
-├─ components/
-│  ├─ MafiaDeCubaBoard.tsx
-│  ├─ CigarBox.tsx
-│  ├─ CigarBoxPrivateView.tsx
-│  ├─ GodfatherPanel.tsx
-│  ├─ PlayerCircle.tsx
-│  ├─ PlayerSeat.tsx
-│  ├─ RoleHelp.tsx
-│  ├─ DiamondTakeDialog.tsx
-│  ├─ RoleTakeDialog.tsx
-│  ├─ GodfatherSetupDialog.tsx
-│  ├─ AccusationDialog.tsx
-│  ├─ CleanerInterruptDialog.tsx
-│  ├─ RevealDialog.tsx
-│  └─ ResultDialog.tsx
-│
-├─ engine/
-│  ├─ setup.ts
-│  ├─ cigarBox.ts
-│  ├─ theft.ts
-│  ├─ investigation.ts
-│  ├─ accusation.ts
-│  ├─ cleaner.ts
-│  ├─ winners.ts
-│  ├─ validation.ts
-│  └─ selectors.ts
-│
-├─ types.ts
-├─ constants.ts
-├─ rules.ts
-└─ index.ts
-```
-
-Keep game-rule functions pure and independent from React/Firebase wherever possible.
-
----
-
-# 4. Components / physical concepts represented digitally
-
-The base implementation needs these concepts:
-
-```text
-15 diamonds
-role tokens
-Godfather
-Joker / apology tokens
-cigar box
-hidden first-player discard
-player seating order
-```
-
-Role-token pool can include:
-
-```text
-Loyal Henchman
-Agent (FBI/CIA)
-Driver
-Cleaner (optional advanced role)
-```
-
-These are **not role tokens**:
-
-```text
-Thief
-Street Urchin
-Godfather
-```
-
-Those roles are created by game state / player action.
-
----
-
-# 5. Role types
-
-```ts
-export type MafiaRole =
-  | 'GODFATHER'
-  | 'THIEF'
-  | 'LOYAL_HENCHMAN'
-  | 'AGENT_FBI'
-  | 'AGENT_CIA'
-  | 'DRIVER'
-  | 'STREET_URCHIN'
-  | 'CLEANER';
-```
-
-UI labels:
-
-```text
-GODFATHER       → 教父
-THIEF           → 竊賊
-LOYAL_HENCHMAN  → 忠誠手下
-AGENT_FBI       → FBI 探員
-AGENT_CIA       → CIA 探員
-DRIVER          → 司機
-STREET_URCHIN   → 街頭小子
-CLEANER         → 清道夫 / Cleaner
-```
-
-Use one consistent Traditional Chinese translation throughout the app.
-
----
-
-# 6. Player-count setup table
-
-Use the standard base setup below. The count includes the Godfather.
-
-| Players | Loyal Henchmen | Agents | Drivers | Jokers |
+| 總人數 | 心腹 | 探員 | 司機 | 美酒 |
 |---:|---:|---:|---:|---:|
 | 6 | 1 | 1 | 1 | 0 |
 | 7 | 2 | 1 | 1 | 0 |
@@ -243,1344 +53,821 @@ Use the standard base setup below. The count includes the Godfather.
 | 11 | 4 | 2 | 2 | 2 |
 | 12 | 5 | 2 | 2 | 2 |
 
-Always start with:
+每局再固定加入 15 顆鑽石。
 
-```text
-15 diamonds
-```
+### 2.4 沒有實體籌碼的身分
 
-When `Agents = 1`, use one agent token. When `Agents = 2`, use both FBI and CIA as distinct token identities with the same base trigger.
+以下兩種身分沒有角色籌碼：
 
-When Cleaner mode is enabled:
-
-```text
-replace 1 Loyal Henchman token with Cleaner
-```
-
-Do not increase the total role-token count.
-
-Recommended config:
-
-```ts
-interface MafiaDeCubaConfig {
-  cleanerEnabled: boolean;       // default false
-  expertFivePlayerMode: boolean; // default false
-  godfatherSelection: 'HOST_SELECTS' | 'RANDOM';
-}
-```
-
-The normal UI should advertise **6–12** players.
+- 竊賊：玩家拿取至少 1 顆鑽石後產生。
+- 街頭混混：玩家沒有拿到任何東西時產生。
 
 ---
 
-# 7. Seating order is gameplay state
+## 3. 遊戲準備
 
-Seat order matters. Persist a stable circular order including the Godfather.
+1. 選出 1 名玩家擔任教父。
+2. 依玩家總人數，將對應數量的角色籌碼與固定 15 顆鑽石放入雪茄盒。
+3. 教父秘密從盒中拿走 0～5 顆鑽石，放在自己面前或自己的保管區。
+4. 其他玩家不得知道教父拿走幾顆鑽石。
+5. 因此，雪茄盒開始傳遞時會剩下 10～15 顆鑽石。
+6. 教父左手邊第一位玩家成為「第一位玩家」，並取得黑色布袋的操作權。
+7. 雪茄盒由第一位玩家開始，依座位順序傳遞，最後由教父右手邊的玩家交還教父。
+
+> 教父預先保留的鑽石不算「失竊鑽石」，也不需要追回。
+
+---
+
+## 4. 第一階段：鑽石失竊
+
+### 4.1 一般玩家回合
+
+每位玩家收到雪茄盒時，依序完成以下動作。
+
+#### 步驟 A：秘密查看盒內物品
+
+玩家可以查看：
+
+- 剩餘鑽石數量。
+- 剩餘角色籌碼。
+- 哪些角色可能已經被拿走。
+
+玩家應記住這些資訊，供之後審問階段使用。其他玩家不能看到盒內內容。
+
+#### 步驟 B：秘密拿取一種物品
+
+正常情況下，玩家必須在以下兩種選擇中擇一：
+
+1. 拿取至少 1 顆鑽石，數量不限，成為「竊賊」。
+2. 拿取 1 個角色籌碼，身分成為該籌碼所代表的角色。
+
+禁止事項：
+
+- 不可同時拿角色籌碼與鑽石。
+- 不可拿取兩個以上角色籌碼。
+- 除特殊情況外，不可主動什麼都不拿。
+
+#### 步驟 C：傳遞雪茄盒
+
+- 玩家將拿到的物品隱藏。
+- 不可公開自己的身分或拿取數量。
+- 將雪茄盒傳給下一位玩家。
+
+### 4.2 第一位玩家的特殊能力
+
+第一位玩家在正常拿取物品以前，可以：
+
+- 從盒中選擇 0 或 1 個角色籌碼放進黑色布袋。
+- 可以選擇不放入任何角色。
+- 絕對不可把鑽石放入黑色布袋。
+
+完成藏角色動作後，第一位玩家仍須正常拿取：
+
+- 至少 1 顆鑽石；或
+- 1 個角色籌碼。
+
+黑色布袋在本局結束前保持秘密。被放入布袋的角色視為「未被任何玩家取得」。
+
+### 4.3 街頭混混的產生方式
+
+街頭混混沒有角色籌碼，共有以下兩種產生方式。
+
+#### 情況 A：雪茄盒已空
+
+若盒子傳到玩家手中時已經沒有任何可拿取物品：
+
+- 該玩家自動成為街頭混混。
+- 該玩家仍須假裝自己有拿取東西。
+- 不得直接公開盒子已空。
+
+若後續玩家也收到空盒，後續玩家同樣成為街頭混混。
+
+#### 情況 B：最後一位玩家主動放棄拿取
+
+教父右手邊、最後收到雪茄盒的玩家具有特殊權利：
+
+- 即使盒內仍有物品，也可以選擇什麼都不拿。
+- 若選擇不拿，該玩家成為街頭混混。
+- 該玩家仍須假裝自己有拿取東西。
+
+只有最後一位玩家能在盒內仍有物品時主動選擇不拿。
+
+---
+
+## 5. 第二階段：教父調查
+
+### 5.1 調查開始
+
+1. 最後一位玩家把雪茄盒交還教父。
+2. 教父秘密查看盒內剩餘的鑽石與角色籌碼。
+3. 教父開始自由審問其他玩家。
+
+### 5.2 教父可詢問的內容
+
+例如：
+
+- 你收到盒子時有幾顆鑽石？
+- 你看到哪些角色？
+- 你把盒子傳出去時剩下幾顆鑽石？
+- 你拿了什麼？
+- 你認為誰偷了鑽石？
+
+### 5.3 玩家發言規則
+
+- 玩家可以說真話。
+- 玩家可以說謊。
+- 玩家可以保持沉默。
+- 尚未出局的玩家可以主動發言。
+- 玩家可指控或替其他玩家辯護。
+- 玩家不會因為口頭承認身分就自動公開或結算；必須由教父正式指控。
+
+---
+
+## 6. 教父正式指控
+
+### 6.1 正式指控方式
+
+當教父決定指控某位玩家時，必須明確執行「要求交出物品」的正式指控動作。
+
+只有正式指控後，目標玩家才必須公開自己的實際物品或身分。
+
+> 線上版應將「詢問／口頭懷疑」和「正式指控」設計為不同操作，並要求教父再次確認正式指控。
+
+### 6.2 抓到竊賊
+
+若目標玩家持有鑽石：
+
+- 教父指控成功。
+- 該玩家公開自己偷取的全部鑽石。
+- 全部鑽石交還教父。
+- 該竊賊立即出局。
+- 出局後不得再發言、投票、提示或參與調查。
+- 教父可繼續調查並指控其他玩家。
+
+### 6.3 抓錯普通角色
+
+若目標玩家是以下身分之一：
+
+- 心腹
+- 司機
+- 街頭混混
+
+則代表教父抓錯人。
+
+處理方式：
+
+- 若教父還有美酒，必須支付 1 個美酒給被冤枉的玩家，調查繼續。
+- 被冤枉的普通角色不會因此出局，可繼續參與討論。
+- 若教父已無美酒可支付，遊戲立即結束，教父失敗。
+
+6～7 人局沒有美酒，因此第一次抓錯普通角色就會立即失敗。
+
+### 6.4 抓到探員
+
+若被正式指控的玩家是 FBI 或 CIA 探員：
+
+- 遊戲立即結束。
+- 被指控的該名探員單獨達成主要勝利。
+- 教父不可使用美酒抵銷。
+- 若場上有兩名探員，另一名未被指控的探員不會因此一起取得探員勝利。
+- 仍需另外判定是否有司機因右手邊玩家獲勝而連帶獲勝。
+
+---
+
+## 7. 角色與標準勝利條件
+
+| 身分 | 產生方式 | 勝利條件 |
+|---|---|---|
+| 教父 | 開局指定 | 找回全部失竊鑽石 |
+| 心腹 | 拿取心腹籌碼 | 教父找回全部失竊鑽石時一起獲勝 |
+| 竊賊 | 拿取至少 1 顆鑽石 | 教父失敗時，尚未被抓的竊賊中持有鑽石最多者獲勝 |
+| 探員 | 拿取 FBI 或 CIA 籌碼 | 自己被教父正式指控時，該探員立即獲勝 |
+| 司機 | 拿取司機籌碼 | 自己右手邊的玩家獲勝時，司機也獲勝 |
+| 街頭混混 | 沒有拿到任何物品 | 只要有竊賊成為勝者，街頭混混一起獲勝 |
+
+### 7.1 竊賊勝利判定
+
+教父失敗時：
+
+1. 排除所有已被教父抓到並追回鑽石的竊賊。
+2. 在仍未被抓的竊賊中，比較各自持有的鑽石數量。
+3. 持有最多鑽石的竊賊獲勝。
+4. 若最高數量相同，並列最高的竊賊共同獲勝。
+5. 其他持有較少鑽石的未被抓竊賊不算勝者。
+6. 若有竊賊勝者，所有街頭混混一起獲勝。
+
+範例：
+
+- 甲偷 2 顆。
+- 乙偷 5 顆。
+- 丙偷 5 顆。
+- 三人均未被抓，且教父最後失敗。
+
+結果為乙、丙共同獲勝，甲不獲勝；所有街頭混混也獲勝。
+
+### 7.2 司機勝利判定
+
+司機沒有固定陣營，只判斷自己右手邊的玩家是否為本局勝者。
+
+右手邊玩家可能是：
+
+- 教父
+- 心腹
+- 竊賊
+- 探員
+- 另一位司機
+- 街頭混混
+
+#### 多名司機的連鎖判定
+
+如果司機右手邊也是司機，應以「右手邊玩家最終是否獲勝」進行遞迴或固定點判定，直到連到非司機角色。
+
+建議實作方式：
+
+1. 先結算所有非司機角色的主要勝負結果。
+2. 依座位關係反覆更新司機勝負。
+3. 當結果不再改變時停止。
+4. 若所有玩家皆為司機造成封閉環，屬於不可能由標準配件配置產生的狀態，後端應阻擋此異常資料。
+
+---
+
+## 8. 遊戲結束條件
+
+### 8.1 教父成功
+
+觸發條件：所有失竊鑽石都已追回。
+
+勝者：
+
+- 教父。
+- 所有心腹。
+- 右手邊玩家為勝者的司機。
+
+### 8.2 教父抓錯且無酒可付
+
+觸發條件：
+
+- 教父正式指控普通角色；且
+- 教父沒有剩餘美酒。
+
+勝者：
+
+- 尚未被抓的竊賊中，持有鑽石最多者。
+- 若最多顆數並列，並列者共同獲勝。
+- 若存在竊賊勝者，所有街頭混混一起獲勝。
+- 右手邊玩家為勝者的司機。
+
+### 8.3 教父指控探員
+
+觸發條件：教父正式指控 FBI 或 CIA 探員。
+
+勝者：
+
+- 被指控的該名探員。
+- 右手邊玩家為該勝者的司機。
+
+### 8.4 教父一開始就沒有失竊鑽石
+
+若所有非教父玩家都選擇角色、成為街頭混混，或因盒子狀態而沒有任何人拿鑽石：
+
+- 雪茄盒回到教父手上並完成初始檢查後，可立即判定教父已找回全部失竊鑽石。
+- 教父與所有心腹獲勝。
+- 再結算司機。
+
+---
+
+## 9. 進階角色：Cleaner／殺手
+
+### 9.1 加入方式
+
+- 從該人數配置中移除 1 個心腹籌碼。
+- 加入 1 個 Cleaner／殺手籌碼。
+- 其他配置不變。
+
+例如 9 人局原本使用 4 個心腹，可改為：
+
+- 心腹 ×3
+- Cleaner ×1
+- 探員 ×1
+- 司機 ×1
+
+### 9.2 發動時機
+
+當教父正式指控某玩家後、目標玩家公開身分以前，Cleaner 可以選擇發動能力。
+
+線上版建議流程：
+
+1. 教父鎖定並確認正式指控目標。
+2. 系統進入 Cleaner 反應階段。
+3. Cleaner 在倒數時間內選擇「開槍」或「不開槍」。
+4. 若不開槍或逾時，目標照正常流程公開身分。
+5. 若開槍，立即處理 Cleaner 結果。
+
+### 9.3 Cleaner 射中探員
+
+若目標是 FBI 或 CIA 探員：
+
+- Cleaner 立即達成主要勝利。
+- 遊戲立即結束。
+- 再依右手邊玩家是否為勝者判定司機。
+
+### 9.4 Cleaner 射錯
+
+若目標不是探員：
+
+- Cleaner 與目標玩家一起出局。
+- 若目標是竊賊，該竊賊全部鑽石仍交給教父。
+- 若目標是普通角色，教父不需支付美酒。
+- 若追回該竊賊的鑽石後，所有失竊鑽石均已追回，教父可立即獲勝。
+- 否則遊戲繼續。
+
+---
+
+## 10. 標準模式與節目版差異
+
+本文件不採用額外積分制。
+
+標準單局規則重點如下：
+
+- 6～12 人。
+- 固定 15 顆鑽石。
+- 教父開局秘密保留 0～5 顆鑽石。
+- 第一位玩家可秘密移除 0 或 1 個角色籌碼。
+- 最後一位玩家可主動不拿東西，成為街頭混混。
+- 教父要追回全部失竊鑽石才能獲勝。
+- 教父失敗時，不是所有竊賊一起獲勝，而是尚未被抓且持有鑽石最多的竊賊獲勝。
+- 節目為多局競賽設計的額外分數，不屬於標準單局規則。
+
+---
+
+## 11. 線上版遊戲狀態設計
+
+### 11.1 建議遊戲階段
+
+```text
+LOBBY
+  -> SETUP
+  -> GODFATHER_HIDE_DIAMONDS
+  -> FIRST_PLAYER_HIDE_ROLE
+  -> PASSING_BOX
+  -> GODFATHER_INSPECT_BOX
+  -> INTERROGATION
+  -> ACCUSATION_CONFIRMATION
+  -> CLEANER_REACTION（啟用 Cleaner 時）
+  -> ACCUSATION_RESOLUTION
+  -> GAME_OVER
+```
+
+可循環的部分：
+
+- `ACCUSATION_RESOLUTION -> INTERROGATION`：成功抓到竊賊，或以美酒支付抓錯代價後繼續。
+- `ACCUSATION_RESOLUTION -> GAME_OVER`：教父成功、無酒可付、抓到探員或 Cleaner 成功。
+
+### 11.2 建議列舉
 
 ```ts
-interface MafiaSeat {
-  uid: string;
+enum Role {
+  Godfather = "godfather",
+  LoyalHenchman = "loyal_henchman",
+  Thief = "thief",
+  AgentFBI = "agent_fbi",
+  AgentCIA = "agent_cia",
+  Driver = "driver",
+  StreetUrchin = "street_urchin",
+  Cleaner = "cleaner"
+}
+
+enum GamePhase {
+  Lobby = "lobby",
+  Setup = "setup",
+  GodfatherHideDiamonds = "godfather_hide_diamonds",
+  FirstPlayerHideRole = "first_player_hide_role",
+  PassingBox = "passing_box",
+  GodfatherInspectBox = "godfather_inspect_box",
+  Interrogation = "interrogation",
+  AccusationConfirmation = "accusation_confirmation",
+  CleanerReaction = "cleaner_reaction",
+  AccusationResolution = "accusation_resolution",
+  GameOver = "game_over"
+}
+
+enum EndReason {
+  AllStolenDiamondsRecovered = "all_stolen_diamonds_recovered",
+  WrongAccusationWithoutRum = "wrong_accusation_without_rum",
+  AgentAccused = "agent_accused",
+  CleanerKilledAgent = "cleaner_killed_agent"
+}
+```
+
+### 11.3 建議玩家狀態
+
+```ts
+interface PlayerState {
+  playerId: string;
   seatIndex: number;
-}
-```
-
-The cigar box passes from the Godfather to the first non-Godfather player and continues around the table until the last non-Godfather player returns it.
-
-The Driver's victory condition depends on the player physically seated to the Driver's **right**.
-
-Implement helpers:
-
-```ts
-getLeftNeighbor(uid, seating): string
-getRightNeighbor(uid, seating): string
-getBoxPassOrder(godfatherUid, seating): string[]
-```
-
-Do not infer Driver relationships from join order after the match has started.
-
----
-
-# 8. Authoritative state model
-
-Conceptual public state:
-
-```ts
-export interface MafiaDeCubaPublicState {
-  phase: MafiaPhase;
-  godfatherUid: string;
-  seating: MafiaSeat[];
-  currentBoxHolderUid?: string;
-  jokersRemaining: number;
-  players: Record<string, PublicMafiaPlayerState>;
-  currentAccusation?: {
-    accusedUid: string;
-    status: 'PENDING' | 'RESOLVING';
-  };
-  lastReveal?: PublicReveal;
-  winnerUids?: string[];
-  endReason?: MafiaEndReason;
-}
-```
-
-Private/server state:
-
-```ts
-export interface MafiaDeCubaSecretState {
-  cigarBox: {
-    diamonds: number;
-    roleTokens: RoleTokenInstance[];
-  };
-  godfatherHiddenDiamonds: number;
-  firstPlayerHiddenDiscard?: {
-    token: RoleTokenInstance;
-    playerUid: string;
-  };
-  privatePlayers: Record<string, PrivateMafiaPlayerState>;
-  initialBoxDiamondCount: number;
-  stolenDiamondsTotal: number;
-  recoveredStolenDiamonds: number;
-}
-```
-
-Private player state:
-
-```ts
-export interface PrivateMafiaPlayerState {
-  role?: MafiaRole;
-  stolenDiamonds: number;
-  selectedRoleTokenId?: string;
+  role: Role | null;
+  diamondsHeld: number;
   isAlive: boolean;
   isRevealed: boolean;
-  currentBoxView?: PrivateBoxView;
+  isFirstPlayer: boolean;
+  isLastPlayer: boolean;
+  hasCompletedBoxTurn: boolean;
+  isWinner: boolean;
 }
 ```
 
-`currentBoxView` must only exist while that player is actively holding the box.
-
----
-
-# 9. Firebase visibility rules — critical
-
-Public Firebase state may contain:
-
-```text
-phase
-seat order
-Godfather identity
-current box holder
-Jokers remaining
-alive / eliminated / revealed status
-public accusation history
-publicly revealed roles
-publicly recovered diamonds
-winner
-```
-
-Public state must **not** contain:
-
-```text
-current cigar-box contents
-Godfather's secretly removed diamond count
-what a player took
-unrevealed player roles
-stolen-diamond counts
-first player's secretly removed role token
-previous private box snapshots
-```
-
-Conceptual storage:
-
-```text
-rooms/{roomCode}/game/public/...
-privateGameData/{roomCode}/{uid}/...
-serverGameData/{roomCode}/mafiaDeCuba/...
-```
-
-Only the current cigar-box holder may receive a temporary view of the current box. The Godfather receives the final box view when it returns.
-
-Do not solve secrecy by merely hiding DOM elements.
-
----
-
-# 10. Preserve memory and bluffing
-
-When a player opens the cigar box they may see the current diamond count and remaining role tokens **only during their turn**.
-
-After they confirm their take and pass the box:
-
-```text
-REMOVE the box snapshot from that player's readable private state
-```
-
-They must not be able to reopen a history panel and inspect what was in the box earlier.
-
-Do not create a log containing previous private snapshots.
-
-If a player disconnects **while currently holding the box**, reconnect should restore the current private box view. If they already passed, reconnect must not restore the previous snapshot.
-
----
-
-# 11. State machine
+### 11.4 建議遊戲狀態
 
 ```ts
-export type MafiaPhase =
-  | 'SETUP'
-  | 'GODFATHER_PREPARE_BOX'
-  | 'BOX_PASS'
-  | 'BOX_PLAYER_DECISION'
-  | 'INVESTIGATION'
-  | 'ACCUSATION_PENDING'
-  | 'CLEANER_INTERRUPT'
-  | 'ACCUSATION_REVEAL'
-  | 'GAME_OVER';
-```
+interface GameState {
+  gameId: string;
+  phase: GamePhase;
+  players: PlayerState[];
+
+  godfatherPlayerId: string;
+  currentTurnPlayerId: string | null;
+  accusationTargetPlayerId: string | null;
+
+  boxDiamonds: number;
+  boxRoles: Role[];
+  hiddenBagRole: Role | null;
+  godfatherReservedDiamonds: number;
+  godfatherRecoveredDiamonds: number;
+  rumRemaining: number;
 
-The server/trusted engine owns phase transitions.
-
----
-
-# 12. Choosing the Godfather
-
-For the first match, allow either:
-
-```text
-host selects
-OR
-random selection
-```
-
-The Godfather does not participate in normal cigar-box taking.
-
-Future rematches may allow winners/host to choose the next Godfather.
-
----
-
-# 13. Godfather box preparation
-
-Create the role-token pool according to player count.
-
-Initially:
-
-```text
-diamonds = 15
-```
-
-The Godfather privately chooses **0–5 diamonds** to remove from the box and keep hidden.
-
-Example:
-
-```text
-Godfather removes 3
-→ box starts with 12 diamonds
-```
-
-Only the Godfather and trusted server know this number.
-
-```ts
-godfatherHiddenDiamonds = selectedAmount;
-cigarBox.diamonds = 15 - selectedAmount;
-initialBoxDiamondCount = cigarBox.diamonds;
-```
-
-Validate `0 <= selectedAmount <= 5`.
-
----
-
-# 14. Passing the cigar box
-
-The public UI only shows who currently holds the box:
-
-```text
-Tony 正在查看雪茄盒……
-```
-
-Do not reveal how many diamonds remain, what role they select, whether they steal, or whether the first player uses their hidden discard.
-
-Only one player can hold/open the box at a time.
-
----
-
-# 15. Box-holder private UI
-
-Example:
-
-```text
-┌───────────────────────────────────┐
-│          只有你看得到              │
-│                                   │
-│        雪茄盒目前內容              │
-│                                   │
-│         💎 × 10                   │
-│                                   │
-│ [忠誠手下] [CIA] [司機]            │
-│                                   │
-│      [ 偷取鑽石 ]                  │
-│                                   │
-│      或選擇一枚角色標記            │
-└───────────────────────────────────┘
-```
-
-Use original artwork. No observer-side sound or animation may leak box size or selected item type.
-
----
-
-# 16. Standard box decision
-
-A non-Godfather player normally chooses exactly one:
-
-```text
-A. Take 1 or more diamonds
-OR
-B. Take exactly 1 role token
-```
-
-They cannot normally take both.
-
-Taking diamonds makes the player a `THIEF`; store the amount privately.
-
-Taking a role removes exactly that role token from the box and assigns it privately.
-
----
-
-# 17. First-player special action
-
-The **first player after the Godfather** may secretly remove **0 or 1 role token** from the game before their normal take.
-
-They may not remove diamonds with this special action.
-
-After the optional hidden discard they must still:
-
-```text
-steal diamonds
-OR
-take another role token
-```
-
-The discarded token:
-
-- is known to the first player and trusted server;
-- is not public;
-- is not the first player's role;
-- is unavailable to later players;
-- may be revealed at game end.
-
-Store it separately as `firstPlayerHiddenDiscard`.
-
----
-
-# 18. Empty-box rule
-
-If a player receives a completely empty box:
-
-```text
-0 diamonds
-AND
-0 role tokens
-```
-
-that player automatically becomes `STREET_URCHIN`.
-
----
-
-# 19. Last-player Street Urchin option
-
-The final non-Godfather player may intentionally take nothing even if the box still contains something. They become `STREET_URCHIN`.
-
-Only the final player has this voluntary no-take option.
-
----
-
-# 20. Returning the box to the Godfather
-
-After the final player's decision:
-
-```text
-currentBoxHolder = Godfather
-phase = INVESTIGATION
-```
-
-The Godfather privately receives the final box contents.
-
-The Godfather may privately see a helper summary such as:
-
-```text
-失竊鑽石：X
-目前追回：Y
-尚未追回：Z
-```
-
-Do not expose those values publicly unless the Godfather says them aloud.
-
----
-
-# 21. Investigation phase
-
-Investigation is human-driven. Players may tell the truth, lie, keep quiet, volunteer information, or accuse each other socially.
-
-Do not validate spoken claims and do not build an automated contradiction detector.
-
-MVP assumption:
-
-```text
-players are co-located
-OR
-use Discord / LINE / another voice channel
-```
-
-The web app is the secret-information game table.
-
----
-
-# 22. Public player status
-
-During investigation, public player cards may show nickname, seat, alive/eliminated state, and only legitimately revealed role information.
-
-Before reveal:
-
-```text
-Role: ???
-```
-
-Never show hidden stolen-diamond amount or what they saw in the box.
-
----
-
-# 23. Godfather accusation
-
-Only the Godfather may issue the formal accusation.
-
-Suggested button:
-
-```text
-[ 命令他掏出口袋 ]
-```
-
-Flow:
-
-```text
-Godfather selects target
-→ confirmation
-→ ACCUSATION_PENDING
-→ optional Cleaner interrupt
-→ reveal / resolve
-```
-
-Server/trusted state determines the actual target result.
-
----
-
-# 24. Accusing a Thief
-
-If the target is a Thief:
-
-```text
-reveal stolen diamond count
-return those diamonds to Godfather
-mark Thief eliminated
-```
-
-The eliminated Thief cannot continue participating in game actions.
-
-After recovery, check whether all stolen diamonds have been recovered. If yes, end with Godfather-side victory.
-
----
-
-# 25. Wrong accusation and Jokers
-
-If the target is not a Thief and not an Agent, it is a false accusation.
-
-If at least one Joker remains:
-
-```text
-consume 1 Joker
-reveal target's role/status
-target remains in play
-investigation continues
-```
-
-If no Joker remains when one is required:
-
-```text
-Godfather is eliminated
-investigation ends
-resolve Thief-side winners
-```
-
-Joker count is public.
-
-Recommended invariant: an already formally revealed innocent cannot be accused again.
-
----
-
-# 26. Accusing an Agent
-
-If the Godfather formally accuses an unrevealed FBI or CIA Agent, the game ends immediately.
-
-Default digital rule:
-
-```text
-AGENT_ACCUSED = accused Agent wins alone
-```
-
-The other Agent, if any, does not automatically share the direct victory. Do not spend a Joker.
-
----
-
-# 27. Loyal Henchman
-
-A Loyal Henchman wins if the Godfather recovers all stolen diamonds.
-
-If falsely accused while a Joker remains, reveal them, consume one Joker, and let them remain in play.
-
----
-
-# 28. Driver
-
-A Driver wins if the player directly to that Driver's **right** wins.
-
-Use the persisted original seat order, not filtered/alive order.
-
-For normal non-solo endings, resolve Driver winners after the direct winner set. If Drivers form a chain, resolve to a fixed point.
-
-Example:
-
-```text
-Driver A's passenger = Driver B
-Driver B's passenger = winning Thief
-→ Driver B wins
-→ Driver A then wins
-```
-
-For explicitly solo endings (`AGENT_ACCUSED`, `CLEANER_SHOT_AGENT`), do not add Driver co-winners unless the project owner later chooses a house-rule interpretation. Keep this decision isolated in `winners.ts`.
-
----
-
-# 29. Street Urchin
-
-A player becomes Street Urchin when the box is completely empty when received, or when the final player legally chooses to take nothing.
-
-Street Urchin wins when the Thief side wins.
-
-If falsely accused while Jokers remain, reveal them, consume one Joker, and keep them in play.
-
----
-
-# 30. Optional advanced Cleaner role
-
-Cleaner is disabled by default.
-
-When enabled, replace one Loyal Henchman token with Cleaner.
-
-After the Godfather chooses an accusation target but before reveal, an alive Cleaner owner may privately choose:
-
-```text
-POW
-or
-PASS
-```
-
-Do not publicly announce that the game is waiting for Cleaner. Use a neutral resolving state to avoid information leaks.
-
----
-
-# 31. Cleaner shoots an Agent
-
-If Cleaner chooses POW and the target is an Agent:
-
-```text
-Cleaner wins immediately
-endReason = CLEANER_SHOT_AGENT
-```
-
-Default implementation: Cleaner is sole winner.
-
----
-
-# 32. Cleaner shoots a non-Agent
-
-If Cleaner shoots a non-Agent:
-
-```text
-Cleaner is eliminated
-target is eliminated
-```
-
-If target is a Thief, return that Thief's stolen diamonds and immediately re-check Godfather victory.
-
-If target is a non-Thief, no Joker is spent for the Cleaner resolution.
-
-An eliminated Cleaner cannot later win with the Godfather.
-
----
-
-# 33. Cleaner secrecy
-
-Cleaner may be taken, left in the box, or secretly discarded by the first player. Therefore only a valid alive Cleaner owner gets the interrupt UI.
-
-Other players see only a neutral message such as:
-
-```text
-正在處理指控……
-```
-
----
-
-# 34. Elimination
-
-Eliminated players stay visually seated and appear in final results, but cannot perform further game actions. If the platform later provides in-app chat, disable it for eliminated players during the current investigation.
-
-External voice compliance is honor-based.
-
----
-
-# 35. Winner resolution
-
-```ts
-export type MafiaEndReason =
-  | 'GODFATHER_RECOVERED_ALL'
-  | 'GODFATHER_OUT_OF_JOKERS'
-  | 'AGENT_ACCUSED'
-  | 'CLEANER_SHOT_AGENT';
-```
-
-## Godfather recovers all stolen diamonds
-
-Direct winners:
-
-```text
-Godfather
-eligible Loyal Henchmen
-eligible alive Cleaner acting as loyal-side role
-```
-
-Then resolve Driver conditions.
-
-## Godfather runs out of Jokers on a false accusation
-
-Among Thieves still in play, the highest stolen-diamond count wins. Ties share the Thief victory. Eligible Street Urchins also win. Then resolve Driver conditions.
-
-## Godfather accuses Agent
-
-Accused Agent wins alone.
-
-## Cleaner shoots Agent
-
-Cleaner wins alone.
-
----
-
-# 36. Thief-side winner calculation
-
-```ts
-export function getWinningThieves(
-  players: Record<string, PrivateMafiaPlayerState>
-): string[]
-```
-
-Requirements:
-
-```text
-role = THIEF
-still alive/in play
-highest stolenDiamonds
-return all ties
-```
-
-Previously caught Thieves cannot win.
-
----
-
-# 37. Public result reveal
-
-At `GAME_OVER`, reveal hidden information.
-
-Example:
-
-```text
-🏆 本局勝利者
-
-Kevin — 竊賊 — 偷走 5 顆
-Amy   — 街頭小子
-Jack  — 司機
-
-完整身份
-Tony  — 教父
-Kevin — 竊賊 / 5 💎
-Amy   — 街頭小子
-Jack  — 司機
-Mary  — 忠誠手下
-Peter — CIA
-
-教父起始藏起：3 💎
-第一位玩家秘密移除：FBI
-```
-
-Do not reveal these secrets before game end.
-
----
-
-# 38. No-information-leak logging
-
-Allowed public logs:
-
-```text
-教父已準備好雪茄盒
-雪茄盒交給 Tony
-Tony 已完成選擇
-進入調查階段
-教父要求 Amy 掏出口袋
-Amy 被揭露為忠誠手下
-教父支付 1 個 Joker
-Kevin 被揭露為竊賊並歸還 4 顆鑽石
-```
-
-Never log secret take/box contents before game end.
-
----
-
-# 39. Trusted operations
-
-Recommended authoritative operations:
-
-```text
-startMafiaDeCuba
-selectGodfather
-prepareCigarBox
-viewCigarBox
-discardFirstPlayerRoleToken
-takeDiamonds
-takeRoleToken
-chooseStreetUrchinAsLastPlayer
-confirmEmptyBoxStreetUrchin
-passCigarBox
-beginInvestigation
-accusePlayer
-submitCleanerDecision
-resolveAccusation
-requestRematch
-```
-
-Every operation validates authenticated UID, room membership, game id, phase, seat, current box holder, permissions, available contents, role/action legality, and winner transitions.
-
-Use transactions / atomic trusted writes for secret box changes.
-
----
-
-# 40. Concurrency requirements
-
-Protect against:
-
-```text
-double click
-multiple browser tabs
-reconnect during action
-late Cleaner response
-Godfather double accusation
-```
-
-Use `stateVersion` and/or `actionId` guards. Make actions idempotent where practical.
-
----
-
-# 41. Reconnect
-
-If the current player disconnects while holding the box, retain their seat and private turn. Reconnecting as the same UID restores the current private view.
-
-If they already passed, do not restore the historical box snapshot.
-
-During investigation, reconnect restores public state plus only that player's own private role/take.
-
----
-
-# 42. Multi-tab protection
-
-Server-side validation must ensure the same UID cannot take twice, discard twice, issue duplicate Cleaner decisions, or resolve multiple accusations.
-
-Reading one's own current secret state from another authenticated tab is acceptable; another UID's private state is not.
-
----
-
-# 43. Main game UI — box phase
-
-Desktop concept:
-
-```text
-┌────────────────────────────────────────────────────┐
-│ 教父風雲：危情古巴            8 Players            │
-├────────────────────────────────────────────────────┤
-│                                                    │
-│  Tony       Kevin       Amy        Jack            │
-│   ●           ●          ●           ●             │
-│                                                    │
-│              [ 雪 茄 盒 ]                          │
-│                                                    │
-│     「Kevin 正在查看雪茄盒……」                     │
-│                                                    │
-│  Mary       Peter       Lisa      👑 Godfather     │
-│   ●           ●          ●           ●             │
-│                                                    │
-├────────────────────────────────────────────────────┤
-│  Joker: 🍾 ×1                                      │
-└────────────────────────────────────────────────────┘
-```
-
-The private box dialog is shown only to the holder.
-
----
-
-# 44. Mobile UI
-
-Mobile-first is mandatory.
-
-Recommended hierarchy:
-
-```text
-Top: phase / current holder
-Middle: compact player circle + cigar box
-Bottom: my private role panel + context action
-```
-
-Before secret content appears:
-
-```text
-輪到你了
-請確認只有你能看到螢幕
-[ 顯示雪茄盒 ]
-```
-
-No hover-only interactions.
-
----
-
-# 45. Investigation UI
-
-Example:
-
-```text
-┌────────────────────────────────────┐
-│            調查階段                │
-│                                    │
-│ 教父：Tony                         │
-│ 尚有 Joker：1                      │
-│                                    │
-│ Kevin    未揭露     [指控]          │
-│ Amy      忠誠手下                   │
-│ Jack     未揭露     [指控]          │
-│ Mary     竊賊・已淘汰・4💎          │
-│ Peter    未揭露     [指控]          │
-│                                    │
-│       自由討論 / 說謊 / 推理        │
-└────────────────────────────────────┘
-```
-
-Only the Godfather sees enabled formal accusation controls.
-
----
-
-# 46. Accusation UX
-
-Use two-step confirmation:
-
-```text
-你確定要指控 Kevin？
-錯誤指控可能消耗 Joker，甚至直接讓教父落敗。
-
-[取消] [命令掏出口袋]
-```
-
-Run a short suspense animation, but keep it skippable/reduced-motion compatible.
-
----
-
-# 47. No deduction assistant
-
-Do not automatically tell players that statements conflict, infer who is lying, or calculate likely thieves. The application is the game table, not a detective assistant.
-
----
-
-# 48. Optional host settings
-
-```ts
-interface MafiaDeCubaRoomOptions {
   cleanerEnabled: boolean;
-  godfatherSelection: 'HOST_SELECTS' | 'RANDOM';
-  showRoleHelp: boolean;
-  expertFivePlayerMode: boolean;
+  endReason: EndReason | null;
+  winnerPlayerIds: string[];
 }
 ```
 
-Do not expose arbitrary custom role counts in the first release.
+### 11.5 伺服器應保存的基準值
 
----
-
-# 49. Optional expert 5-player variant
-
-Not required for MVP.
-
-If implemented later:
-
-```text
-5 total players
-role tokens:
-- 1 Loyal Henchman
-- 1 Agent
-Godfather Jokers:
-- 0
-```
-
-Mark it clearly as an advanced variant.
-
----
-
-# 50. Revolución expansion hook
-
-The official `Revolución` expansion adds new secret agendas/roles and a fake diamond. Do **not** guess detailed expansion rules here.
-
-Prepare only extensibility:
+為避免勝負計算只依賴可變狀態，建議另外保存：
 
 ```ts
-type MafiaExpansion = 'NONE' | 'REVOLUCION';
+interface DiamondLedger {
+  totalDiamonds: 15;
+  godfatherReserved: number;
+  initiallyAvailableToPlayers: number;
+  currentlyInBox: number;
+  currentlyHeldByActiveThieves: number;
+  recoveredFromThieves: number;
+}
 ```
 
-Possible extension points:
-
-```ts
-modifySetup(...)
-validateBoxTake(...)
-resolveAccusation(...)
-resolveWinner(...)
-```
-
-Create a separate verified expansion spec before implementing it.
-
----
-
-# 51. Pure engine functions
-
-At minimum:
-
-```ts
-getSetupForPlayerCount(...)
-buildInitialRolePool(...)
-getBoxPassOrder(...)
-getRightNeighbor(...)
-canGodfatherRemoveDiamonds(...)
-prepareBox(...)
-canFirstPlayerDiscardRole(...)
-discardRoleToken(...)
-canTakeDiamonds(...)
-takeDiamonds(...)
-canTakeRole(...)
-takeRole(...)
-isBoxEmpty(...)
-canChooseStreetUrchin(...)
-advanceBoxHolder(...)
-getMissingDiamondCount(...)
-canAccuse(...)
-resolveAccusation(...)
-canCleanerInterrupt(...)
-resolveCleanerShot(...)
-allStolenDiamondsRecovered(...)
-getWinningThieves(...)
-resolveDrivers(...)
-determineWinners(...)
-```
-
-React should not reimplement these rules.
-
----
-
-# 52. Base setup tests
-
-Expected setup:
+必須隨時符合：
 
 ```text
-6 → H1 A1 D1 J0
-7 → H2 A1 D1 J0
-8 → H3 A1 D1 J1
-9 → H4 A1 D1 J1
-10 → H4 A2 D1 J1
-11 → H4 A2 D2 J2
-12 → H5 A2 D2 J2
+15
+= godfatherReserved
++ currentlyInBox
++ currentlyHeldByActiveThieves
++ recoveredFromThieves
 ```
 
-Also test:
+---
+
+## 12. 資訊可見性與防作弊要求
+
+### 12.1 僅本人可見
+
+- 自己的角色。
+- 自己持有的鑽石數量。
+- 自己收到盒子時看到的內容。
+- 自己傳出盒子前的內容。
+
+### 12.2 僅目前操作玩家可見
+
+- 雪茄盒當前內容。
+- 可拿取的角色與鑽石。
+
+### 12.3 僅教父可見
+
+- 自己開局保留的鑽石數量。
+- 雪茄盒回來後的剩餘內容。
+- 尚未公開前，不可看到其他玩家真實身分或鑽石數量。
+
+### 12.4 第一位玩家專屬資訊
+
+- 黑色布袋是否放入角色。
+- 被放入的角色種類。
+
+### 12.5 伺服器權威原則
+
+- 所有抽取、拿取、傳遞、指控與勝負計算均由伺服器驗證。
+- 前端不可收到不應看見的完整遊戲狀態後再自行隱藏。
+- API／WebSocket 回傳資料應依玩家身分過濾。
+- 重新整理或重新連線後，只能恢復該玩家原本有權看到的資訊。
+- 伺服器應記錄每次狀態轉換，但遊戲進行中不可把秘密操作寫入所有人可讀的事件流。
+
+---
+
+## 13. 核心後端驗證規則
+
+### 13.1 開局驗證
+
+- 人數必須介於 6～12。
+- 必須剛好有 1 名教父。
+- 角色配置必須符合人數表。
+- 啟用 Cleaner 時，必須以 1 個 Cleaner 取代 1 個心腹。
+- 鑽石總數固定為 15。
+- 教父只能保留 0～5 顆鑽石。
+
+### 13.2 拿取驗證
+
+- 只有目前回合玩家可操作雪茄盒。
+- 玩家不可重複操作自己的盒子回合。
+- 一般玩家必須拿鑽石或 1 個角色。
+- 拿鑽石時數量至少為 1，且不可超過盒內剩餘數量。
+- 拿角色時只能拿 1 個盒內仍存在的角色。
+- 不可同時拿角色與鑽石。
+- 第一位玩家最多只能藏 1 個角色，且不可藏鑽石。
+- 只有最後一位玩家可在盒內仍有物品時主動不拿。
+- 盒子已空時，玩家自動成為街頭混混。
+
+### 13.3 指控驗證
+
+- 只有教父可以正式指控。
+- 只能在調查階段指控。
+- 不能指控自己。
+- 不能重複指控已出局玩家。
+- 指控確認後不可更換目標。
+- 啟用 Cleaner 且 Cleaner 尚可行動時，先進入 Cleaner 反應階段。
+
+### 13.4 勝負驗證
+
+- 每次成功追回鑽石後，立即檢查是否追回全部失竊鑽石。
+- 指控普通角色時，若有酒必須自動扣除 1 個；若無酒則立即結束。
+- 指控探員立即結束，不可扣酒。
+- 先結算非司機角色，再結算司機。
+- 勝者清單應由伺服器一次產生並保存，避免不同客戶端自行計算出不同結果。
+
+---
+
+## 14. 建議勝負判定演算法
 
 ```text
-15 diamonds initially
-Godfather may hide 0
-Godfather may hide 5
-Godfather may not hide -1
-Godfather may not hide 6
-Cleaner replaces, not adds to, one Henchman
+resolveAccusation(target):
+  if cleaner enabled and cleaner chooses to shoot:
+    if target is Agent:
+      primaryWinners = [Cleaner]
+      endReason = CLEANER_KILLED_AGENT
+      finalizeDrivers(primaryWinners)
+      end game
+    else:
+      eliminate Cleaner and target
+      if target is Thief:
+        recover all target diamonds
+        if all stolen diamonds recovered:
+          primaryWinners = [Godfather, all Henchmen]
+          endReason = ALL_STOLEN_DIAMONDS_RECOVERED
+          finalizeDrivers(primaryWinners)
+          end game
+      return to interrogation
+
+  reveal target
+
+  if target is Thief:
+    recover all target diamonds
+    eliminate target
+    if all stolen diamonds recovered:
+      primaryWinners = [Godfather, all Henchmen]
+      endReason = ALL_STOLEN_DIAMONDS_RECOVERED
+      finalizeDrivers(primaryWinners)
+      end game
+    else:
+      return to interrogation
+
+  if target is Agent:
+    primaryWinners = [target]
+    endReason = AGENT_ACCUSED
+    finalizeDrivers(primaryWinners)
+    end game
+
+  if target is ordinary role:
+    if rumRemaining > 0:
+      rumRemaining -= 1
+      return to interrogation
+    else:
+      maxDiamonds = maximum diamonds among uncaught thieves
+      primaryWinners = all uncaught thieves with maxDiamonds
+      if primaryWinners contains any thief:
+        add all Street Urchins
+      endReason = WRONG_ACCUSATION_WITHOUT_RUM
+      finalizeDrivers(primaryWinners)
+      end game
 ```
 
 ---
 
-# 53. Box-pass tests
+## 15. 建議 API／即時事件
 
-At minimum:
+以下僅為參考命名，可依現有 React、Firebase、Firestore 或 WebSocket 架構調整。
 
-- only current holder can act;
-- take 1 or all remaining diamonds;
-- cannot take 0 as a normal diamond action;
-- cannot exceed box diamond count;
-- may take exactly one available role token;
-- cannot take role + diamonds in same normal take;
-- taken token leaves box;
-- first player may discard at most one role token;
-- hidden discard does not become their role;
-- first player must still make normal take;
-- non-first player cannot discard;
-- empty-box player becomes Street Urchin;
-- only final player may voluntarily take nothing;
-- final voluntary no-take becomes Street Urchin;
-- box returns to Godfather after final player.
-
----
-
-# 54. Secrecy tests
-
-These are critical. With Firebase emulator/rules where possible, verify:
+### 15.1 指令型 API
 
 ```text
-Player A cannot read Player B private role
-Player A cannot read Player B stolen diamond count
-Player A cannot read current box while B holds it
-Godfather cannot read current box while it is circulating
-observer cannot read first-player hidden discard
-past holder cannot reread old box snapshot after passing
-current holder can recover current snapshot after reconnect
-Godfather can read final returned box
+POST /games/{gameId}/start
+POST /games/{gameId}/godfather/hide-diamonds
+POST /games/{gameId}/first-player/hide-role
+POST /games/{gameId}/box/take-diamonds
+POST /games/{gameId}/box/take-role
+POST /games/{gameId}/box/take-nothing
+POST /games/{gameId}/box/pass
+POST /games/{gameId}/godfather/accuse
+POST /games/{gameId}/cleaner/react
+POST /games/{gameId}/chat/messages
 ```
 
-Do not call the feature complete until these pass.
-
----
-
-# 55. Investigation tests
-
-At minimum:
-
-- Godfather can accuse eligible unrevealed player;
-- non-Godfather cannot accuse;
-- caught Thief returns diamonds and is eliminated;
-- recovered diamond count updates;
-- all stolen diamonds recovered ends with Godfather-side victory;
-- false accusation with Joker consumes exactly one;
-- innocent remains alive after compensated false accusation;
-- false accusation with zero Jokers eliminates Godfather and ends game;
-- Agent accusation ends game immediately;
-- unaccused second Agent is not a direct winner;
-- eliminated Thief cannot win Thief-side ending;
-- highest surviving Thief count wins;
-- top tie yields multiple Thief winners;
-- Street Urchin joins Thief-side victory;
-- Driver relationship uses original seat order.
-
----
-
-# 56. Cleaner tests
-
-When Cleaner is enabled:
-
-- Cleaner replaces one Henchman;
-- only Cleaner owner gets private interrupt;
-- PASS works;
-- POW works before reveal;
-- shooting Agent produces Cleaner solo win;
-- shooting Thief eliminates both and returns diamonds;
-- shooting non-Agent role eliminates both without Joker cost;
-- eliminated Cleaner cannot later win with Godfather;
-- Cleaner left in box has no owner;
-- secretly discarded Cleaner cannot act;
-- public timing/state does not leak Cleaner ownership.
-
----
-
-# 57. Winner tests
-
-Test Godfather victory, Thief victory, Agent solo victory, Cleaner solo victory, Driver chains, tied top Thieves, Street Urchin co-wins, and ineligible eliminated roles.
-
----
-
-# 58. Error messages
-
-Traditional Chinese examples:
+### 15.2 建議即時事件
 
 ```text
-目前不是你的回合
-你現在不是雪茄盒持有人
-雪茄盒內沒有這麼多鑽石
-這個角色已不在雪茄盒內
-你必須選擇鑽石或一個角色
-只有第一位玩家可以秘密移除角色
-只有最後一位玩家可以主動選擇什麼都不拿
-目前不是調查階段
-只有教父可以正式指控
-這名玩家已被揭露，不能再次指控
-你的操作已過期，遊戲狀態已更新
+game.started
+phase.changed
+box.received
+box.action.completed
+box.passed
+interrogation.started
+chat.message.created
+accusation.pending
+cleaner.reaction.requested
+accusation.resolved
+player.eliminated
+rum.consumed
+game.ended
 ```
 
-On stale state: resync, keep player in match, show concise message.
+事件不得向未授權玩家暴露秘密資料。例如 `box.action.completed` 對其他玩家只能顯示「某玩家已完成操作」，不能顯示拿了什麼。
 
 ---
 
-# 59. Security requirements
+## 16. UI／UX 實作建議
 
-Never trust client-provided role, stolen-diamond count, box contents, hidden discard, winner, Cleaner eligibility, seating relationship, or Joker count.
+### 16.1 雪茄盒階段
 
-A malicious client must not be able to inspect another player's secrets, inspect the box out of turn, revisit historical box contents, take twice, fake Street Urchin, fake Cleaner, accuse as non-Godfather, forge returned diamonds, or forge winner state.
+- 只有目前玩家畫面顯示盒內實際內容。
+- 操作前顯示「確認周圍沒有人看到螢幕」。
+- 拿取完成後進入遮罩畫面，再交給下一位玩家。
+- 線上遠端模式則直接切換目前操作權，不需要實體傳手機流程。
+- 顯示操作倒數與斷線重連狀態。
 
----
+### 16.2 調查階段
 
-# 60. Visual direction
+- 顯示所有玩家座位順序。
+- 清楚標示教父左、右方向，避免司機勝負方向混淆。
+- 教父畫面提供「詢問」與醒目的「正式指控」兩種不同操作。
+- 正式指控前顯示二次確認，並提示剩餘美酒數量。
+- 已被抓到的竊賊應顯示出局，並關閉文字／語音發言能力。
 
-Secret theft phase:
+### 16.3 結算畫面
 
-```text
-closed cigar box
-spotlight on current player
-dim other seats
-subtle diamond glint
-```
+應顯示：
 
-Investigation phase:
-
-```text
-interrogation-room mood
-player portraits
-Godfather spotlight
-red accusation highlight
-public role badges
-```
-
-Result phase: sequentially reveal Godfather stash, first-player hidden discard, roles/takes, and winner banner. Reveal animation must be skippable.
-
----
-
-# 61. Accessibility
-
-Required:
-
-- no information only by color;
-- text/ARIA labels;
-- keyboard-operable dialogs;
-- mobile touch targets;
-- reduced-motion support;
-- readable contrast;
-- secret roles always have readable text labels.
+- 遊戲結束原因。
+- 每位玩家的真實身分。
+- 每位竊賊原本偷取的鑽石數量。
+- 哪些竊賊已被抓到。
+- 黑色布袋中的角色。
+- 教父開局保留的鑽石數量。
+- 每位勝者與其獲勝理由。
+- 司機右手邊玩家及連帶勝負結果。
 
 ---
 
-# 62. In-game role help
+## 17. 驗收測試案例
 
-Show concise help for the current player's own role only.
+### 17.1 配置測試
 
-Examples:
+1. 6 人局應建立 1 心腹、1 探員、1 司機、0 美酒與 15 鑽石。
+2. 12 人局應建立 5 心腹、2 探員、2 司機、2 美酒與 15 鑽石。
+3. 開啟 Cleaner 後，角色總數不變，且心腹數減 1、Cleaner 數加 1。
+4. 少於 6 人或多於 12 人不得開始標準模式。
 
-```text
-忠誠手下
-幫助教父找回所有失竊鑽石。
+### 17.2 教父藏鑽測試
 
-竊賊
-避免被抓。若教父落敗，仍在場且偷得最多鑽石的竊賊勝利。
+1. 教父藏 0 顆時，盒內應有 15 顆。
+2. 教父藏 5 顆時，盒內應有 10 顆。
+3. 藏負數或超過 5 顆必須拒絕。
+4. 其他玩家不可讀取實際藏鑽數量。
 
-司機
-你的右手邊玩家獲勝時，你也可能獲勝。
-```
+### 17.3 第一位玩家測試
 
-Before role selection, show only general rules.
+1. 可選擇不藏角色。
+2. 可藏 1 個仍在盒內的角色。
+3. 不可藏 2 個角色。
+4. 不可藏鑽石。
+5. 藏角色後仍必須正常拿取一種物品。
 
----
+### 17.4 拿取測試
 
-# 63. Implementation milestones
+1. 一般玩家不可同時拿鑽石和角色。
+2. 一般玩家不可主動空手。
+3. 最後玩家可在盒內仍有物品時空手並成為街頭混混。
+4. 盒子已空時，目前及後續玩家自動成為街頭混混。
+5. 玩家不可拿超過盒內數量的鑽石。
 
-## M1 — Game registration / room integration
+### 17.5 指控測試
 
-Add catalog entry, 6–12 validation, route/module, Cleaner option, seat model, placeholder board.
+1. 抓到竊賊時，全部鑽石轉為教父已追回，竊賊出局。
+2. 抓到普通角色且有酒時，扣 1 酒，遊戲繼續，目標不出局。
+3. 抓到普通角色且無酒時，遊戲立即結束。
+4. 抓到探員時遊戲立即結束，不扣酒。
+5. 6～7 人局第一次抓錯普通角色時應立即結束。
 
-Acceptance:
+### 17.6 勝負測試
 
-```text
-create room
-→ select 教父風雲：危情古巴
-→ 6+ players ready
-→ choose/random Godfather
-→ game screen renders
-```
+1. 教父追回所有失竊鑽石時，教父與心腹勝利。
+2. 教父失敗時，只有未被抓竊賊中持有最多鑽石者勝利。
+3. 兩名未被抓竊賊同為最多顆時，兩人共同勝利。
+4. 持有較少鑽石的未被抓竊賊不獲勝。
+5. 有竊賊勝者時，所有街頭混混獲勝。
+6. 被指控的探員獲勝，另一名未被指控探員不獲勝。
+7. 司機右手邊玩家獲勝時，司機獲勝。
+8. 司機右手邊玩家未獲勝時，司機不獲勝。
 
-## M2 — Setup engine
+### 17.7 Cleaner 測試
 
-Implement setup table, diamonds, role pool, Jokers, Godfather secret 0–5 preparation, server-only box state.
+1. Cleaner 只能在正式指控後、目標公開前反應。
+2. Cleaner 射中探員時立即獲勝並結束遊戲。
+3. Cleaner 射錯普通角色時，兩者出局，教父不扣酒。
+4. Cleaner 射錯竊賊時，竊賊鑽石仍交給教父。
+5. Cleaner 射中竊賊並使失竊鑽石全部追回時，教父與心腹勝利。
 
-## M3 — Secret cigar-box pass
+### 17.8 權限與斷線測試
 
-Implement private box view, take diamonds, take role, first-player hidden discard, Street Urchin rules, pass order, and no historical reread.
-
-Acceptance: only active player sees box contents; after pass the snapshot disappears; next player sees the updated box.
-
-## M4 — Investigation
-
-Implement returned box to Godfather, interrogation phase, accusations, Thief recovery, false accusations/Jokers, Agent ending, and eliminations.
-
-## M5 — Winner engine
-
-Implement Godfather side, surviving top Thief logic, ties, Street Urchin, Driver positional victory, and result reveal.
-
-## M6 — Firebase security / reconnect
-
-Implement private paths, authoritative actions, rules/emulator tests, reconnect while holding box, multi-tab protection, state version/idempotency.
-
-## M7 — Complete responsive UI
-
-Implement cigar box dialog, seat circle, Godfather setup, investigation board, accusation animation, result reveal, mobile UI, loading/error/reconnect.
-
-Acceptance: 6–12 friends can complete a full base game on mixed devices without DB edits.
-
-## M8 — Cleaner advanced role
-
-Implement Cleaner only after base game is stable.
-
-## M9 — Polish / rematch
-
-Rematch, next Godfather selection, optional stats, optional sound/mute, animation/rule-help polish.
+1. 非目前回合玩家不可取得盒內內容。
+2. 重新整理頁面後，玩家仍只能看見自己的秘密資訊。
+3. 斷線重連不得造成重複拿取。
+4. 同一操作重送時，後端應以冪等方式拒絕或回傳既有結果。
+5. 遊戲結束前，任何公開事件不得洩漏黑色布袋角色。
 
 ---
 
-# 64. Definition of Done — Base Game
+## 18. 開發時最容易寫錯的規則
 
-Base game is complete when:
-
-- game appears in catalog;
-- 6–12 players supported;
-- existing auth/room infrastructure reused;
-- Godfather can secretly remove 0–5 diamonds;
-- box passes in correct order;
-- each player sees box only on their turn;
-- first-player secret role removal works;
-- players can take diamonds or one role;
-- empty-box Street Urchin works;
-- last-player voluntary Street Urchin works;
-- past box snapshots cannot be revisited;
-- Godfather receives final box;
-- interrogation phase works;
-- accusations work;
-- Thief recovery works;
-- Joker mistakes work;
-- Agent win works;
-- Loyal Henchman win works;
-- Driver win works;
-- Street Urchin win works;
-- eliminated Thieves cannot win;
-- secrets reveal only at game end;
-- reconnect works;
-- Firebase rules protect secrets;
-- mobile UI works;
-- tests pass;
-- lint passes;
-- production build passes.
-
-Cleaner is not required for Base Game DoD if scheduled separately as M8.
+1. 玩家身分不是開局隨機發牌，而是透過拿取物品產生。
+2. 教父秘密拿走的 0～5 顆鑽石不是失竊鑽石。
+3. 第一位玩家藏的是 0 或 1 個角色，不能藏鑽石。
+4. 第一位玩家藏完角色後，仍要正常拿取物品。
+5. 只有最後一位玩家可在盒內仍有物品時主動空手。
+6. 抓錯普通角色且有酒時，被冤枉玩家不出局。
+7. 抓到探員不能用酒補救。
+8. 教父失敗時，不是所有竊賊都獲勝，只有未被抓且鑽石最多者獲勝。
+9. 街頭混混只有在出現竊賊勝者時才跟著獲勝。
+10. 司機看的是自己右手邊玩家的最終勝負，不是固定支持教父或竊賊。
+11. 出局竊賊不得繼續發言。
+12. 線上版不能把完整秘密狀態傳給前端後只靠 UI 隱藏。
 
 ---
 
-# 65. Definition of Done — Advanced Base Game
+## 19. 一局完整範例
 
-Additionally:
+假設總共 9 人：1 名教父與 8 名其他玩家。
 
-- Cleaner replaces one Loyal Henchman;
-- Cleaner interrupt remains secret;
-- POW/PASS works;
-- Cleaner-vs-Agent resolution works;
-- non-Agent shot works;
-- no Joker is incorrectly consumed;
-- Cleaner security tests pass.
+配置：
 
----
+- 鑽石 ×15
+- 心腹 ×4
+- 探員 ×1
+- 司機 ×1
+- 美酒 ×1
 
-# 66. Non-goals for first release
+流程：
 
-```text
-AI bots
-public matchmaking
-ranked ladder
-spectator mode
-voice chat
-automatic lie detection
-testimony transcript
-Revolución expansion
-arbitrary role distributions
-tournament scoring
-```
+1. 教父秘密保留 3 顆鑽石，因此盒內剩 12 顆鑽石與 6 個角色。
+2. 第一位玩家把探員放入黑色布袋，再拿走 1 個心腹。
+3. 第二位玩家拿 2 顆鑽石，成為竊賊。
+4. 第三位玩家拿司機。
+5. 第四位玩家拿 4 顆鑽石，成為竊賊。
+6. 第五位玩家拿心腹。
+7. 第六位玩家拿 1 顆鑽石，成為竊賊。
+8. 第七位玩家拿心腹。
+9. 最後一位玩家主動什麼都不拿，成為街頭混混。
+10. 盒子回到教父手中時剩 5 顆鑽石。
 
----
+教父知道：
 
-# 67. Priority order
+- 自己原本保留 3 顆。
+- 玩家開始傳遞時有 12 顆。
+- 現在盒內剩 5 顆。
+- 玩家合計偷走 7 顆。
 
-```text
-secret-information security
->
-rule correctness
->
-transaction integrity
->
-no-information-leak UX
->
-reconnect reliability
->
-mobile usability
->
-visual polish
-```
+但教父不知道：
+
+- 是 1 人偷 7 顆，還是多人分別偷取。
+- 哪些玩家是竊賊。
+- 探員是被玩家拿走，還是被第一位玩家放進黑色布袋。
+
+此時進入調查與正式指控階段。
 
 ---
 
-# 68. Codex instructions
+## 20. 參考來源
 
-Before editing:
+- Asmodee Taiwan 商品與遊戲介紹：https://www.asmodee.com.tw/en_US/shop/product/mafia-de-cuba-1126
+- Mafia de Cuba 英文規則整理：https://www.ultraboardgames.com/mafia-de-cuba/game-rules.php
+- 原版英文規則書 PDF：https://cdn.1j1ju.com/medias/53/87/ed-mafia-de-cuba-rulebook.pdf
 
-1. Read this file completely.
-2. Inspect the current repository.
-3. Inspect existing platform/game registration patterns.
-4. Reuse existing Firebase/Auth/room utilities.
-5. Preserve every existing game.
-6. Do not create another Firebase project.
-7. Do not create another standalone React app.
+> 正式開發或公開發行前，建議再以實際持有版本的原廠規則書校對角色名稱、配件名稱與地區版本差異。
 
-Implement in order:
-
-```text
-M1 → M2 → M3 → M4 → M5 → M6 → M7
-```
-
-Only after base game is stable:
-
-```text
-M8 Cleaner → M9 Polish
-```
-
-After every major milestone:
-
-```text
-run tests
-run lint
-run build
-inspect git diff
-```
-
-Fix failures before proceeding.
-
-If Firebase Console/deployment requires unavailable credentials, complete all repository-side work possible, do not invent credentials, and report the exact manual action required.
-
-Do not stop after scaffolding. Begin implementation.
-
----
-
-# 69. Rule-source notes for developers
-
-This implementation spec was prepared from publicly available Mafia de Cuba rule references, including the Asmodee Taiwan product description, the published English rulebook/rule summaries, and BoardGameGeek game/rules information.
-
-If implementation details conflict with this specification, treat this file as the digital product contract unless the project owner explicitly requests a rule revision.
-
-For the `Revolución` expansion, do not infer detailed mechanics from marketing descriptions. Create a separate verified spec before implementation.

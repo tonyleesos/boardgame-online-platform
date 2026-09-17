@@ -108,13 +108,10 @@ export function mafiaWinners(
 ) {
   const g = s.public.mafia!,
     roles = s.secret.mafia!.roles;
-  if (solo) return [solo];
-  let winners: string[] = [];
+  let winners: string[] = solo ? [solo] : [];
   if (reason === "DIAMONDS_RECOVERED")
-    winners = g.order.filter(
-      (uid) =>
-        g.seats[uid].alive &&
-        ["GODFATHER", "LOYAL_HENCHMAN", "CLEANER"].includes(roles[uid]?.role),
+    winners = g.order.filter((uid) =>
+      ["GODFATHER", "LOYAL_HENCHMAN"].includes(roles[uid]?.role),
     );
   else if (reason === "GODFATHER_ELIMINATED") {
     const thieves = g.order.filter(
@@ -123,9 +120,8 @@ export function mafiaWinners(
     const most = Math.max(...thieves.map((uid) => roles[uid].diamonds), -1);
     winners = g.order.filter(
       (uid) =>
-        g.seats[uid].alive &&
-        (roles[uid]?.role === "STREET_URCHIN" ||
-          (roles[uid]?.role === "THIEF" && roles[uid].diamonds === most)),
+        (thieves.length > 0 && roles[uid]?.role === "STREET_URCHIN") ||
+        (thieves.includes(uid) && roles[uid].diamonds === most),
     );
   }
   let changed = true;
@@ -133,7 +129,6 @@ export function mafiaWinners(
     changed = false;
     for (const uid of g.order)
       if (
-        g.seats[uid].alive &&
         roles[uid]?.role === "DRIVER" &&
         !winners.includes(uid) &&
         winners.includes(rightNeighbor(g.order, uid))
@@ -202,6 +197,7 @@ function resolveAccusation(s: Session) {
       g.seats[cleaner].role = "CLEANER";
       if (held.role === "THIEF") {
         g.recovered += held.diamonds;
+        s.mafiaPrivate![target].diamonds = 0;
         checkRecovered(s);
       }
     }
@@ -212,6 +208,7 @@ function resolveAccusation(s: Session) {
     outcome = "THIEF";
     seat.alive = false;
     g.recovered += held.diamonds;
+    s.mafiaPrivate![target].diamonds = 0;
     checkRecovered(s);
   } else if (g.jokers > 0) {
     outcome = "JOKER";
@@ -275,6 +272,7 @@ export function applyMafiaAction(
     case "mafiaTake": {
       ensure(g.phase === "BOX_PASS" && uid === g.holderId, "現在不是你的回合");
       const position = g.passOrder.indexOf(uid);
+      own.receivedBox = structuredClone(sec.box);
       if (a.discardTokenId !== undefined) {
         ensure(
           position === 0 &&
@@ -322,6 +320,12 @@ export function applyMafiaAction(
       sec.roles[uid] = { role, diamonds };
       own.role = role;
       own.diamonds = diamonds;
+      own.passedBox = structuredClone(sec.box);
+      if (position === 0)
+        own.hiddenBag = {
+          completed: true,
+          ...(sec.discarded ? { token: structuredClone(sec.discarded) } : {}),
+        };
       clearViews(s);
       if (position === g.passOrder.length - 1) {
         g.holderId = g.godfatherId;
@@ -335,6 +339,27 @@ export function applyMafiaAction(
         s.mafiaPrivate![g.holderId].currentBoxView = structuredClone(sec.box);
       }
       break;
+    }
+    case "mafiaSay": {
+      ensure(
+        ["INVESTIGATION", "ACCUSATION_PENDING"].includes(g.phase) &&
+          g.seats[uid]?.alive,
+        "只有尚未出局的玩家可在調查階段發言",
+      );
+      ensure(
+        typeof a.text === "string" &&
+          a.text.trim().length > 0 &&
+          a.text.length <= 500,
+        "發言需要 1–500 個字",
+      );
+      const messages = g.messages ?? [];
+      const previous = messages.filter((message) => message.uid === uid).at(-1);
+      ensure(!previous || now - previous.at >= 1000, "請稍候再發言");
+      g.messages = [...messages, { uid, text: a.text.trim(), at: now }].slice(
+        -80,
+      );
+      // Discussion never changes the game revision or locks an accusation target.
+      return s;
     }
     case "mafiaAccuse":
       ensure(

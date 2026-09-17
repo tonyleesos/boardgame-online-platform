@@ -50,7 +50,11 @@ test("Mafia: twelve seats, private taking, passing, reconnect, accusations and f
     const r = await fetch(signup, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: `test-${crypto.randomUUID()}@example.test`, password: "Boardgame-test-72!", returnSecureToken: true }),
+      body: JSON.stringify({
+        email: `test-${crypto.randomUUID()}@example.test`,
+        password: "Boardgame-test-72!",
+        returnSecureToken: true,
+      }),
     });
     const p = await r.json();
     players.push(p);
@@ -65,6 +69,20 @@ test("Mafia: twelve seats, private taking, passing, reconnect, accusations and f
   await father.getByRole("button", { name: "開始遊戲", exact: true }).click();
   await expect(father.locator(".mafia-seat")).toHaveCount(12);
   await expect(guest.locator(".mafia-seat")).toHaveCount(12);
+  await expect(father.locator(".mafia-status")).toContainText(
+    "美酒剩餘 2／2 瓶",
+  );
+  await guest.getByRole("button", { name: "遊戲玩法", exact: true }).click();
+  await expect(guest.getByRole("dialog")).toContainText("6–7 人：0 瓶");
+  await expect(guest.getByRole("dialog")).toContainText(
+    "第一次抓錯心腹，酒變 0 瓶，繼續調查",
+  );
+  await expect(guest.getByRole("dialog")).toHaveCSS("opacity", "1");
+  await guest.screenshot({
+    path: ".tools/mafia-rules-mobile.png",
+    fullPage: false,
+  });
+  await guest.getByRole("button", { name: "關閉視窗" }).click();
   await father.screenshot({ path: ".tools/mafia-desktop.png", fullPage: true });
   await guest.screenshot({ path: ".tools/mafia-mobile.png", fullPage: true });
   expect(
@@ -112,6 +130,11 @@ test("Mafia: twelve seats, private taking, passing, reconnect, accusations and f
   );
   await guest.getByRole("button", { name: "我的口袋" }).click();
   await expect(guest.getByRole("dialog")).toContainText("竊賊");
+  await guest.getByText("當時收到的盒子（私人紀錄）", { exact: true }).click();
+  await expect(guest.getByRole("dialog")).toContainText("14");
+  await expect(guest.getByRole("dialog")).toContainText(
+    "你的黑色布袋：忠誠手下",
+  );
   await guest.getByRole("button", { name: "關閉視窗" }).click();
   async function room() {
     const r = await fetch(
@@ -151,6 +174,42 @@ test("Mafia: twelve seats, private taking, passing, reconnect, accusations and f
   await father.getByRole("button", { name: "檢查雪茄盒" }).click();
   await expect(father.getByRole("dialog")).toContainText("尚待找回");
   await father.getByRole("button", { name: "關閉視窗" }).click();
+  await guest.getByLabel("你的發言（最多 500 字）").fill("我沒有拿鑽石。");
+  await guest.getByRole("button", { name: "送出發言" }).click();
+  await expect(father.getByRole("log")).toContainText("我沒有拿鑽石。");
+  await father.getByRole("button", { name: "詢問玩家", exact: true }).click();
+  await father
+    .getByRole("button", { name: "你收到盒子時有幾顆鑽石？", exact: true })
+    .click();
+  await father.getByRole("button", { name: "送出發言" }).click();
+  await expect(guest.getByRole("log")).toContainText(
+    "你收到盒子時有幾顆鑽石？",
+  );
+  for (const [index, nickname] of ["Havana 3", "Havana 4"].entries()) {
+    await father
+      .getByRole("button", {
+        name: new RegExp(`${nickname}，身分未揭曉.*指控玩家`),
+      })
+      .click();
+    await expect(father.getByRole("dialog")).toContainText(
+      `剩餘美酒：${2 - index} 瓶`,
+    );
+    await father.getByRole("button", { name: "確認指控", exact: true }).click();
+    await expect(father.locator(".mafia-reveal")).toContainText(
+      `剩餘 ${1 - index} 瓶`,
+    );
+    await expect(father.locator(".mafia-results")).toHaveCount(0);
+    await expect(
+      father.getByRole("button", {
+        name: `${nickname}，忠誠手下`,
+        exact: true,
+      }),
+    ).toBeVisible();
+  }
+  await father.screenshot({
+    path: ".tools/mafia-rum-continues.png",
+    fullPage: true,
+  });
   await father
     .getByRole("button", { name: /Havana Guest，身分未揭曉.*指控玩家/ })
     .click();
@@ -160,6 +219,7 @@ test("Mafia: twelve seats, private taking, passing, reconnect, accusations and f
   await expect(father.locator(".mafia-reveal")).toContainText("找回 2 顆鑽石", {
     timeout: 10000,
   });
+  await expect(guest.getByLabel("你已出局，無法發言")).toBeDisabled();
   await father
     .getByRole("button", {
       name: new RegExp(`${agentName}，身分未揭曉.*指控玩家`),
@@ -170,13 +230,24 @@ test("Mafia: twelve seats, private taking, passing, reconnect, accusations and f
     timeout: 10000,
   });
   await father.getByRole("button", { name: "略過演出" }).click();
-  await expect(father.locator(".mafia-results")).toContainText("探員獨勝");
+  await expect(father.locator(".mafia-results")).toContainText(
+    "教父指控探員，該探員獲勝",
+  );
   await expect(father.locator(".mafia-final-grid>div")).toHaveCount(12);
-  await expect(father.locator(".mafia-final-grid>.winner")).toHaveCount(1);
+  await expect(father.locator(".mafia-final-grid>.winner")).toHaveCount(3);
   await father.screenshot({ path: ".tools/mafia-result.png", fullPage: true });
   await guest.emulateMedia({ reducedMotion: "reduce" });
   await guest.reload();
   await expect(guest.locator(".mafia-final-grid>div")).toHaveCount(12);
+  expect(
+    await guest.evaluate(
+      () => document.documentElement.scrollWidth <= window.innerWidth,
+    ),
+  ).toBe(true);
+  await guest.screenshot({
+    path: ".tools/mafia-result-mobile.png",
+    fullPage: true,
+  });
   await father.getByRole("button", { name: "再開一局" }).click();
   await expect(
     father.getByRole("button", { name: "我準備好了", exact: true }),

@@ -4,8 +4,9 @@ import type {
   MafiaPublicState,
 } from "../shared/mafia";
 
-/** This policy cannot access Session, another seat's role, discarded token or
- * historical box snapshots. Unrevealed accusations remain uncertain guesses. */
+/** This policy only receives public state and this bot's private information.
+ * It never reads other players' roles, bag choices or box memories.
+ * Unrevealed accusations remain uncertain guesses. */
 export function chooseMafiaAction(
   uid: string,
   g: MafiaPublicState,

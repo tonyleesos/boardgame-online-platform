@@ -8,7 +8,11 @@ async function player() {
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: `test-${crypto.randomUUID()}@example.test`, password: "Boardgame-test-72!", returnSecureToken: true }),
+      body: JSON.stringify({
+        email: `test-${crypto.randomUUID()}@example.test`,
+        password: "Boardgame-test-72!",
+        returnSecureToken: true,
+      }),
     },
   );
   assert.equal(r.status, 200);
@@ -168,6 +172,11 @@ for (const count of [6, 12]) {
   await current();
   assert.equal((await own(first)).diamonds, 3);
   assert.equal((await own(first)).currentBoxView, undefined);
+  assert.equal((await own(first)).receivedBox.diamonds, 12);
+  assert.equal((await own(first)).passedBox.diamonds, 9);
+  assert.equal((await own(first)).hiddenBag.token.role, "LOYAL_HENCHMAN");
+  await read(host, `${path}/mafiaPrivate/${first.localId}/receivedBox`, true);
+  await read(host, `${path}/mafiaPrivate/${first.localId}/hiddenBag`, true);
   assert.equal(
     await read(first, `${path}/mafiaPrivate/${first.localId}/currentBoxView`),
     null,
@@ -187,7 +196,7 @@ for (const count of [6, 12]) {
   );
   assert.ok(
     !JSON.stringify(g).match(
-      /currentBoxView|hiddenDiamonds|initialDiamonds|discarded|token-0/,
+      /currentBoxView|receivedBox|passedBox|hiddenBag|hiddenDiamonds|initialDiamonds|discarded|token-0/,
     ),
   );
   // Identical public progression regardless of diamond/token/empty choice.
@@ -212,6 +221,27 @@ for (const count of [6, 12]) {
     await current();
   }
   assert.equal(g.phase, "INVESTIGATION");
+  await action(first, { type: "mafiaSay", text: "我沒有拿鑽石。" });
+  await current();
+  assert.equal(g.messages.at(-1).text, "我沒有拿鑽石。");
+  assert.equal(g.seats[first.localId].revealed, false);
+  if (count === 12) {
+    for (const [index, ordinary] of [players[2], players[3]].entries()) {
+      await action(host, { type: "mafiaAccuse", target: ordinary.localId });
+      await current();
+      await new Promise((resolve) => setTimeout(resolve, 1700));
+      await action(host, { type: "mafiaResolve" });
+      await current();
+      assert.equal(g.jokers, 1 - index);
+      assert.equal(g.phase, "INVESTIGATION");
+      assert.equal(g.seats[ordinary.localId].alive, true);
+      await action(ordinary, {
+        type: "mafiaSay",
+        text: "我是心腹，繼續調查。",
+      });
+      await current();
+    }
+  }
   assert.ok((await own(host)).currentBoxView);
   for (const p of players.slice(1))
     assert.equal((await own(p)).currentBoxView, undefined);
@@ -236,6 +266,9 @@ for (const count of [6, 12]) {
   await current();
   assert.equal(g.recovered, 3);
   assert.equal(g.seats[first.localId].role, "THIEF");
+  assert.equal((await own(first)).diamonds, 0);
+  assert.equal((await own(first)).receivedBox.diamonds, 12);
+  await action(first, { type: "mafiaSay", text: "出局後提示" }, true);
   // Finish through an agent accusation (without consulting any other user's data).
   if (g.phase === "INVESTIGATION") {
     const agent = byId(agentId);
@@ -245,7 +278,12 @@ for (const count of [6, 12]) {
     await action(host, { type: "mafiaResolve" });
     await current();
     assert.equal(g.winReason, "AGENT_ACCUSED");
-    assert.deepEqual(g.winners, [agent.localId]);
+    assert.deepEqual(g.winners, [
+      agent.localId,
+      ...(count === 6
+        ? [players[3].localId]
+        : [players[8].localId, players[9].localId]),
+    ]);
   }
   assert.ok(g.final);
   assert.equal(g.final.hiddenDiamonds, 3);

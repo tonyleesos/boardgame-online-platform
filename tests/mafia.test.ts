@@ -113,7 +113,11 @@ describe("Mafia setup and trusted choices", () => {
     s.public.mafiaConfig!.godfatherId = "p3";
     startMafia(s, "next", (a) => a);
     expect(s.public.mafia!.passOrder).toEqual(["p4", "p5", "p0", "p1", "p2"]);
-    expect(rightNeighbor(s.public.mafia!.order, "p5")).toBe("p0");
+    expect(rightNeighbor(s.public.mafia!.order, "p5")).toBe("p4");
+    expect(rightNeighbor(s.public.mafia!.order, "p0")).toBe("p5");
+    expect(rightNeighbor(s.public.mafia!.order, "p3")).toBe(
+      s.public.mafia!.passOrder.at(-1),
+    );
   });
   it("supports random godfather without shuffling seats", () => {
     const s = session();
@@ -167,6 +171,11 @@ describe("Mafia setup and trusted choices", () => {
     expect(s.secret.mafia!.discarded?.role).toBe("AGENT_FBI");
     expect(s.mafiaPrivate!.p1.role).toBe("LOYAL_HENCHMAN");
     expect(s.mafiaPrivate!.p1.currentBoxView).toBeUndefined();
+    expect(s.mafiaPrivate!.p1.receivedBox?.tokens).toHaveLength(3);
+    expect(s.mafiaPrivate!.p1.passedBox?.tokens.map((t) => t.role)).toEqual([
+      "DRIVER",
+    ]);
+    expect(s.mafiaPrivate!.p1.hiddenBag?.token?.role).toBe("AGENT_FBI");
     expect(
       s.mafiaPrivate!.p2.currentBoxView?.tokens.map((t) => t.role),
     ).toEqual(["DRIVER"]);
@@ -243,6 +252,91 @@ describe("Mafia setup and trusted choices", () => {
   });
 });
 describe("Investigation and winners", () => {
+  it.each([6, 7, 8, 9, 10, 11, 12])(
+    "%i players: actual setup pays each bottle and ends only on the next mistake",
+    (count) => {
+      let s = prepared(count);
+      const bottles = s.public.mafia!.jokers;
+      for (let i = 1; i < count; i++) {
+        const token = s.secret.mafia!.box.tokens.find(
+          (t) => t.role === "LOYAL_HENCHMAN",
+        );
+        s = act(
+          s,
+          `p${i}`,
+          i >= 2 && i <= bottles + 2
+            ? { type: "mafiaTake", tokenId: token!.id }
+            : { type: "mafiaTake", diamonds: 1 },
+        );
+      }
+      for (let i = 0; i < bottles; i++) {
+        s = accuse(s, `p${i + 2}`);
+        expect(s.public.mafia!.jokers).toBe(bottles - i - 1);
+        expect(s.public.mafia!.phase).toBe("INVESTIGATION");
+        expect(s.public.mafia!.seats[`p${i + 2}`].alive).toBe(true);
+        s = act(
+          s,
+          `p${i + 2}`,
+          { type: "mafiaSay", text: "我被冤枉，但仍可協助調查。" },
+          12000 + i * 1000,
+        );
+      }
+      // Zero bottles still permits a correct accusation; recovery does not consume rum.
+      s = accuse(s, "p1");
+      expect(s.public.mafia!.phase).toBe("INVESTIGATION");
+      expect(s.mafiaPrivate!.p1.diamonds).toBe(0);
+      s = accuse(s, `p${bottles + 2}`);
+      expect(s.public.mafia!.winReason).toBe("GODFATHER_ELIMINATED");
+      expect(s.public.mafia!.jokers).toBe(0);
+      expect(s.public.mafia!.winners).not.toContain("p1");
+    },
+  );
+  it.each(["AGENT_FBI", "AGENT_CIA"] as const)(
+    "%s win also propagates through drivers but not the other agent",
+    (role) => {
+      const s = accuse(
+        investigation(
+          [
+            [role, 0],
+            ["DRIVER", 0],
+            ["DRIVER", 0],
+            [role === "AGENT_FBI" ? "AGENT_CIA" : "AGENT_FBI", 0],
+            ["THIEF", 4],
+          ],
+          false,
+          2,
+        ),
+        "p1",
+      );
+      expect(s.public.mafia!.winners).toEqual(["p1", "p2", "p3"]);
+      expect(s.public.mafia!.jokers).toBe(2);
+    },
+  );
+  it("henchmen follow recovery even if eliminated; cleaner is not a henchman", () => {
+    const s = investigation(
+      [
+        ["CLEANER", 0],
+        ["LOYAL_HENCHMAN", 0],
+        ["THIEF", 4],
+        ["DRIVER", 0],
+        ["STREET_URCHIN", 0],
+      ],
+      true,
+    );
+    s.public.mafia!.seats.p2.alive = false;
+    expect(mafiaWinners(s, "DIAMONDS_RECOVERED")).toEqual(["p0", "p2"]);
+  });
+  it("urchins require a thief winner", () => {
+    const s = investigation([
+      ["THIEF", 4],
+      ["STREET_URCHIN", 0],
+      ["LOYAL_HENCHMAN", 0],
+      ["AGENT_FBI", 0],
+      ["DRIVER", 0],
+    ]);
+    s.public.mafia!.seats.p1.alive = false;
+    expect(mafiaWinners(s, "GODFATHER_ELIMINATED")).toEqual([]);
+  });
   const lineup: Array<[MafiaRole, number]> = [
     ["THIEF", 3],
     ["THIEF", 3],
@@ -282,25 +376,30 @@ describe("Investigation and winners", () => {
       ["DRIVER", 0],
     ]);
     s.public.mafia!.seats.p1.alive = false;
-    expect(mafiaWinners(s, "GODFATHER_ELIMINATED")).toEqual(["p2", "p4"]);
+    expect(mafiaWinners(s, "GODFATHER_ELIMINATED")).toEqual(["p2", "p4", "p5"]);
   });
   it("resolves driver chains with original seats, not surviving seats", () => {
     const s = investigation([
-      ["DRIVER", 0],
-      ["DRIVER", 0],
       ["THIEF", 4],
+      ["DRIVER", 0],
+      ["DRIVER", 0],
       ["THIEF", 2],
       ["STREET_URCHIN", 0],
     ]);
     expect(mafiaWinners(s, "GODFATHER_ELIMINATED")).toEqual([
-      "p3",
+      "p1",
       "p5",
       "p2",
-      "p1",
+      "p3",
     ]);
     s.public.mafia!.seats.p2.alive = false;
-    expect(mafiaWinners(s, "GODFATHER_ELIMINATED")).toEqual(["p3", "p5"]);
-    expect(mafiaWinners(s, "AGENT_ACCUSED", "p3")).toEqual(["p3"]);
+    // The spec bases drivers on the right neighbor's final result, even after elimination.
+    expect(mafiaWinners(s, "GODFATHER_ELIMINATED")).toEqual([
+      "p1",
+      "p5",
+      "p2",
+      "p3",
+    ]);
   });
   it("keeps accusation concealed until deadline", () => {
     const s = act(investigation(lineup), "p0", {
@@ -334,6 +433,23 @@ describe("Investigation and winners", () => {
   });
 });
 describe("Cleaner private fixed window", () => {
+  it("a driver beside the winning cleaner wins too", () => {
+    const s = accuse(
+      investigation(
+        [
+          ["CLEANER", 0],
+          ["DRIVER", 0],
+          ["AGENT_FBI", 0],
+          ["THIEF", 4],
+          ["STREET_URCHIN", 0],
+        ],
+        true,
+      ),
+      "p3",
+      "SHOOT",
+    );
+    expect(s.public.mafia!.winners).toEqual(["p1", "p2"]);
+  });
   const lineup: Array<[MafiaRole, number]> = [
     ["CLEANER", 0],
     ["AGENT_FBI", 0],
@@ -403,5 +519,75 @@ describe("Cleaner private fixed window", () => {
     const s = investigation(lineup);
     finishMafia(s, "AGENT_ACCUSED", "p2");
     expect(() => act(s, "p0", { type: "mafiaAccuse", target: "p3" })).toThrow();
+  });
+});
+
+describe("Private memories and discussion", () => {
+  const lineup: Array<[MafiaRole, number]> = [
+    ["THIEF", 2],
+    ["THIEF", 2],
+    ["LOYAL_HENCHMAN", 0],
+    ["AGENT_FBI", 0],
+    ["STREET_URCHIN", 0],
+  ];
+  it("keeps immutable memories and empty bag choice private after later turns", () => {
+    let s = act(prepared(), "p1", { type: "mafiaTake", diamonds: 2 });
+    const memories = structuredClone(s.mafiaPrivate!.p1);
+    s = act(s, "p2", { type: "mafiaTake", diamonds: 3 });
+    expect(s.mafiaPrivate!.p1).toEqual(memories);
+    expect(memories.receivedBox?.diamonds).toBe(12);
+    expect(memories.passedBox?.diamonds).toBe(10);
+    expect(memories.hiddenBag).toEqual({ completed: true });
+    expect(JSON.stringify(s.public)).not.toMatch(
+      /receivedBox|passedBox|hiddenBag|token-0/,
+    );
+    expect(s.mafiaPrivate!.p2.hiddenBag).toBeUndefined();
+  });
+  it("ordinary speech never reveals a role or changes the accusation revision", () => {
+    const s = investigation(lineup);
+    const before = structuredClone(s.public.mafia!);
+    const spoken = act(s, "p1", {
+      type: "mafiaSay",
+      text: "我是竊賊，拿了兩顆。",
+    });
+    expect(spoken.public.mafia).toEqual({
+      ...before,
+      messages: [{ uid: "p1", text: "我是竊賊，拿了兩顆。", at: 1000 }],
+    });
+    expect(() =>
+      act(spoken, "p1", { type: "mafiaSay", text: "重複" }, 1200),
+    ).toThrow();
+  });
+  it("rejects dead players, wrong phase, nonmembers and invalid text", () => {
+    const s = accuse(investigation(lineup), "p1");
+    expect(() => act(s, "p1", { type: "mafiaSay", text: "提示" })).toThrow();
+    expect(() =>
+      act(prepared(), "p2", { type: "mafiaSay", text: "傳盒中" }),
+    ).toThrow();
+    expect(() =>
+      act(s, "outsider", { type: "mafiaSay", text: "闖入" }),
+    ).toThrow();
+    for (const text of [" ", "x".repeat(501), 123])
+      expect(() =>
+        act(s, "p2", { type: "mafiaSay", text } as MafiaAction),
+      ).toThrow();
+  });
+  it("bounds chat history and preserves the pending target and deadline", () => {
+    let s = act(investigation(lineup), "p0", {
+      type: "mafiaAccuse",
+      target: "p1",
+    });
+    const before = structuredClone(s.public.mafia!);
+    for (let i = 0; i < 85; i++)
+      s = act(
+        s,
+        "p3",
+        { type: "mafiaSay", text: `證詞 ${i}` },
+        1000 + i * 1000,
+      );
+    expect(s.public.mafia!.messages).toHaveLength(80);
+    expect(s.public.mafia!.messages![0].text).toBe("證詞 5");
+    expect(s.public.mafia!.pending).toEqual(before.pending);
+    expect(s.public.mafia!.revision).toBe(before.revision);
   });
 });

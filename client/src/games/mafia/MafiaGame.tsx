@@ -23,6 +23,7 @@ import {
   DEFAULT_MAFIA_CONFIG,
   MAFIA_HELP,
   MAFIA_ROLES,
+  mafiaSetup,
   rightNeighbor,
 } from "../../../../functions/src/shared/mafia";
 import type {
@@ -37,6 +38,7 @@ import { mafiaAction } from "../../firebase/api";
 import { useAction } from "../../hooks/useAction";
 import { GameDialog } from "../../components/GameDialog";
 import { MafiaArt } from "./MafiaArt";
+import { MafiaRules, RumAdvice } from "./MafiaRules";
 import "./mafia.css";
 
 export function MafiaSettings({
@@ -49,6 +51,7 @@ export function MafiaSettings({
   onChange: (c: MafiaConfig) => void;
 }) {
   const c = room.mafiaConfig ?? DEFAULT_MAFIA_CONFIG;
+  const count = Object.keys(room.players).length;
   return (
     <div className="mafia-settings">
       <MafiaArt kind="box" />
@@ -91,6 +94,21 @@ export function MafiaSettings({
         清道夫 · 進階
       </label>
       <small>6–12 位玩家（可含 AI） · 更改設定後需重新準備</small>
+      <div className="mafia-lobby-rules">
+        <p>美酒配置：6–7 人 0 瓶／8–10 人 1 瓶／11–12 人 2 瓶。</p>
+        {count >= 6 && count <= 12 && (
+          <>
+            <strong>
+              目前 {count} 人，開局有 {mafiaSetup(count).jokers} 瓶美酒。
+            </strong>
+            <RumAdvice remaining={mafiaSetup(count).jokers} />
+            <details>
+              <summary>完整玩法與角色勝利條件</summary>
+              <MafiaRules count={count} cleaner={c.cleanerEnabled} />
+            </details>
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -130,6 +148,8 @@ function MafiaTable({
   const [panel, setPanel] = useState<"box" | "role" | "help" | null>(null);
   const [target, setTarget] = useState<string | null>(null);
   const [hidden, setHidden] = useState(0);
+  const [statement, setStatement] = useState("");
+  const [asking, setAsking] = useState(false);
   const [receipt, setReceipt] = useState<{
     role: MafiaRole;
     diamonds: number;
@@ -174,11 +194,12 @@ function MafiaTable({
           <h2>一盒鑽石，滿桌秘密。</h2>
         </div>
         <button
-          className="quiet icon-button"
+          className="quiet"
           aria-label="遊戲玩法"
           onClick={() => setPanel("help")}
         >
           <ShieldQuestion />
+          遊戲玩法
         </button>
       </header>
       <div className="mafia-status" role="status">
@@ -188,10 +209,11 @@ function MafiaTable({
         </span>
         <span title="已找回鑽石">
           <Gem size={17} />
-          {g.recovered}
+          已追回 {g.recovered} 顆
         </span>
-        <span title="剩餘寬恕酒瓶">
-          <MafiaArt kind="joker" />× {g.jokers}
+        <span title="抓錯普通角色時自動支付；探員不能用酒抵銷">
+          <MafiaArt kind="joker" />
+          美酒剩餘 {g.jokers}／{mafiaSetup(g.order.length).jokers} 瓶
         </span>
         <small>
           {g.phase === "GODFATHER_PREPARE_BOX"
@@ -203,10 +225,31 @@ function MafiaTable({
                 : "教父調查"}
         </small>
       </div>
+      {g.phase !== "GAME_OVER" && (
+        <section className="mafia-guidance">
+          <strong>
+            本局 {g.order.length} 人 · 開局 {mafiaSetup(g.order.length).jokers}{" "}
+            瓶美酒
+          </strong>
+          <RumAdvice remaining={g.jokers} />
+          <p>
+            {g.phase === "GODFATHER_PREPARE_BOX"
+              ? "教父先秘密保留 0–5 顆鑽石，再傳出雪茄盒。保留的鑽石不算失竊。"
+              : passing
+                ? `從教父左手邊開始傳盒。第 ${g.passOrder.indexOf(g.holderId) + 1}／${g.passOrder.length} 位玩家正在操作；其他人請等待。`
+                : g.phase === "ACCUSATION_PENDING"
+                  ? "正式指控已鎖定，等待揭曉。若啟用殺手，可在倒數內秘密選擇開槍或放行。"
+                  : "先在討論區詢問、核對證詞。教父點選座位，再按「確認指控」才會要求交出物品；一般發言不會觸發結算。"}
+          </p>
+          {!g.seats[uid].alive && (
+            <p>你已出局，請停止發言、提示與參與調查；可繼續觀看結果。</p>
+          )}
+        </section>
+      )}
       <div
         className={`mafia-table ${g.phase === "GAME_OVER" ? "is-finished" : ""}`}
         data-compact={g.order.length <= 8}
-        aria-label="順時針座位；下一位是你的右手邊"
+        aria-label="順時針座位；下一位是左手邊，前一位是右手邊"
       >
         <div className="mafia-table-grain" />
         {g.order.map((id, i) => {
@@ -250,6 +293,8 @@ function MafiaTable({
                     ? "持盒中"
                     : "•••"}
               </small>
+              {id === g.passOrder[0] && <small>教父左手邊 · 首位</small>}
+              {id === g.passOrder.at(-1) && <small>教父右手邊 · 末位</small>}
               {seat.diamonds !== undefined && seat.diamonds > 0 && (
                 <span className="mafia-diamond-label">
                   <Gem size={12} />
@@ -271,10 +316,10 @@ function MafiaTable({
                   : g.phase === "GAME_OVER"
                     ? "秘密不再是秘密"
                     : father
-                      ? "選擇一位玩家調查"
+                      ? "點座位可正式指控"
                       : "誰拿走了鑽石？"}
           </span>
-          <small>順時針傳遞 →</small>
+          <small>向左傳盒 · 司機看右鄰</small>
         </div>
         {g.phase !== "GAME_OVER" && (
           <motion.div
@@ -383,7 +428,7 @@ function MafiaTable({
               {last.outcome === "THIEF"
                 ? `找回 ${last.diamonds} 顆鑽石`
                 : last.outcome === "JOKER"
-                  ? "付出一瓶寬恕，繼續調查"
+                  ? `自動支付 1 瓶美酒，剩餘 ${g.jokers} 瓶。對方不出局，繼續調查。`
                   : last.outcome === "SHOT"
                     ? "槍聲響起，兩人出局"
                     : "指控已揭曉"}
@@ -393,6 +438,88 @@ function MafiaTable({
         </motion.section>
       )}
       {g.phase === "GAME_OVER" && <MafiaResults game={g} />}
+      {["INVESTIGATION", "ACCUSATION_PENDING", "GAME_OVER"].includes(
+        g.phase,
+      ) && (
+        <section className="mafia-discussion">
+          <h3>詢問與討論</h3>
+          <p>
+            發言可以說謊或保持沉默，不會自動公開身分或觸發正式指控。保留最近 80
+            則訊息。
+          </p>
+          {father && g.phase === "INVESTIGATION" && (
+            <button disabled={locked} onClick={() => setAsking(!asking)}>
+              詢問玩家
+            </button>
+          )}
+          {asking && father && g.phase === "INVESTIGATION" && (
+            <div className="mafia-question-list">
+              {[
+                "你收到盒子時有幾顆鑽石？",
+                "你看到哪些角色籌碼？",
+                "你傳出盒子時剩下什麼？",
+                "你拿了什麼？",
+              ].map((question) => (
+                <button
+                  key={question}
+                  disabled={locked}
+                  onClick={() => {
+                    setStatement(question);
+                    setAsking(false);
+                  }}
+                >
+                  {question}
+                </button>
+              ))}
+            </div>
+          )}
+          <div
+            className="mafia-messages"
+            role="log"
+            aria-label="調查發言"
+            aria-live="polite"
+          >
+            {(g.messages ?? []).map((message) => (
+              <p key={`${message.uid}:${message.at}`}>
+                <strong>{g.seats[message.uid].nickname}：</strong>
+                {message.text}
+              </p>
+            ))}
+            {!g.messages?.length && (
+              <p>尚無發言。可先請相鄰玩家描述收到與傳出的盒子。</p>
+            )}
+          </div>
+          {g.phase !== "GAME_OVER" && (
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                send({ type: "mafiaSay", text: statement }, () =>
+                  setStatement(""),
+                );
+              }}
+            >
+              <label htmlFor="mafia-statement">
+                {g.seats[uid].alive
+                  ? "你的發言（最多 500 字）"
+                  : "你已出局，無法發言"}
+              </label>
+              <textarea
+                id="mafia-statement"
+                maxLength={500}
+                value={statement}
+                disabled={locked || !g.seats[uid].alive}
+                onChange={(event) => setStatement(event.target.value)}
+              />
+              <button
+                type="submit"
+                disabled={locked || !g.seats[uid].alive || !statement.trim()}
+              >
+                送出發言
+              </button>
+            </form>
+          )}
+        </section>
+      )}
       {error && (
         <p className="error" role="alert">
           {error}
@@ -428,7 +555,10 @@ function MafiaTable({
             <Fingerprint size={56} />
             <h2>{g.seats[target].nickname}</h2>
             <p>要求他掏出口袋？</p>
-            <small>探員被指控會立即獨勝。</small>
+            <p>確認後會公開他的實際身分，目標不能更換。</p>
+            <strong>剩餘美酒：{g.jokers} 瓶</strong>
+            <RumAdvice remaining={g.jokers} />
+            <p>抓到竊賊會追回全部贓物並使他出局；追回所有失竊鑽石即可獲勝。</p>
             <div className="actions">
               <button onClick={() => setTarget(null)}>再想一下</button>
               <button
@@ -496,6 +626,27 @@ function MafiaTable({
             {own.role === "DRIVER" && (
               <p>右手邊：{g.seats[rightNeighbor(g.order, uid)].nickname}</p>
             )}
+            {own.hiddenBag && (
+              <p>
+                你的黑色布袋：
+                {own.hiddenBag.token
+                  ? MAFIA_ROLES[own.hiddenBag.token.role]
+                  : "沒有藏角色"}
+                （僅你可見）
+              </p>
+            )}
+            {own.receivedBox && (
+              <details>
+                <summary>當時收到的盒子（私人紀錄）</summary>
+                <BoxInventory box={own.receivedBox} />
+              </details>
+            )}
+            {own.passedBox && (
+              <details>
+                <summary>當時傳出的盒子（私人紀錄）</summary>
+                <BoxInventory box={own.passedBox} />
+              </details>
+            )}
           </div>
         </GameDialog>
       )}
@@ -529,38 +680,11 @@ function MafiaTable({
         </GameDialog>
       )}
       {panel === "help" && (
-        <GameDialog title="玩法速覽" onClose={() => setPanel(null)}>
-          <div className="mafia-help">
-            <p>
-              <MafiaArt kind="box" />
-              <ArrowRight />
-              <Hand />
-              <ArrowRight />
-              <Pocket />
-            </p>
-            <h3>傳盒 → 秘密拿取 → 教父調查</h3>
-            <p>
-              拿鑽石成為竊賊，或拿一枚角色籌碼。第一位可先秘密移除一枚角色；最後一位可空手離開。
-            </p>
-            <p>
-              司機的右手邊是座位編號的下一位，最後一位連回第 1
-              位。出局不改變座位。
-            </p>
-            <p>
-              <Gem />
-              教父找回全部被偷鑽石即可獲勝。
-              <br />
-              <MafiaArt kind="joker" />
-              指控無辜者須消耗一瓶寬恕；沒有酒瓶則教父出局。
-              <br />
-              探員被指控立即獨勝。
-            </p>
-            {g.config.cleanerEnabled && (
-              <p>
-                清道夫可在揭曉前秘密開槍：擊中探員獨勝，打錯則一起出局。未回應視為放行。
-              </p>
-            )}
-          </div>
+        <GameDialog title="遊戲玩法與勝利條件" onClose={() => setPanel(null)}>
+          <MafiaRules
+            count={g.order.length}
+            cleaner={g.config.cleanerEnabled}
+          />
         </GameDialog>
       )}
     </div>
@@ -665,6 +789,22 @@ function BoxDecision({
   return (
     <div className="mafia-box-decision">
       <MafiaArt kind="open" className="mafia-open-box" />
+      <p className="mafia-choice-help">
+        請選擇至少 1 顆鑽石，或 1 枚角色籌碼。兩者不能同時拿；確認後不可重選。
+      </p>
+      {first && (
+        <p className="mafia-choice-help">
+          你是第一位：可先藏 0–1
+          枚角色到黑色布袋，再正常拿取。藏的角色不會成為你的身分。
+        </p>
+      )}
+      {(last || empty) && (
+        <p className="mafia-choice-help">
+          {empty
+            ? "盒子已空，你將成為街頭混混；請照常確認傳盒，不要公開空盒資訊。"
+            : "你是最後一位，即使還有物品也可選擇空手離開，成為街頭混混。"}
+        </p>
+      )}
       <div className="mafia-box-caption">
         <Gem size={19} />
         <b>{box.diamonds}</b>
@@ -803,9 +943,9 @@ function MafiaResults({ game: g }: { game: MafiaPublicState }) {
     );
   const reason = {
     DIAMONDS_RECOVERED: "鑽石全數找回",
-    GODFATHER_ELIMINATED: "教父出局",
-    AGENT_ACCUSED: "探員獨勝",
-    CLEANER_SHOT_AGENT: "清道夫獨勝",
+    GODFATHER_ELIMINATED: "抓錯普通角色且無美酒可付，教父失敗",
+    AGENT_ACCUSED: "教父指控探員，該探員獲勝",
+    CLEANER_SHOT_AGENT: "殺手射中探員，殺手獲勝",
   };
   return (
     <section className="mafia-results">
@@ -825,6 +965,15 @@ function MafiaResults({ game: g }: { game: MafiaPublicState }) {
           </button>
         )}
       </div>
+      {count >= total && (
+        <p>
+          美酒剩餘 {g.jokers} 瓶 · 已追回 {g.recovered} 顆鑽石。
+          {g.winReason === "AGENT_ACCUSED"
+            ? "探員被指控立即結束，美酒無法抵銷；另一名探員不會一起獲勝。"
+            : ""}
+          司機依右手邊玩家的最終勝負另行結算。
+        </p>
+      )}
       {count >= 1 && (
         <p className="mafia-final-stash">
           <Pocket size={20} />
@@ -860,10 +1009,40 @@ function MafiaResults({ game: g }: { game: MafiaPublicState }) {
                 <MafiaArt kind={role.role} />
                 <strong>{g.seats[id].nickname}</strong>
                 <span>{MAFIA_ROLES[role.role]}</span>
-                {role.diamonds > 0 && (
+                {role.role === "THIEF" && (
                   <small>
                     <Gem size={13} />
-                    {role.diamonds}
+                    原偷 {role.diamonds} 顆 ·{" "}
+                    {g.seats[id].alive ? "未被抓" : "已追回／出局"}
+                  </small>
+                )}
+                {role.role === "DRIVER" && (
+                  <small>
+                    右鄰：{g.seats[rightNeighbor(g.order, id)].nickname}（
+                    {g.winners.includes(rightNeighbor(g.order, id))
+                      ? "獲勝"
+                      : "未獲勝"}
+                    ）
+                  </small>
+                )}
+                {count >= total && (
+                  <small>
+                    {g.winners.includes(id)
+                      ? `獲勝：${
+                          role.role === "DRIVER"
+                            ? "右手邊玩家獲勝，連帶勝利"
+                            : role.role === "THIEF"
+                              ? "未被抓且持有最多鑽石（含並列）"
+                              : role.role === "STREET_URCHIN"
+                                ? "有竊賊成為勝者"
+                                : role.role === "CLEANER"
+                                  ? "射中探員"
+                                  : role.role === "AGENT_FBI" ||
+                                      role.role === "AGENT_CIA"
+                                    ? "自己被教父正式指控"
+                                    : "全部失竊鑽石已追回"
+                        }`
+                      : "未達成勝利條件"}
                   </small>
                 )}
                 {count >= total && (g.winners ?? []).includes(id) && (

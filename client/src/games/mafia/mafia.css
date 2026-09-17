@@ -427,11 +427,69 @@
 .mafia-help p {
   line-height: 1.8;
 }
-.mafia-help p:first-child {
+.mafia-help li,
+.mafia-help dd {
+  line-height: 1.8;
+  margin-bottom: 10px;
+}
+.mafia-help dt {
+  font-weight: 700;
+}
+.mafia-help dd {
+  margin-left: 0;
+}
+.mafia-help h3 {
+  margin-top: 24px;
+}
+.mafia-lobby-rules {
+  flex-basis: 100%;
+}
+.mafia-guidance,
+.mafia-discussion {
+  padding: 16px;
+  margin: 14px 0;
+  border: 1px solid #bc985541;
+  border-radius: 12px;
+  background: #203b35;
+}
+.mafia-guidance p,
+.mafia-discussion p,
+.mafia-rum-advice {
+  line-height: 1.7;
+  font-size: 14px;
+}
+.mafia-rum-advice {
+  color: #eed29a;
+}
+.mafia-discussion form {
+  display: grid;
+  gap: 10px;
+}
+.mafia-discussion textarea {
+  width: 100%;
+  min-height: 80px;
+  resize: vertical;
+}
+.mafia-question-list {
   display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 20px;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0;
+}
+.mafia-messages {
+  max-height: 260px;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+  margin: 14px 0;
+}
+.mafia-messages p {
+  white-space: pre-wrap;
+}
+.mafia-role-card details {
+  margin: 16px 0;
+}
+.mafia-final-grid small {
+  overflow-wrap: anywhere;
 }
 .mafia-help .mafia-art {
   display: inline-block;

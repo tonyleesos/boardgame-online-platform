@@ -96,7 +96,7 @@ export function RoomEntryPage({ join = false }: { join?: boolean }) {
             </select>
             <p className="fine">
               {gameId === "mafia-de-cuba"
-                ? "AI 只使用自己的資訊，指控仍是猜測。開局前可選自己或 AI 當教父，練習不同角色。"
+                ? "AI 只使用自己的資訊，指控仍是猜測，不會回答文字詢問。6–7 人沒有美酒，第一次抓錯普通角色就結束；想練習付酒後繼續調查，請選 8 人以上（含 AI）。開局前可選自己或 AI 當教父。"
                 : gameId === "splendor"
                   ? "AI 會規劃拿取、保留與購買，只使用公開市場和自己的保留卡。"
                   : "策略型 AI 只知道自己的情報，不會偷看你的身份或牌序。發言可能是虛張聲勢。"}
