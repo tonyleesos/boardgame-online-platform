@@ -22,6 +22,22 @@ import { chooseSplendorAction } from "./splendor/bot";
 import { applySplendorAction } from "./splendor/engine";
 import { normalizeSplendor } from "./shared/splendor";
 import type { SplendorAction } from "./shared/splendor";
+import { chooseMineAction } from "./saboteur/bot";
+import { chooseDanceAction } from "./criminalDance/bot";
+import { applyDanceAction } from "./criminalDance/engine";
+import {
+  danceToken,
+  normalizeDance,
+  normalizeDancePrivate,
+  type DanceAction,
+} from "./shared/criminalDance";
+import { applyMineAction } from "./saboteur/engine";
+import {
+  mineToken,
+  normalizeMine,
+  normalizeMinePrivate,
+  type MineAction,
+} from "./shared/saboteur";
 
 // Policies receive only public game state and this bot's private observation.
 // No Session, complete role map, ordered cards, or secret ballots enter a policy.
@@ -182,8 +198,36 @@ export function chooseBombAction(
       return null;
   }
 }
-function speech(a: GameAction | BombAction | SplendorAction | MafiaAction) {
+function speech(
+  a:
+    | GameAction
+    | BombAction
+    | SplendorAction
+    | MafiaAction
+    | MineAction
+    | DanceAction,
+) {
   switch (a.type) {
+    case "dancePlay":
+      return "我已打出一張牌。";
+    case "danceTarget":
+      return "我已選好目標。";
+    case "danceSelect":
+      return "我已鎖定秘密選牌。";
+    case "danceAcknowledge":
+      return "我已確認結果。";
+    case "minePath":
+      return "礦道已放置，看看接下來能通往哪裡。";
+    case "mineAction":
+      return "我已打出行動牌。";
+    case "mineClean":
+      return "解除一個狀態，準備繼續挖礦。";
+    case "minePass":
+      return "交換手牌，準備下一步。";
+    case "mineAcknowledge":
+      return "我已記住這份情報。";
+    case "mineSteal":
+      return "拿走一枚金塊。";
     case "mafiaPrepare":
       return "雪茄盒準備好了，請依序傳遞。";
     case "mafiaTake":
@@ -232,15 +276,19 @@ function speech(a: GameAction | BombAction | SplendorAction | MafiaAction) {
   }
 }
 export const botToken = (r: Room) =>
-  r.game
-    ? `${r.game.id}:${r.game.revision}`
-    : r.mafia
-      ? `${r.mafia.id}:${r.mafia.revision}`
-      : r.timebomb
-        ? `${r.timebomb.id}:${r.timebomb.revision}`
-        : r.splendor
-          ? `${r.splendor.id}:${r.splendor.revision}`
-          : "";
+  r.dance
+    ? danceToken(r.dance)
+    : r.saboteur
+      ? mineToken(r.saboteur)
+      : r.game
+        ? `${r.game.id}:${r.game.revision}`
+        : r.mafia
+          ? `${r.mafia.id}:${r.mafia.revision}`
+          : r.timebomb
+            ? `${r.timebomb.id}:${r.timebomb.revision}`
+            : r.splendor
+              ? `${r.splendor.id}:${r.splendor.revision}`
+              : "";
 export function advanceOneBot(s: Session, shuffle: Shuffle): boolean {
   if (s.public.status !== "playing") return false;
   const ids = Object.values(s.public.players)
@@ -248,9 +296,33 @@ export function advanceOneBot(s: Session, shuffle: Shuffle): boolean {
     .map((p) => p.uid);
   for (const uid of ids) {
     const casual = s.public.botLevel === "casual";
-    let action: GameAction | BombAction | SplendorAction | MafiaAction | null =
-      null;
-    if (s.public.mafia) {
+    let action:
+      | GameAction
+      | BombAction
+      | SplendorAction
+      | MafiaAction
+      | MineAction
+      | DanceAction
+      | null = null;
+    if (s.public.dance) {
+      action = chooseDanceAction(
+        uid,
+        structuredClone(normalizeDance(s.public.dance)),
+        structuredClone(normalizeDancePrivate(s.dancePrivate![uid])),
+        shuffle,
+        casual,
+      );
+      if (action) Object.assign(s, applyDanceAction(s, uid, action, shuffle));
+    } else if (s.public.saboteur) {
+      action = chooseMineAction(
+        uid,
+        structuredClone(normalizeMine(s.public.saboteur)),
+        structuredClone(normalizeMinePrivate(s.saboteurPrivate![uid])),
+        shuffle,
+        casual,
+      );
+      if (action) Object.assign(s, applyMineAction(s, uid, action, shuffle));
+    } else if (s.public.mafia) {
       action = chooseMafiaAction(
         uid,
         structuredClone(s.public.mafia),
@@ -297,6 +369,8 @@ export function advanceOneBot(s: Session, shuffle: Shuffle): boolean {
           uid,
           message: speech(action),
           sequence:
+            s.public.dance?.revision ??
+            s.public.saboteur?.revision ??
             s.public.game?.revision ??
             s.public.timebomb?.revision ??
             s.public.mafia?.revision ??

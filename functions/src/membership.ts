@@ -12,6 +12,38 @@ export function leaveSeat(session: Session, uid: string): Session | null {
   const player = room.players[uid];
   ensure(player && !player.isBot, "你不在房間內");
   if (
+    room.gameId === "criminal-dance" &&
+    room.status === "playing" &&
+    room.dance
+  ) {
+    room.dance.phase = "MATCH_END";
+    room.dance.aborted = true;
+    room.dance.winners = [];
+    room.dance.revision++;
+    room.status = "finished";
+    delete room.dance.pending;
+    if (session.secret?.dance) {
+      delete session.secret.dance.snapshot;
+      delete session.secret.dance.selections;
+    }
+    for (const own of Object.values(session.dancePrivate ?? {})) {
+      own.revision = room.dance.revision;
+      delete own.witness;
+      delete own.selection;
+    }
+  }
+  if (
+    room.gameId === "saboteur-2" &&
+    room.status === "playing" &&
+    room.saboteur
+  ) {
+    room.saboteur.phase = "GAME_OVER";
+    room.saboteur.aborted = true;
+    room.saboteur.winners = [];
+    room.saboteur.revision++;
+    room.status = "finished";
+  }
+  if (
     room.gameId === "mafia-de-cuba" &&
     room.status === "playing" &&
     room.mafia
@@ -58,6 +90,8 @@ export function leaveSeat(session: Session, uid: string): Session | null {
     if (room.mafiaConfig?.godfatherId === uid)
       delete room.mafiaConfig.godfatherId;
     if (session.splendorPrivate) delete session.splendorPrivate[uid];
+    if (session.saboteurPrivate) delete session.saboteurPrivate[uid];
+    if (session.dancePrivate) delete session.dancePrivate[uid];
     if (session.decorumPrivate) delete session.decorumPrivate[uid];
   }
   if (session.presence) delete session.presence[uid];

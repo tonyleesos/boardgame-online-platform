@@ -110,6 +110,13 @@ import type {
 import { bombToken } from "../../../functions/src/shared/timebomb";
 
 import { splendorToken } from "../../../functions/src/shared/splendor";
+import {
+  mineToken,
+  type MineGame,
+  type MineAction,
+} from "../../../functions/src/shared/saboteur";
+export const mineAction = (code: string, game: MineGame, action: MineAction) =>
+  call("gameAction", { code, action, phaseToken: mineToken(game) });
 import type {
   SplendorAction,
   SplendorPublicState,
@@ -130,3 +137,13 @@ export const mafiaAction = (
   game: MafiaPublicState,
   action: MafiaAction,
 ) => call("gameAction", { code, action, phaseToken: mafiaToken(game) });
+import {
+  danceToken,
+  type DanceAction,
+  type DanceGame,
+} from "../../../functions/src/shared/criminalDance";
+export const danceAction = (
+  code: string,
+  game: DanceGame,
+  action: DanceAction,
+) => call("gameAction", { code, phaseToken: danceToken(game), action });

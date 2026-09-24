@@ -4,6 +4,16 @@ import {
 } from "../../../functions/src/shared/mafia";
 import { normalizeSplendor } from "../../../functions/src/shared/splendor";
 import type { SplendorPrivate } from "../../../functions/src/shared/splendor";
+import {
+  normalizeMine,
+  normalizeMinePrivate,
+  type MinePrivate,
+} from "../../../functions/src/shared/saboteur";
+import {
+  normalizeDance,
+  normalizeDancePrivate,
+  type DancePrivate,
+} from "../../../functions/src/shared/criminalDance";
 import { useEffect, useState } from "react";
 import {
   onValue,
@@ -33,6 +43,10 @@ export function useRoom(code: string, uid: string) {
     null,
   );
   const [mafiaPrivate, setMafiaPrivate] = useState<MafiaPrivate | null>(null);
+  const [saboteurPrivate, setSaboteurPrivate] = useState<MinePrivate | null>(
+    null,
+  );
+  const [dancePrivate, setDancePrivate] = useState<DancePrivate | null>(null);
   const [splendorPrivate, setSplendorPrivate] =
     useState<SplendorPrivate | null>(null);
   const [presence, setPresence] = useState<Record<string, Presence>>({});
@@ -55,6 +69,8 @@ export function useRoom(code: string, uid: string) {
       setDecorumPrivate(null);
       setSplendorPrivate(null);
       setMafiaPrivate(null);
+      setSaboteurPrivate(null);
+      setDancePrivate(null);
     };
     const fail = (e: unknown) => {
       if (active) {
@@ -99,6 +115,8 @@ export function useRoom(code: string, uid: string) {
         }
         if (value?.mafia) normalizeMafia(value.mafia);
         if (value?.splendor) normalizeSplendor(value.splendor);
+        if (value?.saboteur) normalizeMine(value.saboteur);
+        if (value?.dance) normalizeDance(value.dance);
         const member = value?.players?.[uid];
         const branches: Record<string, string> = {
           avalon: "private",
@@ -106,6 +124,8 @@ export function useRoom(code: string, uid: string) {
           "timebomb-classic": "timebombPrivate",
           decorum: "decorumPrivate",
           splendor: "splendorPrivate",
+          "saboteur-2": "saboteurPrivate",
+          "criminal-dance": "dancePrivate",
           "mafia-de-cuba": "mafiaPrivate",
         };
         const branch =
@@ -126,6 +146,16 @@ export function useRoom(code: string, uid: string) {
                 setPrivateError("");
                 const data = privateSnap.val();
                 switch (branch) {
+                  case "dancePrivate":
+                    setDancePrivate(
+                      data ? normalizeDancePrivate(data as DancePrivate) : null,
+                    );
+                    break;
+                  case "saboteurPrivate":
+                    setSaboteurPrivate(
+                      data ? normalizeMinePrivate(data as MinePrivate) : null,
+                    );
+                    break;
                   case "private": {
                     const p = data as PrivateRole | null;
                     if (p) p.knowledge ??= [];
@@ -235,6 +265,8 @@ export function useRoom(code: string, uid: string) {
     mafiaPrivate,
     decorumPrivate,
     splendorPrivate,
+    saboteurPrivate,
+    dancePrivate,
     presence,
     connected,
     loaded,

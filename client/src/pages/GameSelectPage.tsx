@@ -1,4 +1,6 @@
 import { MafiaArt } from "../games/mafia/MafiaArt";
+import { MineCover } from "../games/saboteur/MineIllustrations";
+import { DanceDrawing } from "../games/criminalDance/DanceCard";
 import { useState } from "react";
 import { LeaderboardDialog } from "../components/LeaderboardDialog";
 import "../games/mafia/mafia.css";
@@ -63,7 +65,11 @@ export function GameSelectPage() {
                   "即將登場"
                 )}
               </span>
-              {game.id === "mafia-de-cuba" ? (
+              {game.id === "criminal-dance" ? (
+                <DanceDrawing type="DETECTIVE" />
+              ) : game.id === "saboteur-2" ? (
+                <MineCover />
+              ) : game.id === "mafia-de-cuba" ? (
                 <MafiaArt kind="box" />
               ) : game.id === "splendor" ? (
                 <Gem strokeWidth={0.8} />

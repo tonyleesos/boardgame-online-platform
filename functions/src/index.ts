@@ -10,6 +10,18 @@ import {
   validateSplendorConfig,
 } from "./splendor/engine";
 import { splendorToken } from "./shared/splendor";
+import { startMine, applyMineAction } from "./saboteur/engine";
+import {
+  startDance,
+  applyDanceAction,
+  validateDanceConfig,
+} from "./criminalDance/engine";
+import {
+  danceToken,
+  DANCE_BOT_DELAY,
+  type DanceAction,
+} from "./shared/criminalDance";
+import { mineToken, MINE_BOT_DELAY, type MineAction } from "./shared/saboteur";
 import type { SplendorAction } from "./shared/splendor";
 import { initializeApp } from "firebase-admin/app";
 import { getDatabase } from "firebase-admin/database";
@@ -335,6 +347,18 @@ export const roomAction = callable(async (uid, data) => {
     const room = session.public;
     ensure(room.players[uid] && !room.players[uid].isBot, "你不在房間內");
     switch (action.type) {
+      case "danceConfig":
+        ensure(
+          room.gameId === "criminal-dance" &&
+            room.hostId === uid &&
+            room.status === "waiting",
+          "只有房主能在等待時設定遊戲",
+        );
+        room.danceConfig = validateDanceConfig(action.config);
+        Object.values(room.players).forEach((p) => {
+          p.ready = !!p.isBot;
+        });
+        break;
       case "splendorConfig":
         ensure(
           room.gameId === "splendor" &&
@@ -385,7 +409,11 @@ export const roomAction = callable(async (uid, data) => {
         ensure(room.hostId === uid, "只有房主可以開始");
         room.activity = [];
         delete room.botActionAt;
-        if (room.gameId === "mafia-de-cuba")
+        if (room.gameId === "criminal-dance")
+          startDance(session, gameId, shuffled(seed));
+        else if (room.gameId === "saboteur-2")
+          startMine(session, gameId, shuffled(seed));
+        else if (room.gameId === "mafia-de-cuba")
           startMafia(session, gameId, shuffled(seed));
         else if (room.gameId === "splendor")
           startSplendorGame(session, gameId, shuffled(seed));
@@ -446,6 +474,10 @@ export const roomAction = callable(async (uid, data) => {
         delete room.mafia;
         session.mafiaPrivate = {};
         delete room.splendor;
+        delete room.saboteur;
+        delete room.dance;
+        session.dancePrivate = {};
+        session.saboteurPrivate = {};
         session.splendorPrivate = {};
         delete room.botActionAt;
         room.activity = [];
@@ -464,8 +496,12 @@ export const roomAction = callable(async (uid, data) => {
         break;
       case "recover": {
         ensure(
-          !["splendor", "mafia-de-cuba"].includes(room.gameId) ||
-            room.status !== "playing",
+          ![
+            "splendor",
+            "mafia-de-cuba",
+            "saboteur-2",
+            "criminal-dance",
+          ].includes(room.gameId) || room.status !== "playing",
           "本局保留離線玩家座位，請等待重新連線",
         );
         // Presence and membership share this transaction, so a reconnect forces
@@ -506,6 +542,32 @@ export const gameAction = callable(async (uid, data) => {
       session.public.players[uid] && !session.public.players[uid].isBot,
       "你不在房間內",
     );
+    if (session.public.gameId === "criminal-dance") {
+      const g = session.public.dance;
+      ensure(
+        g && data.phaseToken === danceToken(g),
+        "此操作已過期，請依最新畫面重試",
+      );
+      return applyDanceAction(
+        session,
+        uid,
+        data.action as DanceAction,
+        shuffled(seed),
+      );
+    }
+    if (session.public.gameId === "saboteur-2") {
+      const g = session.public.saboteur;
+      ensure(
+        g && data.phaseToken === mineToken(g),
+        "此操作已過期，請依最新畫面重試",
+      );
+      return applyMineAction(
+        session,
+        uid,
+        data.action as MineAction,
+        shuffled(seed),
+      );
+    }
     if (session.public.gameId === "mafia-de-cuba") {
       const game = session.public.mafia;
       ensure(
@@ -575,7 +637,12 @@ export const advanceBots = callable(async (uid, data) => {
     if (
       s.public.status !== "playing" ||
       data.token !== botToken(s.public) ||
-      now - (s.public.botActionAt ?? 0) < 650
+      now - (s.public.botActionAt ?? 0) <
+        (s.public.gameId === "criminal-dance"
+          ? DANCE_BOT_DELAY
+          : s.public.gameId === "saboteur-2"
+            ? MINE_BOT_DELAY
+            : 650)
     )
       return s;
     moved = advanceOneBot(s, shuffled(seed));

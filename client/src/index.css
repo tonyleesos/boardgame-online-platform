@@ -230,7 +230,7 @@ footer {
   filter: drop-shadow(0 10px 25px #0008);
 }
 .game-art:after {
-  content: "AVALON";
+  content: "";
   position: absolute;
   bottom: 15px;
   color: #dfc39650;
@@ -1076,6 +1076,19 @@ select {
 .game-card.decorum .art-rings { border-color: #8fa07c55; }
 .game-card.decorum .game-art > .tag { background: #fff4d9cc; color: #53684d; }
 
+.game-card.saboteur-2 .game-art {
+  background: radial-gradient(ellipse at 50% 65%, #ab783955, #182a26 65%);
+}
+.game-card.criminal-dance .game-art{background:radial-gradient(ellipse at 50% 50%,#91b5a8,#314b49);}
+.game-card.criminal-dance .game-art>svg{width:210px;height:180px;transform:rotate(-7deg);background:#ccab72;border:6px solid #f0e4c5;border-radius:12px;padding:8px;}
+.game-card.criminal-dance .art-rings{display:none;}
+.game-card.saboteur-2 .game-art > svg {
+  color: #e1b461;
+  width: 100%;
+  height: 100%;
+  filter: none;
+}
+.game-card.saboteur-2 .art-rings { display: none; }
 .game-card.splendor .game-art {
   background: radial-gradient(
     ellipse at 50% 45%,

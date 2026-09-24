@@ -10,6 +10,28 @@ export interface GameDefinition {
 }
 export const games: GameDefinition[] = [
   {
+    id: "criminal-dance",
+    name: "犯人在跳舞",
+    subtitle: "一場不斷換手的追捕",
+    description:
+      "犯人藏在手牌裡，隨交易與謠言悄悄換人。抓住線索，或讓最後一張犯人牌成功逃脫。",
+    minPlayers: 3,
+    maxPlayers: 8,
+    enabled: true,
+    supportsBots: true,
+  },
+  {
+    id: "saboteur-2",
+    name: "矮人礦坑 2",
+    subtitle: "SABOTEUR 2 · INTO THE MINE",
+    description:
+      "一條通往黃金的礦道，藏著各懷心思的矮人。鋪路、設陷阱，三輪後誰能帶走最多金塊？建議 5–8 人。",
+    minPlayers: 2,
+    maxPlayers: 12,
+    enabled: true,
+    supportsBots: true,
+  },
+  {
     id: "mafia-de-cuba",
     name: "教父風雲：危情古巴",
     subtitle: "MAFIA DE CUBA · HAVANA 1955",
@@ -44,7 +66,7 @@ export const games: GameDefinition[] = [
   {
     id: "avalon",
     name: "阿瓦隆",
-    subtitle: "THE RESISTANCE: AVALON",
+    subtitle: "忠誠與謊言的圓桌對決",
     description: "信任，是圓桌上最危險的賭注。在忠誠與謊言之間，找出你的盟友。",
     minPlayers: 5,
     maxPlayers: 10,

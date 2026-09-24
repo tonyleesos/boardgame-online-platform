@@ -87,19 +87,27 @@ export function RoomEntryPage({ join = false }: { join?: boolean }) {
             >
               <option value="casual">輕鬆 · 更多隨機選擇</option>
               <option value="standard">
-                {gameId === "mafia-de-cuba"
-                  ? "標準 · 拿取策略與指控練習"
-                  : gameId === "splendor"
-                    ? "標準 · 規劃寶石與卡牌交易"
-                    : "標準 · 參考公開紀錄推理"}
+                {gameId === "criminal-dance"
+                  ? "標準 · 推理與秘密傳牌策略"
+                  : gameId === "saboteur-2"
+                    ? "標準 · 規劃礦道與陣營策略"
+                    : gameId === "mafia-de-cuba"
+                      ? "標準 · 拿取策略與指控練習"
+                      : gameId === "splendor"
+                        ? "標準 · 規劃寶石與卡牌交易"
+                        : "標準 · 參考公開紀錄推理"}
               </option>
             </select>
             <p className="fine">
-              {gameId === "mafia-de-cuba"
-                ? "AI 只使用自己的資訊，指控仍是猜測，不會回答文字詢問。6–7 人沒有美酒，第一次抓錯普通角色就結束；想練習付酒後繼續調查，請選 8 人以上（含 AI）。開局前可選自己或 AI 當教父。"
-                : gameId === "splendor"
-                  ? "AI 會規劃拿取、保留與購買，只使用公開市場和自己的保留卡。"
-                  : "策略型 AI 只知道自己的情報，不會偷看你的身份或牌序。發言可能是虛張聲勢。"}
+              {gameId === "criminal-dance"
+                ? "AI 只使用自己的手牌與已取得的情報，不會偷看其他人。支援 2–7 位 AI，動作保留約 3.6 秒演出時間；每輪由你確認開始。"
+                : gameId === "saboteur-2"
+                  ? "AI 只知道自己的身份、手牌與已取得的情報；支援 1–11 位 AI，動作間保留動畫閱讀時間。每輪結束由你確認開始下一輪。"
+                  : gameId === "mafia-de-cuba"
+                    ? "AI 只使用自己的資訊，指控仍是猜測，不會回答文字詢問。6–7 人沒有美酒，第一次抓錯普通角色就結束；想練習付酒後繼續調查，請選 8 人以上（含 AI）。開局前可選自己或 AI 當教父。"
+                    : gameId === "splendor"
+                      ? "AI 會規劃拿取、保留與購買，只使用公開市場和自己的保留卡。"
+                      : "策略型 AI 只知道自己的情報，不會偷看你的身份或牌序。發言可能是虛張聲勢。"}
             </p>
           </>
         )}

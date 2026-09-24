@@ -12,6 +12,14 @@ import type {
   SplendorAction,
   SplendorConfig,
 } from "./splendor";
+import type { MineGame, MinePrivate, MineSecret, MineAction } from "./saboteur";
+import type {
+  DanceGame,
+  DancePrivate,
+  DanceSecret,
+  DanceAction,
+  DanceConfig,
+} from "./criminalDance";
 export type Role =
   "merlin" | "percival" | "servant" | "assassin" | "morgana" | "minion";
 export type Side = "good" | "evil";
@@ -80,6 +88,9 @@ export interface Room {
   mafia?: MafiaPublicState;
   mafiaConfig?: MafiaConfig;
   splendor?: SplendorPublicState;
+  saboteur?: MineGame;
+  dance?: DanceGame;
+  danceConfig?: DanceConfig;
   splendorConfig?: SplendorConfig;
   decorumScenarioId?: string;
   mode?: "friends" | "practice";
@@ -101,9 +112,13 @@ export interface Session {
   decorumPrivate?: Record<string, DecorumPrivate>;
   mafiaPrivate?: Record<string, MafiaPrivate>;
   splendorPrivate?: Record<string, SplendorPrivate>;
+  saboteurPrivate?: Record<string, MinePrivate>;
+  dancePrivate?: Record<string, DancePrivate>;
   secret: {
     mafia?: MafiaSecret;
     splendor?: SplendorSecret;
+    saboteur?: MineSecret;
+    dance?: DanceSecret;
     teamVotes: Record<string, TeamVote>;
     missionVotes: Record<string, MissionVote>;
     bombHands?: Record<string, Array<Wire | null>>;
@@ -119,6 +134,7 @@ export type GameAction =
   | { type: "continue" }
   | { type: "assassinate"; target: string };
 export type RoomAction =
+  | { type: "danceConfig"; config: DanceConfig }
   | { type: "mafiaConfig"; config: MafiaConfig }
   | { type: "splendorConfig"; config: SplendorConfig }
   | { type: "decorScenario"; scenarioId: string }
@@ -130,8 +146,16 @@ export type RoomAction =
   | { type: "rematch" }
   | { type: "recover" };
 export type PlatformGameAction =
-  GameAction | BombAction | DecorumAction | SplendorAction | MafiaAction;
+  | GameAction
+  | BombAction
+  | DecorumAction
+  | SplendorAction
+  | MafiaAction
+  | MineAction
+  | DanceAction;
 export const GAME_LIMITS: Record<string, { min: number; max: number }> = {
+  "criminal-dance": { min: 3, max: 8 },
+  "saboteur-2": { min: 2, max: 12 },
   "mafia-de-cuba": { min: 6, max: 12 },
   splendor: { min: 2, max: 4 },
   avalon: { min: 5, max: 10 },

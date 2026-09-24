@@ -1,5 +1,10 @@
 import { MafiaGame, MafiaSettings } from "../games/mafia/MafiaGame";
 import { SplendorGame, SplendorSettings } from "../games/splendor/SplendorGame";
+import { SaboteurGame } from "../games/saboteur/SaboteurGame";
+import {
+  CriminalDanceGame,
+  DanceSettings,
+} from "../games/criminalDance/CriminalDanceGame";
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Check, Copy, Crown, LogOut, Wifi, WifiOff } from "lucide-react";
@@ -37,6 +42,8 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
     decorumPrivate,
     splendorPrivate,
     mafiaPrivate,
+    saboteurPrivate,
+    dancePrivate,
     presence,
     connected,
     loaded,
@@ -83,6 +90,8 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
   const definition = games.find((g) => g.id === room.gameId)!;
   const isMafia = room.gameId === "mafia-de-cuba";
   const isSplendor = room.gameId === "splendor";
+  const isSaboteur = room.gameId === "saboteur-2";
+  const isDance = room.gameId === "criminal-dance";
   const noBots = definition.supportsBots === false;
   const isDecorum = room.gameId === "decorum";
   const decorScenario =
@@ -93,7 +102,9 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
     players.every((p) => p.ready) &&
     (!isDecorum || decorScenario?.playerCount === players.length);
   return (
-    <div className={`${room.status === "waiting" ? "room-waiting" : "room-active"}${isSplendor ? " room-splendor" : ""}`}>
+    <div
+      className={`${room.status === "waiting" ? "room-waiting" : "room-active"}${isSplendor ? " room-splendor" : ""}${isSaboteur ? " room-saboteur" : ""}${isDance ? " room-dance" : ""}`}
+    >
       <div className="room-top">
         <div>
           <p className="eyebrow">
@@ -231,12 +242,13 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
             disabled={
               pending ||
               !connected ||
-              ((isSplendor || isMafia) && room.status === "playing")
+              ((isSplendor || isMafia || isDance || isSaboteur) &&
+                room.status === "playing")
             }
             onClick={() => act({ type: "recover" })}
           >
             {room.status === "playing"
-              ? isSplendor || isMafia
+              ? isSplendor || isMafia || isDance || isSaboteur
                 ? "保留座位，等待重新連線"
                 : isDecorum
                   ? "清理離線室友並中止本局"
@@ -244,7 +256,7 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
               : "清理離線超過 90 秒的玩家"}
           </button>
           <p className="fine">
-            {isSplendor || isMafia
+            {isSplendor || isMafia || isDance || isSaboteur
               ? "暫時離線保留座位。明確離開會中止本局，其他玩家可重新開局。"
               : isDecorum
                 ? "離線可重連。室友明確離開或被清理會中止合租，房主由最早入座的室友接任。"
@@ -273,6 +285,13 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
                 需要 {definition.minPlayers}–{definition.maxPlayers}{" "}
                 位玩家，且所有人都已準備。{!noBots && "AI 會自動準備。"}
               </p>
+              {isDance && (
+                <DanceSettings
+                  room={room}
+                  disabled={!host || pending || !connected}
+                  onChange={act}
+                />
+              )}
               {isMafia && (
                 <MafiaSettings
                   room={room}
@@ -369,6 +388,29 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
                 roomPending={pending}
               />
             )
+          ) : isDance ? (
+            privateError ? null : (
+              <CriminalDanceGame
+                room={room}
+                uid={uid}
+                privateData={dancePrivate}
+                connected={connected}
+                onRematch={() => act({ type: "rematch" })}
+                roomPending={pending}
+              />
+            )
+          ) : isSaboteur ? (
+            privateError ? null : (
+              <SaboteurGame
+                room={room}
+                uid={uid}
+                privateData={saboteurPrivate}
+                connected={connected}
+                presence={presence}
+                onRematch={() => act({ type: "rematch" })}
+                roomPending={pending}
+              />
+            )
           ) : isSplendor ? (
             <SplendorGame
               room={room}
@@ -442,15 +484,17 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
           <h2 id="leave-title">離開這張圓桌？</h2>
           <p>
             {room.status === "playing"
-              ? isMafia
-                ? "離開會中止這局教父風雲。暫時離線會保留座位，可回到原房間繼續。"
-                : isSplendor
-                  ? "離開會中止這局璀璨寶石。暫時離線可直接關閉頁面，之後回到原房間繼續。"
-                  : isDecorum
-                    ? "離開會中止這局同房異夢並公開所有心願。若只是暫時離線，可關閉頁面後回到原房間。"
-                    : players.filter((p) => !p.isBot).length === 1
-                      ? "你是最後一位真人，離開後房間將關閉。"
-                      : "AI 將接管你的角色、手牌與後續操作，其他玩家繼續本局。接手後本局無法重新入座；下一局可再加入。"
+              ? isDance || isSaboteur
+                ? "明確離開會中止本局，其他玩家可重新開局。暫時離線會保留座位，可回到原房間繼續。"
+                : isMafia
+                  ? "離開會中止這局教父風雲。暫時離線會保留座位，可回到原房間繼續。"
+                  : isSplendor
+                    ? "離開會中止這局璀璨寶石。暫時離線可直接關閉頁面，之後回到原房間繼續。"
+                    : isDecorum
+                      ? "離開會中止這局同房異夢並公開所有心願。若只是暫時離線，可關閉頁面後回到原房間。"
+                      : players.filter((p) => !p.isBot).length === 1
+                        ? "你是最後一位真人，離開後房間將關閉。"
+                        : "AI 將接管你的角色、手牌與後續操作，其他玩家繼續本局。接手後本局無法重新入座；下一局可再加入。"
               : "你的座位會空出，房主身份會自動交接。"}
           </p>
           {error && (

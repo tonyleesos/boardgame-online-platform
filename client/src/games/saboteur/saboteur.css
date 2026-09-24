@@ -1,0 +1,1108 @@
+.site:has(.room-active.room-saboteur) {
+  padding: 0;
+  max-width: none;
+  min-height: 100dvh;
+}
+.site:has(.room-active.room-saboteur) > .site-header,
+.site:has(.room-active.room-saboteur) > footer,
+.room-active.room-saboteur .players-panel,
+.room-active.room-saboteur .ai-conversation {
+  display: none;
+}
+.site:has(.room-active.room-saboteur) > main {
+  min-height: 0;
+  width: 100%;
+}
+.room-active.room-saboteur {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+    env(safe-area-inset-bottom) env(safe-area-inset-left);
+  box-sizing: border-box;
+  max-width: 1500px;
+  margin: auto;
+}
+.room-saboteur .room-top {
+  flex: 0 0 34px;
+  min-height: 34px;
+  margin: 0;
+  padding: 0 12px;
+}
+.room-saboteur .room-top h1 {
+  font-size: 13px;
+  margin: 0;
+}
+.room-saboteur .room-top .eyebrow,
+.room-saboteur .room-code > small {
+  display: none;
+}
+.room-saboteur .room-top button {
+  padding: 3px 6px;
+  min-height: 28px;
+  font-size: 12px;
+}
+.room-saboteur .room-grid {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  gap: 0;
+}
+.room-saboteur .room-grid > section {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+.room-saboteur > .connection {
+  display: none;
+}
+.room-saboteur > .connection.offline,
+.room-saboteur > .error {
+  display: block;
+  font-size: 11px;
+  padding: 3px 10px;
+  margin: 0;
+}
+.mine-game {
+  --mine-gold: #efc777;
+  color: #e9e5d5;
+  background: radial-gradient(ellipse at 50% 0, #3a4534, #15221f 65%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: 12px 20px;
+  border: 1px solid #9d895444;
+  border-radius: 16px 16px 0 0;
+  box-sizing: border-box;
+}
+.mine-game button,
+.mine-dialog button {
+  color: inherit;
+  font: inherit;
+  touch-action: manipulation;
+  border: 1px solid #c8bc9538;
+  border-radius: 8px;
+  background: #ffffff08;
+  min-height: 40px;
+  padding: 7px 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.mine-game button:disabled,
+.mine-dialog button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.mine-game button:focus-visible,
+.mine-dialog button:focus-visible,
+.mine-map g[role="button"]:focus-visible {
+  outline: 3px solid #ffdc81;
+  outline-offset: 2px;
+}
+.mine-game button[aria-pressed="true"],
+.mine-dialog button[aria-pressed="true"] {
+  outline: 2px solid #eeca78;
+  background: #eeca7820;
+}
+.mine-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+.mine-heading h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 23px;
+  margin: 0;
+  color: #f1d9a0;
+}
+.mine-heading > div > span {
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: #b9bd9f;
+}
+.mine-heading nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.mine-turn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 34px;
+  flex-shrink: 0;
+  padding: 5px 12px;
+  background: #ffffff05;
+  border: 1px solid #ffffff16;
+  border-radius: 8px;
+  gap: 8px;
+  font-size: 13px;
+}
+.mine-turn small {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  white-space: nowrap;
+  color: #d2c29c;
+}
+.mine-my-turn {
+  color: #ffe0a1;
+  border-color: #c1a56188;
+  background: #d7b44c14;
+}
+.mine-my-turn > span:before {
+  content: "●";
+  margin-right: 6px;
+  color: #e4b852;
+}
+.mine-players {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+  flex-shrink: 0;
+}
+.mine-game .mine-player {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  align-items: stretch;
+  padding: 6px 8px;
+  background: #121e1bb0;
+  text-align: left;
+}
+.mine-player.active {
+  border-color: #eed184;
+  box-shadow: inset 0 0 0 1px #eec98188;
+}
+.mine-player > span,
+.mine-player > small {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+.mine-player b {
+  font-size: 12px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.mine-player em {
+  margin-left: auto;
+}
+.mine-avatar {
+  border-radius: 50%;
+  width: 21px;
+  height: 21px;
+  display: grid;
+  place-items: center;
+  font-style: normal;
+  flex-shrink: 0;
+  font-size: 11px;
+  background: #3b686d;
+}
+.mine-avatar-1 {
+  background: #806442;
+}
+.mine-avatar-2 {
+  background: #657954;
+}
+.mine-avatar-3 {
+  background: #7c5962;
+}
+.mine-player > small {
+  color: #bdcaba;
+  font-size: 11px;
+}
+.mine-effects {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.mine-effects > span {
+  position: relative;
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 4px;
+}
+.mine-effect-bad {
+  color: #ffb2a0;
+  background: #b1534930;
+}
+.mine-effect-gold {
+  color: #f1d074;
+  background: #a9843225;
+}
+.mine-effect-bad i {
+  position: absolute;
+  height: 2px;
+  background: #f66c67;
+  width: 19px;
+  transform: rotate(-45deg);
+  left: 0;
+  top: 10px;
+}
+.mine-map {
+  position: relative;
+  flex: 1;
+  min-height: 140px;
+  border-radius: 12px;
+  border: 1px solid #81978136;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse, #41423344, transparent 65%),
+    radial-gradient(circle, #7d84722a 1px, transparent 1px), #111f1b;
+  background-size:
+    auto,
+    23px 23px,
+    auto;
+}
+.mine-map > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  user-select: none;
+}
+.mine-map g[role="button"] {
+  cursor: pointer;
+}
+.mine-map-controls {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  z-index: 1;
+  display: flex;
+  gap: 4px;
+}
+.mine-map-controls button {
+  background: #152722e8;
+  width: 36px;
+  min-height: 36px;
+  padding: 5px;
+}
+.mine-map-hint {
+  position: absolute;
+  bottom: 6px;
+  right: 9px;
+  font-size: 10px;
+  color: #b3c0a7;
+  pointer-events: none;
+  background: #152722c0;
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+.mine-tile-art {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.mine-bottom {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.mine-own-info,
+.mine-bottom-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mine-own-info > span:not(.mine-effects) {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #f1d789;
+}
+.mine-own-info small {
+  color: #aaa;
+  font-size: 10px;
+}
+.mine-own-info button:last-child {
+  margin-left: auto;
+}
+.mine-own-info button {
+  min-height: 34px;
+  font-size: 12px;
+}
+.mine-hand-summary {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+.mine-game .mine-mini-card {
+  display: flex;
+  flex-direction: column;
+  padding: 3px;
+  gap: 2px;
+  width: 70px;
+  height: 91px;
+  flex-shrink: 1;
+  min-width: 0;
+}
+.mine-mini-card strong {
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.mine-mini-card .mine-hand-art {
+  height: 65px;
+  width: 49px;
+  max-width: 100%;
+}
+.mine-mini-card .mine-hand-art > svg:not(.mine-tile-art) {
+  width: 26px;
+  height: 26px;
+}
+.mine-hand-art {
+  width: 66px;
+  height: 86px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  background: #685a3a2e;
+  color: #dfc58c;
+  flex-shrink: 0;
+}
+.mine-hand-art > span {
+  display: flex;
+  gap: 3px;
+}
+.mine-hand-art.mine-action-TRAPPED,
+.mine-hand-art.mine-action-BREAK {
+  color: #f8aaa0;
+  background: #ad594d20;
+}
+.mine-hand-art.mine-action-FREEDOM,
+.mine-hand-art.mine-action-REPAIR {
+  color: #98dfb1;
+  background: #63835d22;
+}
+.mine-bottom-actions {
+  justify-content: center;
+}
+.mine-bottom-actions button {
+  min-height: 34px;
+  font-size: 12px;
+}
+.mine-primary {
+  background: linear-gradient(135deg, #f0d59a, #c59c52) !important;
+  color: #263023 !important;
+  border-color: #e5c88c !important;
+  font-weight: 700 !important;
+}
+.mine-placement {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  min-height: 90px;
+}
+.mine-placement > span {
+  flex: 1;
+  min-width: 0;
+}
+.mine-placement strong,
+.mine-placement small {
+  display: block;
+}
+.mine-placement small {
+  color: #bbccae;
+  font-size: 11px;
+  margin-top: 4px;
+}
+.mine-dialog {
+  width: min(550px, calc(100vw - 24px));
+  background: #1c2c25;
+  color: #e7e7d4;
+  border: 1px solid #c6a76888;
+}
+.mine-dialog p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: #c7d0bd;
+}
+.mine-dialog h3 {
+  color: #f1d9a0;
+}
+.mine-dialog > .mine-primary {
+  display: flex;
+  width: 100%;
+  margin-top: 15px;
+  min-height: 44px;
+}
+.mine-hand-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+}
+.mine-hand-grid button {
+  display: flex;
+  flex-direction: column;
+  padding: 10px 4px;
+  gap: 6px;
+}
+.mine-hand-grid strong {
+  font-size: 12px;
+}
+.mine-role {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 20px 6px;
+}
+.mine-role > svg {
+  color: #d6b66e;
+}
+.mine-role-portrait {
+  width: 172px;
+  height: auto;
+  max-height: 30dvh;
+  flex-shrink: 0;
+  filter: drop-shadow(0 7px 9px #0005);
+}
+.mine-dialog > .mine-role-portrait {
+  display: block;
+  margin: 12px auto;
+}
+.mine-action-face {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+.mine-card-tools {
+  position: absolute;
+  bottom: 3px;
+  left: 3px;
+  right: 3px;
+  display: flex;
+  justify-content: center;
+  gap: 3px;
+}
+.mine-card-tools > svg {
+  background: #183133ed;
+  border: 1px solid #fff1c3;
+  border-radius: 50%;
+  color: #ffdfa0;
+  padding: 1px;
+}
+.mine-action-large {
+  width: 88px;
+  height: 116px;
+  flex-shrink: 0;
+}
+.mine-gold-art,
+.mine-crystal-art {
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+.mine-gold-art {
+  filter: drop-shadow(0 1px 3px #f6bc333d);
+}
+.mine-crystal-art {
+  filter: drop-shadow(0 1px 3px #68d7fc44);
+}
+.mine-game .mine-player-inventory {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 3px;
+}
+.mine-player-inventory > .mine-effects {
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
+}
+.mine-effects:empty {
+  display: none;
+}
+.mine-player-inventory > .mine-has-gold {
+  grid-column: 2;
+  grid-row: 1;
+}
+.mine-hand-count {
+  display: inline-flex;
+  align-items: center;
+  width: 77px;
+  max-width: 100%;
+  height: 26px;
+  flex-shrink: 1;
+  gap: 2px;
+}
+.mine-hand-count > svg {
+  width: calc(100% - 14px);
+  height: 26px;
+  overflow: visible;
+}
+.mine-hand-count > b {
+  font-size: 12px;
+  color: #fff3cc;
+  min-width: 12px;
+  text-align: right;
+  overflow: visible;
+}
+.mine-crystal-total,
+.mine-gold-amount {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mine-crystal-total {
+  justify-content: center;
+}
+.mine-private-discovery {
+  text-align: center;
+}
+.mine-crystal-total b {
+  color: #aff3ff;
+  font-size: 20px;
+}
+.mine-round-winner {
+  text-align: center;
+  font-weight: 700;
+  color: #ffe0a2 !important;
+}
+.mine-victory {
+  --victory-color: #d7ae57;
+  position: fixed;
+  isolation: isolate;
+  text-align: center;
+  overflow: auto;
+  background: radial-gradient(ellipse at 50% 37%, #5e532e, #142725 74%);
+}
+.mine-victory-blue {
+  --victory-color: #83c9ff;
+  background: radial-gradient(ellipse at 50% 37%, #31556b, #142529 74%);
+}
+.mine-victory-green {
+  --victory-color: #a1e2a7;
+  background: radial-gradient(ellipse at 50% 37%, #3d684b, #142725 74%);
+}
+.mine-victory-both {
+  --victory-color: #a4e2d7;
+  background: linear-gradient(120deg, #244953, #29432d);
+}
+.mine-victory-saboteur {
+  --victory-color: #efa991;
+  background: radial-gradient(ellipse at 50% 37%, #663d33, #22252a 74%);
+}
+.mine-victory-content {
+  position: relative;
+  z-index: 1;
+  padding: 4px 6px 12px;
+}
+.mine-victory-round {
+  color: var(--victory-color) !important;
+  letter-spacing: 0.18em;
+  font-weight: bold;
+}
+.mine-victory-portraits {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  animation: mine-champion-enter 1800ms ease-out both;
+}
+.mine-victory-portraits > svg {
+  width: min(170px, 34vw);
+  height: min(205px, 30dvh);
+}
+.mine-victory h2 {
+  font-size: clamp(21px, 5vw, 30px);
+  margin: 18px 0 8px;
+  color: var(--victory-color);
+  animation: mine-title-enter 1400ms 700ms both;
+  text-shadow: 0 2px 15px #0007;
+}
+.mine-victory-loot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 15px 0;
+  font-size: 12px;
+  color: #e9d6a8;
+}
+.mine-victory .mine-primary {
+  min-width: 180px;
+  min-height: 44px;
+}
+.mine-victory-rays {
+  position: absolute;
+  inset: 20% -15% 10%;
+  z-index: 0;
+  pointer-events: none;
+  background: repeating-conic-gradient(
+    from 10deg,
+    transparent 0deg 20deg,
+    #f6dd8e10 20deg 35deg
+  );
+  mask-image: radial-gradient(ellipse, #000, transparent 70%);
+  animation: mine-rays 9s linear infinite;
+}
+.mine-victory-particles {
+  position: absolute;
+  inset: 35px 0 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.mine-victory-particles > span {
+  position: absolute;
+  top: 8%;
+  opacity: 0;
+  animation: mine-gold-fall 3400ms ease-in-out both;
+}
+@keyframes mine-champion-enter {
+  from {
+    opacity: 0;
+    transform: translateY(25px) scale(0.75);
+    filter: brightness(1.6);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: brightness(1);
+  }
+}
+@keyframes mine-title-enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes mine-gold-fall {
+  0% {
+    opacity: 0;
+    transform: translateY(-25px) rotate(-25deg);
+  }
+  20% {
+    opacity: 0.85;
+  }
+  80% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(300px) rotate(120deg);
+  }
+}
+@keyframes mine-rays {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.mine-targets {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+.mine-targets button {
+  flex-wrap: wrap;
+  font-size: 13px;
+  min-height: 48px;
+}
+.mine-target-tile {
+  display: inline-flex;
+  width: 38px;
+  height: 49px;
+}
+.mine-action-preview {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.mine-action-preview > svg {
+  flex-shrink: 0;
+  color: #dfba72;
+}
+.mine-dialog select {
+  display: block;
+  width: 100%;
+  color: #eee;
+  background: #283c31;
+  border: 1px solid #c6a76855;
+  padding: 10px;
+  border-radius: 7px;
+  margin: 8px 0;
+}
+.mine-large-tile {
+  width: 130px;
+  height: 170px;
+  margin: 15px auto;
+}
+.mine-log {
+  padding-left: 22px;
+  font-size: 13px;
+}
+.mine-log li {
+  padding: 8px 0;
+  border-bottom: 1px solid #ffffff13;
+}
+.mine-scores {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.mine-scores th,
+.mine-scores td {
+  padding: 9px 4px;
+  border-bottom: 1px solid #ffffff20;
+  text-align: left;
+}
+.mine-scores small {
+  display: block;
+  color: #b9c8ad;
+  font-weight: 400;
+  font-size: 11px;
+}
+.mine-result {
+  text-align: center;
+}
+.mine-result > svg {
+  color: #eacc78;
+  animation: mine-reveal 1.5s ease-out;
+}
+.mine-warning,
+.mine-game > .error {
+  padding: 4px 8px;
+  margin: 0;
+  font-size: 11px;
+}
+.mine-playback {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  color: #f1d89a;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1000;
+}
+.mine-playback::backdrop {
+  display: none;
+}
+.mine-flight {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 84px;
+  filter: drop-shadow(0 8px 10px #000a);
+}
+.mine-receipt {
+  position: absolute;
+  bottom: 22%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: max-content;
+  max-width: calc(100vw - 30px);
+  padding: 12px 16px;
+  border: 1px solid #dac084;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px #0008;
+  background: #1c382eef;
+  box-sizing: border-box;
+}
+.mine-receipt > svg {
+  flex-shrink: 0;
+}
+.mine-receipt b {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.mine-receipt strong {
+  display: block;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #ecf0d7;
+  margin-top: 3px;
+}
+@keyframes mine-reveal {
+  from {
+    opacity: 0;
+    transform: scale(0.7) rotateY(90deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotateY(0);
+  }
+}
+.mine-tile-revealed {
+  animation: mine-reveal 1.6s ease-out;
+}
+@media (max-width: 700px) {
+  .mine-game {
+    padding: 6px 7px;
+    gap: 5px;
+    border-radius: 10px 10px 0 0;
+  }
+  .mine-heading > div > span {
+    display: none;
+  }
+  .mine-heading h2 {
+    font-size: 17px;
+  }
+  .mine-heading nav {
+    gap: 3px;
+    font-size: 11px;
+  }
+  .mine-heading nav button {
+    min-height: 32px;
+    padding: 5px;
+  }
+  .mine-turn {
+    font-size: 11px;
+    min-height: 27px;
+    padding: 4px 7px;
+  }
+  .mine-turn small {
+    font-size: 10px;
+  }
+  .mine-players {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .mine-game .mine-player {
+    padding: 3px;
+    gap: 2px;
+    min-height: 42px;
+  }
+  .mine-hand-count,
+  .mine-hand-count > svg {
+    height: 20px;
+  }
+  .mine-player b {
+    font-size: 10px;
+  }
+  .mine-avatar {
+    display: none;
+  }
+  .mine-player > small {
+    gap: 2px;
+    font-size: 10px;
+  }
+  .mine-effects {
+    gap: 1px;
+  }
+  .mine-effects svg {
+    width: 12px;
+    height: 12px;
+  }
+  .mine-effect-bad i {
+    width: 13px;
+    top: 8px;
+  }
+  .mine-map {
+    min-height: 90px;
+  }
+  .mine-map-controls {
+    left: 4px;
+    top: 4px;
+    gap: 3px;
+  }
+  .mine-map-controls button {
+    width: 31px;
+    min-height: 31px;
+  }
+  .mine-map-hint {
+    font-size: 9px;
+  }
+  .mine-bottom {
+    gap: 4px;
+  }
+  .mine-own-info {
+    gap: 4px;
+  }
+  .mine-own-info button {
+    min-height: 31px;
+    padding: 4px 7px;
+    font-size: 11px;
+  }
+  .mine-own-info small {
+    display: none;
+  }
+  .mine-hand-summary {
+    gap: 4px;
+  }
+  .mine-game .mine-mini-card {
+    height: 70px;
+    width: 55px;
+    padding: 2px;
+  }
+  .mine-mini-card .mine-hand-art {
+    width: 38px;
+    height: 49px;
+  }
+  .mine-mini-card strong {
+    font-size: 9px;
+  }
+  .mine-mini-card .mine-hand-art > svg:not(.mine-tile-art) {
+    width: 23px;
+    height: 23px;
+  }
+  .mine-mini-card .mine-hand-art > span svg {
+    width: 12px;
+    height: 12px;
+  }
+  .mine-bottom-actions button {
+    min-height: 30px;
+    padding: 4px 9px;
+    font-size: 11px;
+  }
+  .mine-placement {
+    min-height: 83px;
+    gap: 4px;
+  }
+  .mine-placement button {
+    padding: 6px;
+    font-size: 12px;
+  }
+  .mine-placement strong {
+    font-size: 12px;
+  }
+  .mine-receipt {
+    bottom: 24%;
+    padding: 10px 12px;
+  }
+  .mine-receipt strong {
+    font-size: 12px;
+  }
+}
+@media (max-width: 360px) {
+  .mine-player .mine-effects {
+    gap: 0;
+  }
+  .mine-effects > span {
+    padding: 1px;
+  }
+  .mine-player > small > .mine-effects svg {
+    width: 10px;
+    height: 10px;
+  }
+  .mine-heading h2 {
+    font-size: 15px;
+  }
+  .mine-heading nav strong {
+    font-size: 10px;
+  }
+}
+@media (min-width: 560px) and (max-height: 520px) {
+  .mine-game {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 190px;
+    grid-template-rows: 32px 28px minmax(0, 1fr) 42px;
+    padding: 6px;
+    gap: 5px;
+  }
+  .mine-heading {
+    grid-area: 1 / 1;
+  }
+  .mine-heading > div > span,
+  .mine-avatar,
+  .mine-hand-summary,
+  .mine-own-info small {
+    display: none;
+  }
+  .mine-heading h2 {
+    font-size: 16px;
+  }
+  .mine-heading nav {
+    gap: 3px;
+    font-size: 11px;
+  }
+  .mine-heading nav button {
+    min-height: 30px;
+    padding: 4px;
+  }
+  .mine-turn {
+    grid-area: 2 / 1;
+    font-size: 11px;
+    min-height: 0;
+    padding: 3px 6px;
+  }
+  .mine-players {
+    grid-area: 1 / 2 / 5 / 3;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: start;
+    gap: 4px;
+    overflow: auto;
+  }
+  .mine-game .mine-player {
+    min-height: 42px;
+    padding: 4px;
+    gap: 3px;
+  }
+  .mine-player b,
+  .mine-player > small {
+    font-size: 10px;
+  }
+  .mine-map {
+    grid-area: 3 / 1;
+    min-height: 0;
+  }
+  .mine-bottom,
+  .mine-placement {
+    grid-area: 4 / 1;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    min-height: 0;
+    gap: 3px;
+  }
+  .mine-own-info,
+  .mine-bottom-actions {
+    gap: 3px;
+  }
+  .mine-bottom button,
+  .mine-placement button {
+    min-height: 32px;
+    padding: 4px 6px;
+    font-size: 11px;
+  }
+  .mine-placement strong {
+    font-size: 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mine-game *,
+  .mine-dialog * {
+    animation: none !important;
+    transition: none !important;
+  }
+  .mine-flight {
+    display: none;
+  }
+}
