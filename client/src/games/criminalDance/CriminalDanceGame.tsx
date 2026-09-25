@@ -9,6 +9,7 @@ import {
   Footprints,
   ShieldCheck,
   Search,
+  RotateCw,
 } from "lucide-react";
 import type { Room, RoomAction } from "../../../../functions/src/shared/model";
 import {
@@ -313,6 +314,7 @@ function Table({
               ? `${actor.nickname} 確認效果`
               : "本輪結束";
   const selectedError = card ? canPlayDanceCard(g, own, uid, card.id) : null;
+  const mySeat = g.order.indexOf(uid);
   return (
     <div className="cd-game">
       <header className="cd-heading">
@@ -331,87 +333,118 @@ function Table({
         <span>{title}</span>
         {!connected && <b>離線，正在重連</b>}
       </div>
-      <div className="cd-players">
-        {g.order.map((id, i) => {
-          const p = g.players[id];
-          return (
-            <button
-              key={id}
-              data-dance-player={id}
-              className={`cd-player ${g.current === id ? "active" : ""}`}
-              onClick={() => setPlayerView(id)}
-              aria-label={`${p.nickname}，${p.handCount} 張手牌，${p.score} 分${p.accomplice ? "，已成為共犯" : ""}`}
-            >
-              <span>
-                <i>{i + 1}</i>
-                <b>
-                  {p.nickname}
-                  {id === uid ? " · 你" : ""}
-                </b>
-              </span>
-              <span>
-                <span className="cd-back-stack" aria-hidden="true">
-                  {Array.from({ length: p.handCount }, (_, n) => (
-                    <i key={n} />
-                  ))}
+      <div className="cd-arena">
+        <div
+          className="cd-players"
+          role="group"
+          aria-label="環形座位，自己在下方，順時針往左鄰出牌"
+        >
+          {g.order.map((id, i) => {
+            const p = g.players[id];
+            const offset = (i - mySeat + g.order.length) % g.order.length;
+            const angle = Math.PI / 2 + (offset * 2 * Math.PI) / g.order.length;
+            const neighbor =
+              offset === 0
+                ? "你的座位"
+                : offset === 1
+                  ? "左鄰 · 下一位"
+                  : offset === g.order.length - 1
+                    ? "右鄰 · 上一位"
+                    : `座位 ${i + 1}`;
+            return (
+              <button
+                key={id}
+                data-dance-player={id}
+                data-seat-offset={offset}
+                style={
+                  {
+                    "--seat-x": Math.cos(angle),
+                    "--seat-y": Math.sin(angle),
+                  } as CSSProperties
+                }
+                className={`cd-player ${g.current === id ? "active" : ""} ${id === uid ? "cd-self" : ""}`}
+                onClick={() => setPlayerView(id)}
+                aria-label={`${p.nickname}，${neighbor}，${p.handCount} 張手牌，${p.score} 分${p.accomplice ? "，已成為共犯" : ""}`}
+              >
+                <span>
+                  <i>{i + 1}</i>
+                  <b>
+                    {p.nickname}
+                    {id === uid ? " · 你" : ""}
+                  </b>
                 </span>
-                <small>{p.handCount} 張</small>
-                <b className="cd-points">{p.score} 分</b>
-                {p.accomplice && (
-                  <Handshake size={17} aria-label="已亮牌的共犯" />
+                <span>
+                  <span className="cd-back-stack" aria-hidden="true">
+                    {Array.from({ length: p.handCount }, (_, n) => (
+                      <i key={n} />
+                    ))}
+                  </span>
+                  <small>{p.handCount} 張</small>
+                  <b className="cd-points">{p.score} 分</b>
+                  {p.accomplice && (
+                    <Handshake size={17} aria-label="已亮牌的共犯" />
+                  )}
+                  {g.pending?.locked.includes(id) && (
+                    <ShieldCheck size={16} aria-label="已秘密選牌" />
+                  )}
+                </span>
+                <small className="cd-seat-relation">{neighbor}</small>
+                {g.policeChiefHolderUid === id && (
+                  <span className="cd-police-badge" title="警部持有中">
+                    <ShieldCheck size={13} />
+                    <span>警部持有中</span>
+                  </span>
                 )}
-                {g.pending?.locked.includes(id) && (
-                  <ShieldCheck size={16} aria-label="已秘密選牌" />
+                {g.policeChiefTargetUid === id && (
+                  <span
+                    className="cd-police-badge cd-police-target"
+                    title="警部鎖定"
+                  >
+                    <Search size={13} />
+                    <span>警部鎖定</span>
+                  </span>
                 )}
-              </span>
-              {g.policeChiefHolderUid === id && (
-                <span className="cd-police-badge">
-                  <ShieldCheck size={13} />
-                  警部持有中
-                </span>
-              )}
-              {g.policeChiefTargetUid === id && (
-                <span className="cd-police-badge cd-police-target">
-                  <Search size={13} />
-                  警部鎖定
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-      <section className="cd-center" aria-label="公開桌面">
-        <div className="cd-last-card">
-          {last ? <DanceCard id={last.cardId} /> : <DanceCard back />}
+              </button>
+            );
+          })}
         </div>
-        <div className="cd-table-copy">
-          <span className="cd-eyebrow">
-            {last ? "最近公開的牌" : "案件尚未揭幕"}
-          </span>
-          <h3>
-            {last
-              ? `${g.players[last.uid].nickname} · ${DANCE_DEFINITIONS[DANCE_CARD_BY_ID[last.cardId].type].name}`
-              : "犯人，就藏在其中一張手牌裡"}
-          </h3>
-          <p>
-            {g.notice ??
-              (last
-                ? DANCE_DEFINITIONS[DANCE_CARD_BY_ID[last.cardId].type].rule
-                : "第一發現者先出牌，其餘玩家依座位順序接續。")}
-          </p>
-          {selectionPhase && (
+        <section className="cd-center" aria-label="公開桌面">
+          <div className="cd-last-card">
+            {last ? <DanceCard id={last.cardId} /> : <DanceCard back />}
+          </div>
+          <div className="cd-table-copy">
+            <span className="cd-seat-direction">
+              <RotateCw size={14} />
+              順時針 · 向左傳牌
+            </span>
+            <span className="cd-eyebrow">
+              {last ? "最近公開的牌" : "案件尚未揭幕"}
+            </span>
+            <h3>
+              {last
+                ? `${g.players[last.uid].nickname} · ${DANCE_DEFINITIONS[DANCE_CARD_BY_ID[last.cardId].type].name}`
+                : "犯人，就藏在其中一張手牌裡"}
+            </h3>
             <p>
-              已鎖定 {g.pending?.locked.length ?? 0} /{" "}
-              {g.pending?.eligible.length ?? 0} 人
+              {g.notice ??
+                (last
+                  ? DANCE_DEFINITIONS[DANCE_CARD_BY_ID[last.cardId].type].rule
+                  : "第一發現者先出牌，其餘玩家依座位順序接續。")}
             </p>
-          )}
-          {g.phase === "SELECT_TARGET" && turn && (
-            <button className="cd-primary" onClick={() => setPanel(null)}>
-              選擇目標
-            </button>
-          )}
-        </div>
-      </section>
+            {selectionPhase && (
+              <p>
+                已鎖定 {g.pending?.locked.length ?? 0} /{" "}
+                {g.pending?.eligible.length ?? 0} 人
+              </p>
+            )}
+            {g.phase === "SELECT_TARGET" && turn && (
+              <button className="cd-primary" onClick={() => setPanel(null)}>
+                選擇目標
+              </button>
+            )}
+          </div>
+        </section>
+      </div>
       <section className="cd-hand" aria-label="我的手牌">
         <div className="cd-hand-heading">
           <strong>我的手牌 · {own.hand.length} 張</strong>

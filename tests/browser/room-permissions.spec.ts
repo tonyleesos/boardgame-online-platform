@@ -6,6 +6,7 @@ for (const game of [
   { id: "mafia-de-cuba", privateBranch: "mafiaPrivate" },
   { id: "saboteur-2", privateBranch: "saboteurPrivate" },
   { id: "criminal-dance", privateBranch: "dancePrivate" },
+  { id: "blades-and-rose", privateBranch: "rosePrivate" },
 ])
   test(`${game.id}: missing game-private permissions preserve membership; retry recovers; unrelated games still work`, async ({
     page,
@@ -63,6 +64,16 @@ for (const game of [
         ).toBeVisible({
           timeout: 20000,
         });
+      } else if (game.id === "blades-and-rose") {
+        await expect(page.locator(".br-table")).toBeVisible();
+        await expect(page.locator(".br-hand .br-card")).toHaveCount(3);
+        await expect(page.getByRole("alert")).toHaveCount(0);
+        await page.getByRole("button", { name: "查看我的身分" }).click();
+        await expect(page.getByRole("dialog")).toBeVisible();
+        await page
+          .getByRole("button", { name: "確認身分，完成夜晚儀式" })
+          .click();
+        await expect(page.getByRole("dialog")).toHaveCount(0);
       } else if (game.id === "criminal-dance") {
         await expect(page.locator(".cd-game")).toBeVisible();
         await expect(page.locator(".cd-hand-card")).toHaveCount(4);

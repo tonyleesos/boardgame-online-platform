@@ -159,6 +159,14 @@ npm run deploy
 
 若資料庫為非預設具名 instance，請先在 Firebase CLI 設定該 database target，並將 `firebase.json` 的 database 設定指向該 target，確保規則部署至 `DATABASE_URL` 對應的 instance。
 
+若新遊戲開局後顯示「私人資料暫時無法讀取」，但房間仍顯示即時連線，請檢查正式 Realtime Database 是否已部署該遊戲的私人資料規則。例如血與刃的白薔薇需要 `sessions/$code/rosePrivate/$uid`；只更新 Hosting 或 Functions 會漏掉這項規則。確認後可單獨同步規則：
+
+```sh
+npx firebase deploy --only database --project boardgame-online-platfor-c5ebd
+```
+
+完成後在原房間按「重新載入私人資料」，即可保留原座位與進度重新連接。規則只允許房間內的真人玩家讀取自己的資料，不能開放整個私人資料節點。權限缺漏及修復後恢復手牌的回歸測試位於 `tests/browser/room-permissions.spec.ts`。
+
 Hosting 使用 `client/dist` 並將所有前端路由導回 `index.html`。在 Authentication 的 Authorized domains 檢查部署網域與 localhost；本機連線正式專案時依 Console 狀態加入 localhost。
 
 ## 架構與資料保密

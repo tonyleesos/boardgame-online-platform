@@ -100,6 +100,40 @@ test("Criminal Dance: responsive physical cards, private witness, atomic trade, 
     ]) {
       await host.setViewportSize(viewport);
       await expect(host.locator(".cd-player")).toHaveCount(8);
+      const seats = await host.locator(".cd-player").evaluateAll((nodes) =>
+        nodes.map((node) => {
+          const b = node.getBoundingClientRect();
+          return {
+            offset: Number((node as HTMLElement).dataset.seatOffset),
+            x: b.x,
+            y: b.y,
+            width: b.width,
+            height: b.height,
+          };
+        }),
+      );
+      const me = seats.find((s) => s.offset === 0)!;
+      expect(seats.find((s) => s.offset === 1)!.x).toBeLessThan(me.x);
+      expect(seats.find((s) => s.offset === 7)!.x).toBeGreaterThan(me.x);
+      expect(seats.filter((s) => s.y < me.y - 10).length).toBe(7);
+      for (let i = 0; i < seats.length; i++) {
+        expect(seats[i].x).toBeGreaterThanOrEqual(0);
+        expect(seats[i].x + seats[i].width).toBeLessThanOrEqual(
+          viewport.width + 1,
+        );
+        for (let j = i + 1; j < seats.length; j++) {
+          const a = seats[i],
+            b = seats[j];
+          const overlapX =
+            Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x);
+          const overlapY =
+            Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y);
+          expect(
+            overlapX <= 1 || overlapY <= 1,
+            `Seats ${a.offset} and ${b.offset} overlap at ${viewport.width}x${viewport.height}`,
+          ).toBe(true);
+        }
+      }
       await expect(
         host.getByRole("button", { name: "出牌紀錄", exact: true }),
       ).toBeInViewport();

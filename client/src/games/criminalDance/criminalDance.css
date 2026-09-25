@@ -153,13 +153,36 @@
   margin-right: 7px;
   color: #ecc76e;
 }
+.cd-arena {
+  --seat-width: 154px;
+  position: relative;
+  flex: 1;
+  min-height: 300px;
+  width: 100%;
+  max-width: 1100px;
+  align-self: center;
+}
+.cd-arena::before {
+  content: "";
+  position: absolute;
+  inset: 36px calc(var(--seat-width) / 2);
+  border: 1px solid #d6bc7966;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, #c8b27b12, #142a2633);
+  box-shadow: inset 0 0 0 6px #e2c68108;
+}
 .cd-players {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
-  flex-shrink: 0;
+  position: absolute;
+  inset: 0;
 }
 .cd-game .cd-player {
+  position: absolute;
+  left: calc(50% + var(--seat-x) * (50% - var(--seat-width) / 2 - 3px));
+  top: calc(50% + var(--seat-y) * (50% - 42px));
+  transform: translate(-50%, -50%);
+  width: var(--seat-width);
+  height: 76px;
+  z-index: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -169,16 +192,31 @@
   gap: 5px;
   background: #122724b0;
 }
+.cd-player.cd-self {
+  background: #34443a;
+}
+.cd-player .cd-seat-relation {
+  color: #e8cf95;
+  font-size: 10px;
+}
 .cd-player.active {
   border-color: #f1d291;
   box-shadow: inset 0 0 0 1px #d2b26677;
 }
 .cd-player .cd-police-badge {
+  position: absolute;
+  top: -9px;
+  right: 2px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  background: #293e5c;
   color: #e1eafa;
   font-size: 10px;
   gap: 3px;
 }
 .cd-player .cd-police-target {
+  right: auto;
+  left: 2px;
   color: #ffdc99;
 }
 .cd-player > span {
@@ -226,17 +264,32 @@
   align-items: center;
   justify-content: center;
   gap: 30px;
-  flex: 1;
-  min-height: 90px;
-  border: 1px dashed #cab87935;
-  border-radius: 20px;
-  background: radial-gradient(ellipse, #d9c9880c, transparent 70%);
-  padding: 10px;
-  position: relative;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(100% - var(--seat-width) * 2 - 36px);
+  max-width: 480px;
+  height: calc(100% - 180px);
+  min-height: 80px;
+  padding: 0;
+  pointer-events: none;
+}
+.cd-center button {
+  pointer-events: auto;
+}
+.cd-seat-direction {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #e1c88d;
+  font-size: 11px;
+  margin-bottom: 8px;
 }
 .cd-last-card {
   height: 100%;
   max-height: 210px;
+  flex-shrink: 0;
   aspect-ratio: 65/90;
   filter: drop-shadow(0 7px 9px #0005);
   transform: rotate(-3deg);
@@ -631,12 +684,21 @@
     font-size: 11px;
     padding: 6px 8px;
   }
-  .cd-players {
-    gap: 4px;
+  .cd-arena {
+    --seat-width: 78px;
+    min-height: 250px;
   }
   .cd-game .cd-player {
-    padding: 5px;
-    gap: 4px;
+    top: calc(50% + var(--seat-y) * (50% - 29px));
+    height: 54px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .cd-player .cd-seat-relation {
+    font-size: 8px;
+  }
+  .cd-player .cd-police-badge > span {
+    display: none;
   }
   .cd-player > span {
     gap: 3px;
@@ -651,36 +713,40 @@
     display: none;
   }
   .cd-back-stack {
-    height: 17px;
-  }
-  .cd-back-stack > i {
-    width: 9px;
-    height: 15px;
-    margin-left: -3px;
+    display: none;
   }
   .cd-player > span > svg {
-    width: 13px;
+    width: 10px;
   }
   .cd-center {
-    gap: 15px;
-    padding: 8px;
+    flex-direction: column;
+    gap: 6px;
+    height: calc(100% - 148px);
   }
   .cd-last-card {
-    max-height: 157px;
+    height: 72px;
+  }
+  .cd-last-card .cd-card-rule,
+  .cd-last-card .cd-card-back > span {
+    display: none;
   }
   .cd-table-copy {
-    max-width: 155px;
+    text-align: center;
+  }
+  .cd-seat-direction {
+    font-size: 9px;
+    justify-content: center;
+    margin-bottom: 4px;
   }
   .cd-table-copy h3 {
-    font-size: 14px;
-    margin: 5px 0;
+    font-size: 11px;
+    margin: 3px 0;
   }
   .cd-table-copy p {
-    font-size: 11px;
-    margin: 5px 0;
+    display: none;
   }
   .cd-eyebrow {
-    font-size: 9px;
+    display: none;
   }
   .cd-hand-heading {
     font-size: 12px;
@@ -731,16 +797,53 @@
     font-size: 12px;
   }
 }
+@media (max-width: 559px) and (max-height: 650px) {
+  .cd-game {
+    padding: 4px 8px;
+    gap: 3px;
+  }
+  .cd-heading h2 {
+    font-size: 16px;
+  }
+  .cd-heading > button {
+    min-height: 24px;
+    padding: 2px;
+  }
+  .cd-turn {
+    padding: 4px 6px;
+  }
+  .cd-arena {
+    min-height: 230px;
+    --seat-width: 74px;
+  }
+  .cd-game .cd-hand-card {
+    width: 54px;
+    min-width: 54px;
+  }
+  .cd-hand-fan {
+    padding: 10px 5px 3px;
+  }
+  .cd-hand-heading > span {
+    display: none;
+  }
+  .cd-footer button {
+    min-height: 26px;
+    padding: 3px 6px;
+  }
+  .cd-last-card {
+    height: 54px;
+  }
+}
 @media (min-width: 560px) and (max-height: 520px) {
   .cd-game {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 235px;
-    grid-template-rows: 32px 30px minmax(0, 1fr) 102px;
+    grid-template-columns: minmax(0, 1fr) 175px;
+    grid-template-rows: 28px 28px minmax(0, 1fr) 30px;
     padding: 6px;
     gap: 5px;
   }
   .cd-heading {
-    grid-area: 1/1;
+    grid-area: 1/1/2/3;
   }
   .cd-heading h2 {
     font-size: 16px;
@@ -753,45 +856,69 @@
     padding: 4px;
   }
   .cd-turn {
-    grid-area: 2/1;
+    grid-area: 2/1/3/3;
     font-size: 11px;
     padding: 3px 6px;
   }
-  .cd-players {
-    grid-area: 1/2/4/3;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-content: start;
-    gap: 4px;
+  .cd-arena {
+    grid-area: 3/1/5/2;
+    align-self: stretch;
+    --seat-width: 78px;
+    min-height: 0;
   }
   .cd-game .cd-player {
-    padding: 5px;
-    gap: 3px;
+    top: calc(50% + var(--seat-y) * (50% - 29px));
+    height: 54px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .cd-player .cd-seat-relation {
+    font-size: 8px;
+  }
+  .cd-player .cd-police-badge > span,
+  .cd-back-stack {
+    display: none;
+  }
+  .cd-player small {
+    font-size: 9px;
+  }
+  .cd-player > span > i {
+    display: none;
   }
   .cd-player b {
     font-size: 10px;
   }
   .cd-center {
-    grid-area: 3/1;
+    height: calc(100% - 120px);
     min-height: 0;
-    gap: 12px;
+    gap: 8px;
+    flex-direction: row;
   }
   .cd-table-copy {
     max-width: 190px;
   }
   .cd-table-copy h3 {
-    font-size: 14px;
-  }
-  .cd-table-copy p {
     font-size: 11px;
   }
+  .cd-table-copy p {
+    display: none;
+  }
+  .cd-seat-direction {
+    font-size: 9px;
+  }
+  .cd-eyebrow {
+    display: none;
+  }
   .cd-last-card {
-    max-height: 170px;
+    height: 65px;
+  }
+  .cd-last-card .cd-card-rule,
+  .cd-last-card .cd-card-back > span {
+    display: none;
   }
   .cd-hand {
-    grid-area: 4/1;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    grid-area: 3/2;
+    align-self: center;
   }
   .cd-hand-heading {
     font-size: 10px;
@@ -800,11 +927,13 @@
     display: none;
   }
   .cd-hand-fan {
+    flex-wrap: wrap;
+    gap: 5px;
     padding: 3px 5px;
   }
   .cd-game .cd-hand-card {
-    width: 62px;
-    min-width: 62px;
+    width: 54px;
+    min-width: 54px;
     transform: none;
     margin: 0 2px;
   }
