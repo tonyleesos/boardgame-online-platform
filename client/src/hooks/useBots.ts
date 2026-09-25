@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { roseToken } from "../../../functions/src/shared/bladesRose";
 import type { Room } from "../../../functions/src/shared/model";
 import { advanceBots, errorMessage } from "../firebase/api";
 import { MINE_BOT_DELAY } from "../../../functions/src/shared/saboteur";
@@ -10,28 +11,32 @@ export function useBots(room: Room | null, connected: boolean) {
   const [error, setError] = useState("");
   const code = room?.code;
   const delay =
-    room?.gameId === "criminal-dance"
-      ? DANCE_BOT_DELAY
-      : room?.gameId === "saboteur-2"
-        ? MINE_BOT_DELAY
-        : 1100;
+    room?.gameId === "blades-and-rose"
+      ? 1800
+      : room?.gameId === "criminal-dance"
+        ? DANCE_BOT_DELAY
+        : room?.gameId === "saboteur-2"
+          ? MINE_BOT_DELAY
+          : 1100;
   const enabled =
     connected &&
     room?.status === "playing" &&
     Object.values(room.players).some((p) => p.isBot);
-  const token = room?.dance
-    ? danceToken(room.dance)
-    : room?.saboteur
-      ? `${room.saboteur.id}:${room.saboteur.revision}`
-      : room?.game
-        ? `${room.game.id}:${room.game.revision}`
-        : room?.mafia
-          ? `${room.mafia.id}:${room.mafia.revision}`
-          : room?.timebomb
-            ? `${room.timebomb.id}:${room.timebomb.revision}`
-            : room?.splendor
-              ? `${room.splendor.id}:${room.splendor.revision}`
-              : "";
+  const token = room?.rose
+    ? roseToken(room.rose)
+    : room?.dance
+      ? danceToken(room.dance)
+      : room?.saboteur
+        ? `${room.saboteur.id}:${room.saboteur.revision}`
+        : room?.game
+          ? `${room.game.id}:${room.game.revision}`
+          : room?.mafia
+            ? `${room.mafia.id}:${room.mafia.revision}`
+            : room?.timebomb
+              ? `${room.timebomb.id}:${room.timebomb.revision}`
+              : room?.splendor
+                ? `${room.splendor.id}:${room.splendor.revision}`
+                : "";
   useEffect(() => {
     if (!enabled || !code) return;
     let active = true,

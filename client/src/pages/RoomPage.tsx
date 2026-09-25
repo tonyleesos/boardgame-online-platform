@@ -1,6 +1,8 @@
 import { MafiaGame, MafiaSettings } from "../games/mafia/MafiaGame";
 import { SplendorGame, SplendorSettings } from "../games/splendor/SplendorGame";
 import { SaboteurGame } from "../games/saboteur/SaboteurGame";
+import { BladesRoseGame } from "../games/blades-and-rose/BladesRoseGame";
+import { PLAYER_COUNT_RULES } from "../../../functions/src/shared/bladesRose";
 import {
   CriminalDanceGame,
   DanceSettings,
@@ -44,6 +46,7 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
     mafiaPrivate,
     saboteurPrivate,
     dancePrivate,
+    rosePrivate,
     presence,
     connected,
     loaded,
@@ -92,6 +95,7 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
   const isSplendor = room.gameId === "splendor";
   const isSaboteur = room.gameId === "saboteur-2";
   const isDance = room.gameId === "criminal-dance";
+  const isRose = room.gameId === "blades-and-rose";
   const noBots = definition.supportsBots === false;
   const isDecorum = room.gameId === "decorum";
   const decorScenario =
@@ -100,10 +104,12 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
   const allReady =
     players.length >= definition.minPlayers &&
     players.every((p) => p.ready) &&
+    (!isRose ||
+      PLAYER_COUNT_RULES[players.length]?.verifiedAgainstOfficialBoard) &&
     (!isDecorum || decorScenario?.playerCount === players.length);
   return (
     <div
-      className={`${room.status === "waiting" ? "room-waiting" : "room-active"}${isSplendor ? " room-splendor" : ""}${isSaboteur ? " room-saboteur" : ""}${isDance ? " room-dance" : ""}`}
+      className={`${room.status === "waiting" ? "room-waiting" : "room-active"}${isSplendor ? " room-splendor" : ""}${isSaboteur ? " room-saboteur" : ""}${isDance ? " room-dance" : ""}${isRose ? " room-rose" : ""}`}
     >
       <div className="room-top">
         <div>
@@ -242,13 +248,13 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
             disabled={
               pending ||
               !connected ||
-              ((isSplendor || isMafia || isDance || isSaboteur) &&
+              ((isSplendor || isMafia || isDance || isSaboteur || isRose) &&
                 room.status === "playing")
             }
             onClick={() => act({ type: "recover" })}
           >
             {room.status === "playing"
-              ? isSplendor || isMafia || isDance || isSaboteur
+              ? isSplendor || isMafia || isDance || isSaboteur || isRose
                 ? "保留座位，等待重新連線"
                 : isDecorum
                   ? "清理離線室友並中止本局"
@@ -256,7 +262,7 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
               : "清理離線超過 90 秒的玩家"}
           </button>
           <p className="fine">
-            {isSplendor || isMafia || isDance || isSaboteur
+            {isSplendor || isMafia || isDance || isSaboteur || isRose
               ? "暫時離線保留座位。明確離開會中止本局，其他玩家可重新開局。"
               : isDecorum
                 ? "離線可重連。室友明確離開或被清理會中止合租，房主由最早入座的室友接任。"
@@ -371,7 +377,24 @@ function RoomContent({ code, uid }: { code: string; uid: string }) {
                 {players.filter((p) => p.ready).length} 位已準備
                 {!host && " · 等待房主開始遊戲"}
               </p>
+              {isRose && (
+                <p className="fine">
+                  目前開放 8 人模式。5、6、7、9、10
+                  人的角色配置與勝利門檻尚待官方圖板校對。
+                </p>
+              )}
             </div>
+          ) : isRose ? (
+            privateError ? null : (
+              <BladesRoseGame
+                room={room}
+                uid={uid}
+                privateData={rosePrivate}
+                connected={connected}
+                onRematch={() => act({ type: "rematch" })}
+                roomPending={pending}
+              />
+            )
           ) : isMafia ? (
             privateError || (!mafiaPrivate && room.status === "playing") ? (
               <section className="panel" role="status">

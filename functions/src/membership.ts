@@ -12,6 +12,24 @@ export function leaveSeat(session: Session, uid: string): Session | null {
   const player = room.players[uid];
   ensure(player && !player.isBot, "你不在房間內");
   if (
+    room.gameId === "blades-and-rose" &&
+    room.status === "playing" &&
+    room.rose
+  ) {
+    room.rose.phase = "GAME_OVER";
+    room.rose.aborted = true;
+    room.rose.reason = "玩家離席，本局結束";
+    room.rose.revision++;
+    room.status = "finished";
+    if (session.secret.rose) session.secret.rose.contributions = {};
+    for (const p of Object.values(session.rosePrivate ?? {})) {
+      delete p.peek;
+      delete p.decision;
+      p.replacementTargets = [];
+      p.revision = room.rose.revision;
+    }
+  }
+  if (
     room.gameId === "criminal-dance" &&
     room.status === "playing" &&
     room.dance
@@ -92,6 +110,7 @@ export function leaveSeat(session: Session, uid: string): Session | null {
     if (session.splendorPrivate) delete session.splendorPrivate[uid];
     if (session.saboteurPrivate) delete session.saboteurPrivate[uid];
     if (session.dancePrivate) delete session.dancePrivate[uid];
+    if (session.rosePrivate) delete session.rosePrivate[uid];
     if (session.decorumPrivate) delete session.decorumPrivate[uid];
   }
   if (session.presence) delete session.presence[uid];

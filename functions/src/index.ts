@@ -1,3 +1,9 @@
+import { startRose, applyRoseAction } from "./bladesRose/engine";
+import {
+  roseToken,
+  PLAYER_COUNT_RULES,
+  type RoseAction,
+} from "./shared/bladesRose";
 import {
   startMafia,
   applyMafiaAction,
@@ -78,6 +84,7 @@ type RequestData = {
   gameId?: string;
   action?: PlatformGameAction | RoomAction;
   phaseToken?: string;
+  actionId?: string;
   mode?: "friends" | "practice";
   playerCount?: number;
   bombVariant?: "standard" | "evolution" | "classic";
@@ -261,7 +268,17 @@ export const createRoom = callable(async (uid, data) => {
     data.bombVariant === undefined || data.bombVariant === variant,
     "規則必須與選擇的遊戲版本一致",
   );
-  const count = data.mode === "practice" ? (data.playerCount ?? limits.min) : 1;
+  const count =
+    data.mode === "practice"
+      ? (data.playerCount ??
+        (data.gameId === "blades-and-rose" ? 8 : limits.min))
+      : 1;
+  ensure(
+    data.gameId !== "blades-and-rose" ||
+      data.mode !== "practice" ||
+      PLAYER_COUNT_RULES[count]?.verifiedAgainstOfficialBoard,
+    "此人數規則尚未完成官方圖板校對，目前請使用 8 人模式",
+  );
   ensure(
     Number.isInteger(count) &&
       count >= (data.mode === "practice" ? limits.min : 1) &&
@@ -409,7 +426,9 @@ export const roomAction = callable(async (uid, data) => {
         ensure(room.hostId === uid, "只有房主可以開始");
         room.activity = [];
         delete room.botActionAt;
-        if (room.gameId === "criminal-dance")
+        if (room.gameId === "blades-and-rose")
+          startRose(session, gameId, shuffled(seed));
+        else if (room.gameId === "criminal-dance")
           startDance(session, gameId, shuffled(seed));
         else if (room.gameId === "saboteur-2")
           startMine(session, gameId, shuffled(seed));
@@ -476,6 +495,8 @@ export const roomAction = callable(async (uid, data) => {
         delete room.splendor;
         delete room.saboteur;
         delete room.dance;
+        delete room.rose;
+        session.rosePrivate = {};
         session.dancePrivate = {};
         session.saboteurPrivate = {};
         session.splendorPrivate = {};
@@ -501,6 +522,7 @@ export const roomAction = callable(async (uid, data) => {
             "mafia-de-cuba",
             "saboteur-2",
             "criminal-dance",
+            "blades-and-rose",
           ].includes(room.gameId) || room.status !== "playing",
           "本局保留離線玩家座位，請等待重新連線",
         );
@@ -542,6 +564,33 @@ export const gameAction = callable(async (uid, data) => {
       session.public.players[uid] && !session.public.players[uid].isBot,
       "你不在房間內",
     );
+    if (session.public.gameId === "blades-and-rose") {
+      const g = session.public.rose;
+      ensure(
+        typeof data.actionId === "string" &&
+          /^[a-zA-Z0-9-]{10,80}$/.test(data.actionId),
+        "缺少操作識別碼",
+      );
+      const receipts = session.secret.rose?.receipts ?? {};
+      const receipt = receipts[data.actionId];
+      if (receipt) {
+        ensure(
+          receipt.uid === uid && receipt.token === data.phaseToken,
+          "操作識別碼不符",
+        );
+        return session;
+      }
+      ensure(
+        g && data.phaseToken === roseToken(g),
+        "你的操作已過期，遊戲狀態已更新",
+      );
+      applyRoseAction(session, uid, data.action as RoseAction, shuffled(seed));
+      receipts[data.actionId] = { uid, token: data.phaseToken! };
+      session.secret.rose!.receipts = Object.fromEntries(
+        Object.entries(receipts).slice(-160),
+      );
+      return session;
+    }
     if (session.public.gameId === "criminal-dance") {
       const g = session.public.dance;
       ensure(
@@ -638,11 +687,13 @@ export const advanceBots = callable(async (uid, data) => {
       s.public.status !== "playing" ||
       data.token !== botToken(s.public) ||
       now - (s.public.botActionAt ?? 0) <
-        (s.public.gameId === "criminal-dance"
-          ? DANCE_BOT_DELAY
-          : s.public.gameId === "saboteur-2"
-            ? MINE_BOT_DELAY
-            : 650)
+        (s.public.gameId === "blades-and-rose"
+          ? 1500
+          : s.public.gameId === "criminal-dance"
+            ? DANCE_BOT_DELAY
+            : s.public.gameId === "saboteur-2"
+              ? MINE_BOT_DELAY
+              : 650)
     )
       return s;
     moved = advanceOneBot(s, shuffled(seed));

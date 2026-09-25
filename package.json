@@ -14,6 +14,8 @@
     "lint": "npm run lint --workspace client && npm run lint --workspace functions",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "test:blades-rose": "vitest run tests/blades-rose.test.ts",
+    "test:blades-rose:services": "node tests/blades-rose-integration.mjs",
     "emulators": "npm run build --workspace functions && firebase emulators:start --project demo-boardgame --only auth,database,firestore,functions",
     "test:services": "node tests/auth-integration.mjs && node tests/integration.mjs && node tests/timebomb-integration.mjs && node tests/decorum-integration.mjs && node tests/splendor-integration.mjs && node tests/mafia-integration.mjs && node tests/leaderboard-integration.mjs && node tests/saboteur-integration.mjs && node tests/criminal-dance-integration.mjs",
     "test:integration": "npm run build --workspace functions && firebase emulators:exec --project demo-boardgame --only auth,database,firestore,functions \"npm run test:services\""

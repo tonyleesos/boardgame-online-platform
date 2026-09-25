@@ -9,6 +9,14 @@ import type {
   Session,
 } from "./shared/model";
 import type { BombAction, BombGame, BombPrivate } from "./shared/timebomb";
+import { chooseRoseAction } from "./bladesRose/bot";
+import { applyRoseAction } from "./bladesRose/engine";
+import {
+  normalizeRose,
+  normalizeRosePrivate,
+  roseToken,
+  type RoseAction,
+} from "./shared/bladesRose";
 import {
   bombThreshold,
   defusableColors,
@@ -205,9 +213,28 @@ function speech(
     | SplendorAction
     | MafiaAction
     | MineAction
-    | DanceAction,
+    | DanceAction
+    | RoseAction,
 ) {
   switch (a.type) {
+    case "roseNight":
+      return "我已確認夜晚情報。";
+    case "roseCoin":
+      return "把金幣交給下一位，看看接下來的儀式。";
+    case "roseCrystal":
+      return "白水晶已啟封。";
+    case "roseTarget":
+      return "我已指定水晶對象。";
+    case "rosePeek":
+      return "我已確認情報。";
+    case "roseDecide":
+      return "我的決定已封存，等待揭示。";
+    case "roseReplaceTarget":
+      return "命運改寫的決定已完成。";
+    case "roseReplaceCard":
+      return "已完成換牌。";
+    case "roseContinue":
+      return "整理這輪線索，再繼續吧。";
     case "dancePlay":
       return "我已打出一張牌。";
     case "danceTarget":
@@ -276,19 +303,21 @@ function speech(
   }
 }
 export const botToken = (r: Room) =>
-  r.dance
-    ? danceToken(r.dance)
-    : r.saboteur
-      ? mineToken(r.saboteur)
-      : r.game
-        ? `${r.game.id}:${r.game.revision}`
-        : r.mafia
-          ? `${r.mafia.id}:${r.mafia.revision}`
-          : r.timebomb
-            ? `${r.timebomb.id}:${r.timebomb.revision}`
-            : r.splendor
-              ? `${r.splendor.id}:${r.splendor.revision}`
-              : "";
+  r.rose
+    ? roseToken(r.rose)
+    : r.dance
+      ? danceToken(r.dance)
+      : r.saboteur
+        ? mineToken(r.saboteur)
+        : r.game
+          ? `${r.game.id}:${r.game.revision}`
+          : r.mafia
+            ? `${r.mafia.id}:${r.mafia.revision}`
+            : r.timebomb
+              ? `${r.timebomb.id}:${r.timebomb.revision}`
+              : r.splendor
+                ? `${r.splendor.id}:${r.splendor.revision}`
+                : "";
 export function advanceOneBot(s: Session, shuffle: Shuffle): boolean {
   if (s.public.status !== "playing") return false;
   const ids = Object.values(s.public.players)
@@ -303,8 +332,18 @@ export function advanceOneBot(s: Session, shuffle: Shuffle): boolean {
       | MafiaAction
       | MineAction
       | DanceAction
+      | RoseAction
       | null = null;
-    if (s.public.dance) {
+    if (s.public.rose) {
+      action = chooseRoseAction(
+        uid,
+        structuredClone(normalizeRose(s.public.rose)),
+        structuredClone(normalizeRosePrivate(s.rosePrivate![uid])),
+        shuffle,
+        casual,
+      );
+      if (action) applyRoseAction(s, uid, action, shuffle);
+    } else if (s.public.dance) {
       action = chooseDanceAction(
         uid,
         structuredClone(normalizeDance(s.public.dance)),
@@ -369,6 +408,7 @@ export function advanceOneBot(s: Session, shuffle: Shuffle): boolean {
           uid,
           message: speech(action),
           sequence:
+            s.public.rose?.revision ??
             s.public.dance?.revision ??
             s.public.saboteur?.revision ??
             s.public.game?.revision ??

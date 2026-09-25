@@ -1,4 +1,6 @@
 import { MafiaArt } from "../games/mafia/MafiaArt";
+import { RoseArt } from "../games/blades-and-rose/BladesRoseCard";
+import "../games/blades-and-rose/bladesRose.css";
 import { MineCover } from "../games/saboteur/MineIllustrations";
 import { DanceDrawing } from "../games/criminalDance/DanceCard";
 import { useState } from "react";
@@ -65,7 +67,9 @@ export function GameSelectPage() {
                   "即將登場"
                 )}
               </span>
-              {game.id === "criminal-dance" ? (
+              {game.id === "blades-and-rose" ? (
+                <RoseArt />
+              ) : game.id === "criminal-dance" ? (
                 <DanceDrawing type="DETECTIVE" />
               ) : game.id === "saboteur-2" ? (
                 <MineCover />

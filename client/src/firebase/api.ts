@@ -1,4 +1,16 @@
 import { httpsCallable } from "firebase/functions";
+import {
+  roseToken,
+  type RoseGame,
+  type RoseAction,
+} from "../../../functions/src/shared/bladesRose";
+export const roseAction = (code: string, game: RoseGame, action: RoseAction) =>
+  call("gameAction", {
+    code,
+    phaseToken: roseToken(game),
+    action,
+    actionId: crypto.randomUUID(),
+  });
 import { firebase } from "./config";
 import type {
   LeaderboardResponse,

@@ -1,4 +1,9 @@
 import {
+  normalizeRose,
+  normalizeRosePrivate,
+  type RosePrivate,
+} from "../../../functions/src/shared/bladesRose";
+import {
   normalizeMafia,
   type MafiaPrivate,
 } from "../../../functions/src/shared/mafia";
@@ -36,6 +41,7 @@ export interface Presence {
   lastSeen?: number;
 }
 export function useRoom(code: string, uid: string) {
+  const [rosePrivate, setRosePrivate] = useState<RosePrivate | null>(null);
   const [room, setRoom] = useState<Room | null>(null);
   const [role, setRole] = useState<PrivateRole | null>(null);
   const [bombRole, setBombRole] = useState<BombPrivate | null>(null);
@@ -64,6 +70,7 @@ export function useRoom(code: string, uid: string) {
     let unsubscribePrivate: (() => void) | undefined;
     let privatePath: string | undefined;
     const clearPrivate = () => {
+      setRosePrivate(null);
       setRole(null);
       setBombRole(null);
       setDecorumPrivate(null);
@@ -117,8 +124,10 @@ export function useRoom(code: string, uid: string) {
         if (value?.splendor) normalizeSplendor(value.splendor);
         if (value?.saboteur) normalizeMine(value.saboteur);
         if (value?.dance) normalizeDance(value.dance);
+        if (value?.rose) normalizeRose(value.rose);
         const member = value?.players?.[uid];
         const branches: Record<string, string> = {
+          "blades-and-rose": "rosePrivate",
           avalon: "private",
           timebomb: "timebombPrivate",
           "timebomb-classic": "timebombPrivate",
@@ -146,6 +155,11 @@ export function useRoom(code: string, uid: string) {
                 setPrivateError("");
                 const data = privateSnap.val();
                 switch (branch) {
+                  case "rosePrivate":
+                    setRosePrivate(
+                      data ? normalizeRosePrivate(data as RosePrivate) : null,
+                    );
+                    break;
                   case "dancePrivate":
                     setDancePrivate(
                       data ? normalizeDancePrivate(data as DancePrivate) : null,
@@ -267,6 +281,7 @@ export function useRoom(code: string, uid: string) {
     splendorPrivate,
     saboteurPrivate,
     dancePrivate,
+    rosePrivate,
     presence,
     connected,
     loaded,

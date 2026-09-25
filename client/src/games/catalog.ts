@@ -10,6 +10,17 @@ export interface GameDefinition {
 }
 export const games: GameDefinition[] = [
   {
+    id: "blades-and-rose",
+    name: "血與刃的白薔薇",
+    subtitle: "BLADES & ROSE · THE MIDNIGHT RITUAL",
+    description:
+      "白薔薇、祕密與藏於袖中的刀刃。將手牌獻入祭壇，在匿名揭牌中守護你的陣營。目前開放 8 人模式。",
+    minPlayers: 5,
+    maxPlayers: 10,
+    enabled: true,
+    supportsBots: true,
+  },
+  {
     id: "criminal-dance",
     name: "犯人在跳舞",
     subtitle: "一場不斷換手的追捕",

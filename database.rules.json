@@ -39,6 +39,11 @@
             }
           }
         },
+        "rosePrivate": {
+          "$uid": {
+            ".read": "auth != null && auth.token.firebase.sign_in_provider === 'password' && auth.token.email != null && auth.uid === $uid && root.child('sessions').child($code).child('public/players').child(auth.uid).exists() && root.child('sessions').child($code).child('public/players').child(auth.uid).child('isBot').val() !== true"
+          }
+        },
         "dancePrivate": {
           "$uid": {
             ".read": "auth != null && auth.token.firebase.sign_in_provider === 'password' && auth.token.email != null && auth.uid === $uid && root.child('sessions').child($code).child('public/players').child(auth.uid).exists() && root.child('sessions').child($code).child('public/players').child(auth.uid).child('isBot').val() !== true"

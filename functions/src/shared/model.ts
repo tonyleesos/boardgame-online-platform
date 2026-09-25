@@ -20,6 +20,12 @@ import type {
   DanceAction,
   DanceConfig,
 } from "./criminalDance";
+import type {
+  RoseGame,
+  RosePrivate,
+  RoseSecret,
+  RoseAction,
+} from "./bladesRose";
 export type Role =
   "merlin" | "percival" | "servant" | "assassin" | "morgana" | "minion";
 export type Side = "good" | "evil";
@@ -90,6 +96,7 @@ export interface Room {
   splendor?: SplendorPublicState;
   saboteur?: MineGame;
   dance?: DanceGame;
+  rose?: RoseGame;
   danceConfig?: DanceConfig;
   splendorConfig?: SplendorConfig;
   decorumScenarioId?: string;
@@ -114,11 +121,13 @@ export interface Session {
   splendorPrivate?: Record<string, SplendorPrivate>;
   saboteurPrivate?: Record<string, MinePrivate>;
   dancePrivate?: Record<string, DancePrivate>;
+  rosePrivate?: Record<string, RosePrivate>;
   secret: {
     mafia?: MafiaSecret;
     splendor?: SplendorSecret;
     saboteur?: MineSecret;
     dance?: DanceSecret;
+    rose?: RoseSecret;
     teamVotes: Record<string, TeamVote>;
     missionVotes: Record<string, MissionVote>;
     bombHands?: Record<string, Array<Wire | null>>;
@@ -152,8 +161,10 @@ export type PlatformGameAction =
   | SplendorAction
   | MafiaAction
   | MineAction
-  | DanceAction;
+  | DanceAction
+  | RoseAction;
 export const GAME_LIMITS: Record<string, { min: number; max: number }> = {
+  "blades-and-rose": { min: 5, max: 10 },
   "criminal-dance": { min: 3, max: 8 },
   "saboteur-2": { min: 2, max: 12 },
   "mafia-de-cuba": { min: 6, max: 12 },

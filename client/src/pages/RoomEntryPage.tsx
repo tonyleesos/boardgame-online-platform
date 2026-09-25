@@ -10,6 +10,7 @@ import { usePlayer } from "../app/context";
 import { createRoom, joinRoom } from "../firebase/api";
 import { useAction } from "../hooks/useAction";
 import { games } from "../games/catalog";
+import { PLAYER_COUNT_RULES } from "../../../functions/src/shared/bladesRose";
 export function RoomEntryPage({ join = false }: { join?: boolean }) {
   const { nickname } = usePlayer();
   const { gameId = "avalon" } = useParams();
@@ -20,7 +21,9 @@ export function RoomEntryPage({ join = false }: { join?: boolean }) {
   const [params] = useSearchParams();
   const practice =
     !join && game?.supportsBots !== false && params.get("mode") === "practice";
-  const [playerCount, setPlayerCount] = useState(game?.minPlayers ?? 5);
+  const [playerCount, setPlayerCount] = useState(
+    gameId === "blades-and-rose" ? 8 : (game?.minPlayers ?? 5),
+  );
   const [botLevel, setBotLevel] = useState<"casual" | "standard">("standard");
   return (
     <section className="panel entry">
@@ -71,11 +74,17 @@ export function RoomEntryPage({ join = false }: { join?: boolean }) {
                   length: (game?.maxPlayers ?? 5) - (game?.minPlayers ?? 5) + 1,
                 },
                 (_, i) => (game?.minPlayers ?? 5) + i,
-              ).map((n) => (
-                <option key={n} value={n}>
-                  1 位玩家 ＋ {n - 1} 位 AI
-                </option>
-              ))}
+              )
+                .filter(
+                  (n) =>
+                    gameId !== "blades-and-rose" ||
+                    PLAYER_COUNT_RULES[n]?.verifiedAgainstOfficialBoard,
+                )
+                .map((n) => (
+                  <option key={n} value={n}>
+                    1 位玩家 ＋ {n - 1} 位 AI
+                  </option>
+                ))}
             </select>
             <label htmlFor="bot-level">AI 難度</label>
             <select
